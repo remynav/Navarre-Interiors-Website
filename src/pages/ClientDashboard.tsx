@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Home,
   FileText,
   Calendar,
@@ -56,7 +63,7 @@ const inspirations = [
   { id: 3, title: "Bedroom Vision", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400", notes: "Serene and organic textures" },
 ];
 
-const renderings = [
+const initialRenderings = [
   { id: 1, title: "Living Room - Option A", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", status: "approved", comments: 3, sent: true },
   { id: 2, title: "Kitchen Rendering", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", status: "pending", comments: 1, sent: true },
   { id: 3, title: "Master Bedroom", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", status: "revision", comments: 5, sent: true },
@@ -80,6 +87,10 @@ const ClientDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [allMessages, setAllMessages] = useState(chatMessages);
+  const [renderings, setRenderings] = useState(initialRenderings);
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [revisionFeedback, setRevisionFeedback] = useState("");
+  const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
 
   // Check if logged in
   useEffect(() => {
@@ -105,6 +116,37 @@ const ClientDashboard = () => {
     }]);
     setNewMessage("");
     toast.success("Message sent");
+  };
+
+  const handleRequestChanges = (renderingId: number) => {
+    setSelectedRenderingId(renderingId);
+    setRevisionFeedback("");
+    setShowRevisionModal(true);
+  };
+
+  const handleSubmitRevision = () => {
+    if (!revisionFeedback.trim()) {
+      toast.error("Please provide feedback for the revision request");
+      return;
+    }
+    setRenderings(renderings.map(r => 
+      r.id === selectedRenderingId 
+        ? { ...r, status: "revision", comments: r.comments + 1 } 
+        : r
+    ));
+    setShowRevisionModal(false);
+    setRevisionFeedback("");
+    setSelectedRenderingId(null);
+    toast.success("Revision request sent to designer");
+  };
+
+  const handleApproveRendering = (renderingId: number) => {
+    setRenderings(renderings.map(r => 
+      r.id === renderingId 
+        ? { ...r, status: "approved" } 
+        : r
+    ));
+    toast.success("Rendering approved!");
   };
 
   const navItems = [
@@ -488,11 +530,21 @@ const ClientDashboard = () => {
                       )}
                       {rendering.status === "pending" && (
                         <div className="flex gap-2">
-                          <Button variant="gold" size="sm" className="flex-1">
+                          <Button 
+                            variant="gold" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleApproveRendering(rendering.id)}
+                          >
                             <ThumbsUp className="w-4 h-4 mr-2" />
                             Approve
                           </Button>
-                          <Button variant="outline" size="sm" className="flex-1">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleRequestChanges(rendering.id)}
+                          >
                             <ThumbsDown className="w-4 h-4 mr-2" />
                             Request Changes
                           </Button>
@@ -670,6 +722,34 @@ const ClientDashboard = () => {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Revision Request Modal */}
+      <Dialog open={showRevisionModal} onOpenChange={setShowRevisionModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request Changes</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Please describe what changes you'd like to see in this rendering:
+            </p>
+            <Textarea
+              value={revisionFeedback}
+              onChange={(e) => setRevisionFeedback(e.target.value)}
+              placeholder="e.g., I'd prefer a warmer color palette, and the sofa should be positioned closer to the window..."
+              className="min-h-[120px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRevisionModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="gold" onClick={handleSubmitRevision}>
+              Submit Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
