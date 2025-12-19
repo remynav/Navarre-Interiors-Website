@@ -26,6 +26,9 @@ import {
   Palette,
   ThumbsUp,
   Send,
+  ChevronLeft,
+  ChevronRight,
+  PauseCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,7 +36,6 @@ import { toast } from "sonner";
 const projectData = {
   name: "Modern Penthouse Renovation",
   status: "In Progress",
-  progress: 65,
   startDate: "October 15, 2024",
   estimatedCompletion: "March 2025",
   designer: "Sarah Mitchell",
@@ -55,10 +57,54 @@ const documents = [
   { id: 4, name: "Furniture Quote", type: "PDF", date: "Dec 1" },
 ];
 
-const inspirations = [
-  { id: 1, title: "Living Room Mood", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", notes: "Warm neutrals with brass accents" },
-  { id: 2, title: "Kitchen Concept", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400", notes: "Modern minimalist with marble" },
-  { id: 3, title: "Bedroom Vision", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400", notes: "Serene and organic textures" },
+const initialInspirations = [
+  { 
+    id: 1, 
+    title: "Living Room Mood", 
+    coverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", 
+    notes: "Warm neutrals with brass accents",
+    gallery: [
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800",
+      "https://images.unsplash.com/photo-1567016432779-094069958ea5?w=800",
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800",
+    ],
+    designItems: [
+      { id: 1, type: "Paint Color", name: "Benjamin Moore - Simply White", image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200", status: "approved", commentsList: [] },
+      { id: 2, type: "Sofa", name: "Article Sven Charme Tan", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200", status: "pending", commentsList: [] },
+      { id: 3, type: "Coffee Table", name: "West Elm Streamline Round", image: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=200", status: "pending", commentsList: [] },
+    ]
+  },
+  { 
+    id: 2, 
+    title: "Kitchen Concept", 
+    coverImage: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400", 
+    notes: "Modern minimalist with marble",
+    gallery: [
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800",
+      "https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=800",
+      "https://images.unsplash.com/photo-1556909190-4e67f6e0a9e5?w=800",
+    ],
+    designItems: [
+      { id: 1, type: "Countertop", name: "Calacatta Gold Marble", image: "https://images.unsplash.com/photo-1618221118493-9cfa1a1c00da?w=200", status: "approved", commentsList: [] },
+      { id: 2, type: "Faucet", name: "Kohler Purist in Brushed Nickel", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200", status: "pending", commentsList: [] },
+    ]
+  },
+  { 
+    id: 3, 
+    title: "Bedroom Vision", 
+    coverImage: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400", 
+    notes: "Serene and organic textures",
+    gallery: [
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800",
+      "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800",
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800",
+    ],
+    designItems: [
+      { id: 1, type: "Bedding", name: "Parachute Linen Duvet - Bone", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=200", status: "pending", commentsList: [] },
+      { id: 2, type: "Nightstand", name: "CB2 Gwyneth Side Table", image: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?w=200", status: "pending", commentsList: [] },
+    ]
+  },
 ];
 
 const initialRenderings = [
@@ -126,9 +172,16 @@ const ClientDashboard = () => {
   const [newMessage, setNewMessage] = useState("");
   const [allMessages, setAllMessages] = useState(chatMessages);
   const [renderings, setRenderings] = useState(initialRenderings);
+  const [inspirations, setInspirations] = useState(initialInspirations);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [showItemCommentsModal, setShowItemCommentsModal] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const [newItemComment, setNewItemComment] = useState("");
   const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
+  const [selectedBoardId, setSelectedBoardId] = useState<number | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   // Check if logged in
   useEffect(() => {
@@ -200,6 +253,103 @@ const ClientDashboard = () => {
   };
 
   const getSelectedRendering = () => renderings.find(r => r.id === selectedRenderingId);
+  const getSelectedBoard = () => inspirations.find(b => b.id === selectedBoardId);
+  const getSelectedItem = () => {
+    const board = inspirations.find(b => b.id === selectedBoardId);
+    return board?.designItems.find(item => item.id === selectedItemId);
+  };
+
+  const handleOpenGallery = (boardId: number) => {
+    setSelectedBoardId(boardId);
+    setGalleryIndex(0);
+    setShowGalleryModal(true);
+  };
+
+  const handleNextImage = () => {
+    const board = getSelectedBoard();
+    if (board && galleryIndex < board.gallery.length - 1) {
+      setGalleryIndex(galleryIndex + 1);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (galleryIndex > 0) {
+      setGalleryIndex(galleryIndex - 1);
+    }
+  };
+
+  const handleViewItemComments = (boardId: number, itemId: number) => {
+    setSelectedBoardId(boardId);
+    setSelectedItemId(itemId);
+    setNewItemComment("");
+    setShowItemCommentsModal(true);
+  };
+
+  const handleAddItemComment = () => {
+    if (!newItemComment.trim()) return;
+    setInspirations(inspirations.map(board => 
+      board.id === selectedBoardId 
+        ? {
+            ...board,
+            designItems: board.designItems.map(item =>
+              item.id === selectedItemId
+                ? {
+                    ...item,
+                    commentsList: [...item.commentsList, {
+                      id: item.commentsList.length + 1,
+                      sender: "client",
+                      text: newItemComment,
+                      time: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    }]
+                  }
+                : item
+            )
+          }
+        : board
+    ));
+    setNewItemComment("");
+    toast.success("Comment added");
+  };
+
+  const handleApproveItem = (boardId: number, itemId: number) => {
+    setInspirations(inspirations.map(board => 
+      board.id === boardId 
+        ? {
+            ...board,
+            designItems: board.designItems.map(item =>
+              item.id === itemId
+                ? { ...item, status: "approved" }
+                : item
+            )
+          }
+        : board
+    ));
+    toast.success("Item approved!");
+  };
+
+  const handleUndoItemApproval = (boardId: number, itemId: number) => {
+    setInspirations(inspirations.map(board => 
+      board.id === boardId 
+        ? {
+            ...board,
+            designItems: board.designItems.map(item =>
+              item.id === itemId
+                ? { ...item, status: "pending" }
+                : item
+            )
+          }
+        : board
+    ));
+    toast.success("Approval undone");
+  };
+
+  const getItemStatusColor = (status: string) => {
+    switch (status) {
+      case "approved": return "bg-green-500/10 text-green-600";
+      case "pending": return "bg-gold/10 text-gold";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
 
   const navItems = [
     { id: "overview", label: "Overview", icon: Home },
@@ -341,18 +491,6 @@ const ClientDashboard = () => {
                   </span>
                 </div>
 
-                <div className="mb-6">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium text-foreground">{projectData.progress}%</span>
-                  </div>
-                  <div className="h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gold rounded-full transition-all duration-500"
-                      style={{ width: `${projectData.progress}%` }}
-                    />
-                  </div>
-                </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <div>
@@ -523,19 +661,59 @@ const ClientDashboard = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {inspirations.map((board) => (
-                  <div key={board.id} className="bg-card rounded-lg overflow-hidden shadow-soft group">
-                    <div className="aspect-video relative overflow-hidden">
+                  <div key={board.id} className="bg-card rounded-lg overflow-hidden shadow-soft">
+                    <div 
+                      className="aspect-video relative overflow-hidden cursor-pointer group"
+                      onClick={() => handleOpenGallery(board.id)}
+                    >
                       <img
-                        src={board.image}
+                        src={board.coverImage}
                         alt={board.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-white font-medium text-sm bg-black/30 px-3 py-1 rounded-full">
+                          View Gallery ({board.gallery.length} images)
+                        </span>
+                      </div>
                     </div>
                     <div className="p-4">
                       <h3 className="font-display text-lg font-semibold text-foreground mb-1">
                         {board.title}
                       </h3>
-                      <p className="text-sm text-muted-foreground">{board.notes}</p>
+                      <p className="text-sm text-muted-foreground mb-4">{board.notes}</p>
+                      
+                      {/* Design Items Section */}
+                      {board.designItems.length > 0 && (
+                        <div className="border-t border-border pt-4">
+                          <h4 className="text-sm font-medium text-foreground mb-3">Selections & Materials</h4>
+                          <div className="space-y-3">
+                            {board.designItems.map((item) => (
+                              <div key={item.id} className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
+                                <img src={item.image} alt={item.name} className="w-12 h-12 rounded object-cover" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs text-muted-foreground">{item.type}</p>
+                                  <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  {item.status === "approved" ? (
+                                    <Button size="sm" variant="ghost" onClick={() => handleUndoItemApproval(board.id, item.id)} className="text-xs h-7">
+                                      <CheckCircle className="w-3 h-3 mr-1 text-green-600" /> Undo
+                                    </Button>
+                                  ) : (
+                                    <Button size="sm" variant="outline" onClick={() => handleApproveItem(board.id, item.id)} className="text-xs h-7">
+                                      <ThumbsUp className="w-3 h-3 mr-1" /> Approve
+                                    </Button>
+                                  )}
+                                  <Button size="sm" variant="ghost" onClick={() => handleViewItemComments(board.id, item.id)} className="text-xs h-7">
+                                    <MessageSquare className="w-3 h-3 mr-1" /> Comment
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -823,6 +1001,77 @@ const ClientDashboard = () => {
             <Button variant="gold" onClick={handleAddComment}>
               <Send className="w-4 h-4" />
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Gallery Modal */}
+      <Dialog open={showGalleryModal} onOpenChange={setShowGalleryModal}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{getSelectedBoard()?.title} - Gallery</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            {getSelectedBoard() && (
+              <>
+                <img
+                  src={getSelectedBoard()?.gallery[galleryIndex]}
+                  alt={`Gallery image ${galleryIndex + 1}`}
+                  className="w-full h-[400px] object-cover rounded-lg"
+                />
+                <div className="absolute inset-y-0 left-0 flex items-center">
+                  <Button variant="ghost" size="icon" onClick={handlePrevImage} disabled={galleryIndex === 0} className="bg-background/80 hover:bg-background ml-2">
+                    <ChevronLeft className="w-6 h-6" />
+                  </Button>
+                </div>
+                <div className="absolute inset-y-0 right-0 flex items-center">
+                  <Button variant="ghost" size="icon" onClick={handleNextImage} disabled={galleryIndex === (getSelectedBoard()?.gallery.length || 1) - 1} className="bg-background/80 hover:bg-background mr-2">
+                    <ChevronRight className="w-6 h-6" />
+                  </Button>
+                </div>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 px-3 py-1 rounded-full text-sm">
+                  {galleryIndex + 1} / {getSelectedBoard()?.gallery.length}
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Item Comments Modal */}
+      <Dialog open={showItemCommentsModal} onOpenChange={setShowItemCommentsModal}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {getSelectedItem() && (
+                <>
+                  <img src={getSelectedItem()?.image} alt={getSelectedItem()?.name} className="w-12 h-12 rounded object-cover" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">{getSelectedItem()?.type}</p>
+                    <p className="font-medium">{getSelectedItem()?.name}</p>
+                  </div>
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-4 py-4 max-h-[300px]">
+            {getSelectedItem()?.commentsList.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No comments yet on this item.</p>
+            ) : (
+              getSelectedItem()?.commentsList.map((comment: any) => (
+                <div key={comment.id} className={`p-3 rounded-lg ${comment.sender === "client" ? "bg-gold/10 ml-8" : "bg-muted mr-8"}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-foreground">{comment.sender === "client" ? "You" : comment.name || "Designer"}</span>
+                    <span className="text-xs text-muted-foreground">{comment.time}</span>
+                  </div>
+                  <p className="text-sm text-foreground">{comment.text}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex gap-2 pt-4 border-t border-border">
+            <Input value={newItemComment} onChange={(e) => setNewItemComment(e.target.value)} placeholder="Add a comment..." className="flex-1" onKeyDown={(e) => e.key === "Enter" && handleAddItemComment()} />
+            <Button variant="gold" onClick={handleAddItemComment}><Send className="w-4 h-4" /></Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -19,6 +19,10 @@ import {
   Edit,
   MoreHorizontal,
   Trash2,
+  PauseCircle,
+  ChevronLeft,
+  ChevronRight,
+  ThumbsUp,
 } from "lucide-react";
 import {
   Dialog,
@@ -34,14 +38,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Mock client data
 const clientsData: Record<number, any> = {
-  1: { id: 1, name: "John Smith", email: "john@example.com", phone: "+1 555-0101", project: "Modern Penthouse Renovation", status: "In Progress", progress: 65, address: "123 Park Avenue, NYC" },
-  2: { id: 2, name: "Sarah Johnson", email: "sarah@example.com", phone: "+1 555-0102", project: "Coastal Beach House", status: "In Progress", progress: 40, address: "456 Ocean Drive, Miami" },
-  3: { id: 3, name: "Michael Chen", email: "michael@example.com", phone: "+1 555-0103", project: "Minimalist Loft", status: "Completed", progress: 100, address: "789 Design St, LA" },
-  4: { id: 4, name: "Emily Davis", email: "emily@example.com", phone: "+1 555-0104", project: "Urban Studio Apartment", status: "Planning", progress: 15, address: "321 Metro Blvd, Chicago" },
-  5: { id: 5, name: "Robert Wilson", email: "robert@example.com", phone: "+1 555-0105", project: "Classic Colonial Refresh", status: "On Hold", progress: 30, address: "654 Heritage Lane, Boston" },
+  1: { id: 1, name: "John Smith", email: "john@example.com", phone: "+1 555-0101", project: "Modern Penthouse Renovation", status: "In Progress", address: "123 Park Avenue, NYC" },
+  2: { id: 2, name: "Sarah Johnson", email: "sarah@example.com", phone: "+1 555-0102", project: "Coastal Beach House", status: "In Progress", address: "456 Ocean Drive, Miami" },
+  3: { id: 3, name: "Michael Chen", email: "michael@example.com", phone: "+1 555-0103", project: "Minimalist Loft", status: "Completed", address: "789 Design St, LA" },
+  4: { id: 4, name: "Emily Davis", email: "emily@example.com", phone: "+1 555-0104", project: "Urban Studio Apartment", status: "In Progress", address: "321 Metro Blvd, Chicago" },
+  5: { id: 5, name: "Robert Wilson", email: "robert@example.com", phone: "+1 555-0105", project: "Classic Colonial Refresh", status: "On Hold", address: "654 Heritage Lane, Boston" },
 };
 
 const mockDocuments = [
@@ -51,9 +62,53 @@ const mockDocuments = [
 ];
 
 const mockInspirations = [
-  { id: 1, title: "Living Room Mood", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", notes: "Warm neutrals with brass accents" },
-  { id: 2, title: "Kitchen Concept", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400", notes: "Modern minimalist with marble" },
-  { id: 3, title: "Bedroom Vision", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400", notes: "Serene and organic textures" },
+  { 
+    id: 1, 
+    title: "Living Room Mood", 
+    coverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", 
+    notes: "Warm neutrals with brass accents",
+    gallery: [
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800",
+      "https://images.unsplash.com/photo-1567016432779-094069958ea5?w=800",
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800",
+    ],
+    designItems: [
+      { id: 1, type: "Paint Color", name: "Benjamin Moore - Simply White", image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200", status: "approved", commentsList: [] },
+      { id: 2, type: "Sofa", name: "Article Sven Charme Tan", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200", status: "pending", commentsList: [] },
+      { id: 3, type: "Coffee Table", name: "West Elm Streamline Round", image: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=200", status: "pending", commentsList: [] },
+    ]
+  },
+  { 
+    id: 2, 
+    title: "Kitchen Concept", 
+    coverImage: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400", 
+    notes: "Modern minimalist with marble",
+    gallery: [
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800",
+      "https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=800",
+      "https://images.unsplash.com/photo-1556909190-4e67f6e0a9e5?w=800",
+    ],
+    designItems: [
+      { id: 1, type: "Countertop", name: "Calacatta Gold Marble", image: "https://images.unsplash.com/photo-1618221118493-9cfa1a1c00da?w=200", status: "approved", commentsList: [] },
+      { id: 2, type: "Faucet", name: "Kohler Purist in Brushed Nickel", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200", status: "pending", commentsList: [] },
+    ]
+  },
+  { 
+    id: 3, 
+    title: "Bedroom Vision", 
+    coverImage: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400", 
+    notes: "Serene and organic textures",
+    gallery: [
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800",
+      "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800",
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800",
+    ],
+    designItems: [
+      { id: 1, type: "Bedding", name: "Parachute Linen Duvet - Bone", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=200", status: "pending", commentsList: [] },
+      { id: 2, type: "Nightstand", name: "CB2 Gwyneth Side Table", image: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?w=200", status: "pending", commentsList: [] },
+    ]
+  },
 ];
 
 const mockRenderings = [
@@ -100,8 +155,9 @@ const mockMessages = [
 const AdminClientDetail = () => {
   const navigate = useNavigate();
   const { clientId } = useParams();
-  const client = clientsData[Number(clientId)] || clientsData[1];
+  const clientData = clientsData[Number(clientId)] || clientsData[1];
   
+  const [client, setClient] = useState(clientData);
   const [activeTab, setActiveTab] = useState("overview");
   const [documents, setDocuments] = useState(mockDocuments);
   const [inspirations, setInspirations] = useState(mockInspirations);
@@ -113,14 +169,93 @@ const AdminClientDetail = () => {
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
   const [showAddRenderingModal, setShowAddRenderingModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [showItemCommentsModal, setShowItemCommentsModal] = useState(false);
   const [editingRendering, setEditingRendering] = useState<any>(null);
   const [editingBoard, setEditingBoard] = useState<any>(null);
   const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
+  const [selectedBoardId, setSelectedBoardId] = useState<number | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [newComment, setNewComment] = useState("");
+  const [newItemComment, setNewItemComment] = useState("");
   
   // Form states
   const [newBoard, setNewBoard] = useState({ title: "", image: "", notes: "" });
   const [newRendering, setNewRendering] = useState({ title: "", image: "" });
+
+  const handleStatusChange = (newStatus: string) => {
+    setClient({ ...client, status: newStatus });
+    toast.success(`Project status changed to ${newStatus}`);
+  };
+
+  const handleOpenGallery = (boardId: number) => {
+    setSelectedBoardId(boardId);
+    setGalleryIndex(0);
+    setShowGalleryModal(true);
+  };
+
+  const getSelectedBoard = () => inspirations.find(b => b.id === selectedBoardId);
+
+  const handleNextImage = () => {
+    const board = getSelectedBoard();
+    if (board && galleryIndex < board.gallery.length - 1) {
+      setGalleryIndex(galleryIndex + 1);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (galleryIndex > 0) {
+      setGalleryIndex(galleryIndex - 1);
+    }
+  };
+
+  const handleViewItemComments = (boardId: number, itemId: number) => {
+    setSelectedBoardId(boardId);
+    setSelectedItemId(itemId);
+    setNewItemComment("");
+    setShowItemCommentsModal(true);
+  };
+
+  const handleAddItemComment = () => {
+    if (!newItemComment.trim()) return;
+    setInspirations(inspirations.map(board => 
+      board.id === selectedBoardId 
+        ? {
+            ...board,
+            designItems: board.designItems.map(item =>
+              item.id === selectedItemId
+                ? {
+                    ...item,
+                    commentsList: [...item.commentsList, {
+                      id: item.commentsList.length + 1,
+                      sender: "admin",
+                      name: "You",
+                      text: newItemComment,
+                      time: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    }]
+                  }
+                : item
+            )
+          }
+        : board
+    ));
+    setNewItemComment("");
+    toast.success("Comment added");
+  };
+
+  const getSelectedItem = () => {
+    const board = inspirations.find(b => b.id === selectedBoardId);
+    return board?.designItems.find(item => item.id === selectedItemId);
+  };
+
+  const getItemStatusColor = (status: string) => {
+    switch (status) {
+      case "approved": return "bg-green-500/10 text-green-600";
+      case "pending": return "bg-gold/10 text-gold";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
 
   const tabs = [
     { id: "overview", label: "Overview", icon: FileText },
@@ -192,7 +327,7 @@ const AdminClientDetail = () => {
   // Inspiration board handlers
   const handleEditBoard = (board: any) => {
     setEditingBoard(board);
-    setNewBoard({ title: board.title, image: board.image, notes: board.notes });
+    setNewBoard({ title: board.title, image: board.coverImage, notes: board.notes });
     setShowAddBoardModal(true);
   };
 
@@ -205,7 +340,7 @@ const AdminClientDetail = () => {
     if (editingBoard) {
       setInspirations(inspirations.map(b => 
         b.id === editingBoard.id 
-          ? { ...b, title: newBoard.title, image: newBoard.image, notes: newBoard.notes }
+          ? { ...b, title: newBoard.title, coverImage: newBoard.image, notes: newBoard.notes }
           : b
       ));
       toast.success("Inspiration board updated");
@@ -214,8 +349,10 @@ const AdminClientDetail = () => {
       setInspirations([...inspirations, {
         id: newId,
         title: newBoard.title,
-        image: newBoard.image,
-        notes: newBoard.notes
+        coverImage: newBoard.image,
+        notes: newBoard.notes,
+        gallery: [newBoard.image],
+        designItems: []
       }]);
       toast.success("Inspiration board added");
     }
@@ -358,18 +495,36 @@ const AdminClientDetail = () => {
 
               <div className="bg-card rounded-lg p-6 shadow-soft">
                 <h2 className="font-display text-xl font-semibold text-foreground mb-4">
-                  Project Progress
+                  Project Status
                 </h2>
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Overall Progress</span>
-                    <span className="font-medium text-foreground">{client.progress}%</span>
-                  </div>
-                  <div className="h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gold rounded-full transition-all"
-                      style={{ width: `${client.progress}%` }}
-                    />
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="project-status" className="text-sm text-muted-foreground">Current Status</Label>
+                    <Select value={client.status} onValueChange={handleStatusChange}>
+                      <SelectTrigger className="w-full mt-1">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="In Progress">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-gold" />
+                            In Progress
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Completed">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            Completed
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="On Hold">
+                          <div className="flex items-center gap-2">
+                            <PauseCircle className="w-4 h-4 text-muted-foreground" />
+                            On Hold
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -460,29 +615,68 @@ const AdminClientDetail = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {inspirations.map((board) => (
-                <div key={board.id} className="bg-card rounded-lg overflow-hidden shadow-soft group">
-                  <div className="aspect-video relative overflow-hidden">
+                <div key={board.id} className="bg-card rounded-lg overflow-hidden shadow-soft">
+                  {/* Clickable Gallery Cover */}
+                  <div 
+                    className="aspect-video relative overflow-hidden cursor-pointer group"
+                    onClick={() => handleOpenGallery(board.id)}
+                  >
                     <img
-                      src={board.image}
+                      src={board.coverImage}
                       alt={board.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4 gap-2">
-                      <Button size="sm" variant="secondary" onClick={() => handleEditBoard(board)}>
-                        <Edit className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDeleteBoard(board.id)}>
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
-                      </Button>
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-white font-medium text-sm bg-black/30 px-3 py-1 rounded-full">
+                        View Gallery ({board.gallery.length} images)
+                      </span>
                     </div>
                   </div>
                   <div className="p-4">
-                    <h3 className="font-display text-lg font-semibold text-foreground mb-1">
-                      {board.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{board.notes}</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-display text-lg font-semibold text-foreground">
+                        {board.title}
+                      </h3>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => handleEditBoard(board)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleDeleteBoard(board.id)}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">{board.notes}</p>
+                    
+                    {/* Design Items Section */}
+                    {board.designItems.length > 0 && (
+                      <div className="border-t border-border pt-4 mt-4">
+                        <h4 className="text-sm font-medium text-foreground mb-3">Selections & Materials</h4>
+                        <div className="space-y-3">
+                          {board.designItems.map((item) => (
+                            <div key={item.id} className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
+                              <img src={item.image} alt={item.name} className="w-12 h-12 rounded object-cover" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-muted-foreground">{item.type}</p>
+                                <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getItemStatusColor(item.status)}`}>
+                                  {item.status === "approved" ? "Approved" : "Pending"}
+                                </span>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => handleViewItemComments(board.id, item.id)}
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -819,6 +1013,119 @@ const AdminClientDetail = () => {
               onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
             />
             <Button variant="gold" onClick={handleAddComment}>
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Gallery Modal */}
+      <Dialog open={showGalleryModal} onOpenChange={setShowGalleryModal}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{getSelectedBoard()?.title} - Gallery</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            {getSelectedBoard() && (
+              <>
+                <img
+                  src={getSelectedBoard()?.gallery[galleryIndex]}
+                  alt={`Gallery image ${galleryIndex + 1}`}
+                  className="w-full h-[400px] object-cover rounded-lg"
+                />
+                <div className="absolute inset-y-0 left-0 flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handlePrevImage}
+                    disabled={galleryIndex === 0}
+                    className="bg-background/80 hover:bg-background ml-2"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </Button>
+                </div>
+                <div className="absolute inset-y-0 right-0 flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleNextImage}
+                    disabled={galleryIndex === (getSelectedBoard()?.gallery.length || 1) - 1}
+                    className="bg-background/80 hover:bg-background mr-2"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </Button>
+                </div>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 px-3 py-1 rounded-full text-sm">
+                  {galleryIndex + 1} / {getSelectedBoard()?.gallery.length}
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto py-2">
+            {getSelectedBoard()?.gallery.map((img, idx) => (
+              <button
+                key={idx}
+                onClick={() => setGalleryIndex(idx)}
+                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                  idx === galleryIndex ? "border-gold" : "border-transparent"
+                }`}
+              >
+                <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Item Comments Modal */}
+      <Dialog open={showItemCommentsModal} onOpenChange={setShowItemCommentsModal}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {getSelectedItem() && (
+                <>
+                  <img src={getSelectedItem()?.image} alt={getSelectedItem()?.name} className="w-12 h-12 rounded object-cover" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">{getSelectedItem()?.type}</p>
+                    <p className="font-medium">{getSelectedItem()?.name}</p>
+                  </div>
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-4 py-4 max-h-[300px]">
+            {getSelectedItem()?.commentsList.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No comments yet on this item.</p>
+            ) : (
+              getSelectedItem()?.commentsList.map((comment: any) => (
+                <div 
+                  key={comment.id} 
+                  className={`p-3 rounded-lg ${
+                    comment.sender === "admin" 
+                      ? "bg-gold/10 ml-8" 
+                      : "bg-muted mr-8"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-foreground">
+                      {comment.sender === "admin" ? "You" : comment.name || "Client"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{comment.time}</span>
+                  </div>
+                  <p className="text-sm text-foreground">{comment.text}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex gap-2 pt-4 border-t border-border">
+            <Input
+              value={newItemComment}
+              onChange={(e) => setNewItemComment(e.target.value)}
+              placeholder="Add a comment about this item..."
+              className="flex-1"
+              onKeyDown={(e) => e.key === "Enter" && handleAddItemComment()}
+            />
+            <Button variant="gold" onClick={handleAddItemComment}>
               <Send className="w-4 h-4" />
             </Button>
           </div>
