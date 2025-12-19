@@ -86,7 +86,7 @@ const AdminLogin = () => {
 
         <div className="mt-6 text-center">
           <Link to="/login" className="text-sm text-primary-foreground/70 hover:text-gold transition-colors">
-            ← Back to Client Login
+            ← Back to Client Portal
           </Link>
         </div>
       </div>
