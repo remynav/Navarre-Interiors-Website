@@ -80,7 +80,7 @@ const AdminClientDetail = () => {
   const [renderings, setRenderings] = useSharedRenderings();
   const [messages, setMessages] = useState(mockMessages);
   const [newMessage, setNewMessage] = useState("");
-  const [docTab, setDocTab] = useState<"sent" | "drafts" | "archive">("sent");
+  const [docTab, setDocTab] = useState<"sent" | "draft" | "archived">("sent");
   
   // Modal states
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
@@ -639,17 +639,17 @@ const AdminClientDetail = () => {
                 Sent ({documents.filter(d => d.status === "sent").length})
               </button>
               <button
-                onClick={() => setDocTab("drafts")}
+                onClick={() => setDocTab("draft")}
                 className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  docTab === "drafts" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+                  docTab === "draft" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Drafts ({documents.filter(d => d.status === "draft").length})
               </button>
               <button
-                onClick={() => setDocTab("archive")}
+                onClick={() => setDocTab("archived")}
                 className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  docTab === "archive" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+                  docTab === "archived" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Archive ({documents.filter(d => d.status === "archived").length})
@@ -662,10 +662,10 @@ const AdminClientDetail = () => {
                   <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                   <p className="text-muted-foreground">
                     {docTab === "sent" && "No documents sent to client yet"}
-                    {docTab === "drafts" && "No draft documents"}
-                    {docTab === "archive" && "No archived documents"}
+                    {docTab === "draft" && "No draft documents"}
+                    {docTab === "archived" && "No archived documents"}
                   </p>
-                  {docTab === "drafts" && (
+                  {docTab === "draft" && (
                     <Button variant="outline" className="mt-4" onClick={() => { setUploadAsDraft(true); setShowUploadDocModal(true); }}>
                       Upload Draft
                     </Button>
