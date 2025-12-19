@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   FileText,
@@ -15,11 +16,17 @@ import {
   Send,
   Plus,
   X,
-  ThumbsUp,
-  ThumbsDown,
+  Edit,
   MoreHorizontal,
   Trash2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -50,9 +57,9 @@ const mockInspirations = [
 ];
 
 const mockRenderings = [
-  { id: 1, title: "Living Room - Option A", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", status: "approved", comments: 3 },
-  { id: 2, title: "Kitchen Rendering", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", status: "pending", comments: 1 },
-  { id: 3, title: "Master Bedroom", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", status: "revision", comments: 5 },
+  { id: 1, title: "Living Room - Option A", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", status: "sent", comments: 3 },
+  { id: 2, title: "Kitchen Rendering", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", status: "draft", comments: 0 },
+  { id: 3, title: "Master Bedroom", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", status: "completed", comments: 5 },
 ];
 
 const mockMessages = [
@@ -73,6 +80,16 @@ const AdminClientDetail = () => {
   const [renderings, setRenderings] = useState(mockRenderings);
   const [messages, setMessages] = useState(mockMessages);
   const [newMessage, setNewMessage] = useState("");
+  
+  // Modal states
+  const [showAddBoardModal, setShowAddBoardModal] = useState(false);
+  const [showAddRenderingModal, setShowAddRenderingModal] = useState(false);
+  const [editingRendering, setEditingRendering] = useState<any>(null);
+  const [editingBoard, setEditingBoard] = useState<any>(null);
+  
+  // Form states
+  const [newBoard, setNewBoard] = useState({ title: "", image: "", notes: "" });
+  const [newRendering, setNewRendering] = useState({ title: "", image: "" });
 
   const tabs = [
     { id: "overview", label: "Overview", icon: FileText },
@@ -94,17 +111,114 @@ const AdminClientDetail = () => {
     toast.success("Message sent");
   };
 
-  const handleApproveRendering = (id: number, status: "approved" | "revision") => {
-    setRenderings(renderings.map(r => r.id === id ? { ...r, status } : r));
-    toast.success(status === "approved" ? "Rendering approved" : "Revision requested");
+  // Rendering workflow handlers
+  const handleSendRendering = (id: number) => {
+    setRenderings(renderings.map(r => r.id === id ? { ...r, status: "sent" } : r));
+    toast.success("Rendering sent to client");
+  };
+
+  const handleMarkComplete = (id: number) => {
+    setRenderings(renderings.map(r => r.id === id ? { ...r, status: "completed" } : r));
+    toast.success("Rendering marked as complete");
+  };
+
+  const handleEditRendering = (rendering: any) => {
+    setEditingRendering(rendering);
+    setNewRendering({ title: rendering.title, image: rendering.image });
+    setShowAddRenderingModal(true);
+  };
+
+  const handleSaveRendering = () => {
+    if (!newRendering.title.trim() || !newRendering.image.trim()) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    
+    if (editingRendering) {
+      setRenderings(renderings.map(r => 
+        r.id === editingRendering.id 
+          ? { ...r, title: newRendering.title, image: newRendering.image }
+          : r
+      ));
+      toast.success("Rendering updated");
+    } else {
+      const newId = Math.max(...renderings.map(r => r.id)) + 1;
+      setRenderings([...renderings, {
+        id: newId,
+        title: newRendering.title,
+        image: newRendering.image,
+        status: "draft",
+        comments: 0
+      }]);
+      toast.success("Rendering added as draft");
+    }
+    
+    setShowAddRenderingModal(false);
+    setEditingRendering(null);
+    setNewRendering({ title: "", image: "" });
+  };
+
+  // Inspiration board handlers
+  const handleEditBoard = (board: any) => {
+    setEditingBoard(board);
+    setNewBoard({ title: board.title, image: board.image, notes: board.notes });
+    setShowAddBoardModal(true);
+  };
+
+  const handleSaveBoard = () => {
+    if (!newBoard.title.trim() || !newBoard.image.trim()) {
+      toast.error("Please fill in title and image URL");
+      return;
+    }
+    
+    if (editingBoard) {
+      setInspirations(inspirations.map(b => 
+        b.id === editingBoard.id 
+          ? { ...b, title: newBoard.title, image: newBoard.image, notes: newBoard.notes }
+          : b
+      ));
+      toast.success("Inspiration board updated");
+    } else {
+      const newId = Math.max(...inspirations.map(b => b.id)) + 1;
+      setInspirations([...inspirations, {
+        id: newId,
+        title: newBoard.title,
+        image: newBoard.image,
+        notes: newBoard.notes
+      }]);
+      toast.success("Inspiration board added");
+    }
+    
+    setShowAddBoardModal(false);
+    setEditingBoard(null);
+    setNewBoard({ title: "", image: "", notes: "" });
+  };
+
+  const handleDeleteBoard = (id: number) => {
+    setInspirations(inspirations.filter(b => b.id !== id));
+    toast.success("Inspiration board deleted");
+  };
+
+  const handleDeleteRendering = (id: number) => {
+    setRenderings(renderings.filter(r => r.id !== id));
+    toast.success("Rendering deleted");
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "approved": return "bg-green-500/10 text-green-600";
-      case "pending": return "bg-gold/10 text-gold";
-      case "revision": return "bg-orange-500/10 text-orange-600";
+      case "completed": return "bg-green-500/10 text-green-600";
+      case "sent": return "bg-gold/10 text-gold";
+      case "draft": return "bg-muted text-muted-foreground";
       default: return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "completed": return "Completed";
+      case "sent": return "Sent to Client";
+      case "draft": return "Draft";
+      default: return status;
     }
   };
 
@@ -280,7 +394,7 @@ const AdminClientDetail = () => {
           <div className="space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-semibold text-foreground">Inspiration Boards</h2>
-              <Button variant="gold">
+              <Button variant="gold" onClick={() => { setEditingBoard(null); setNewBoard({ title: "", image: "", notes: "" }); setShowAddBoardModal(true); }}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Board
               </Button>
@@ -294,7 +408,16 @@ const AdminClientDetail = () => {
                       alt={board.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4 gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => handleEditBoard(board)}>
+                        <Edit className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDeleteBoard(board.id)}>
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                   <div className="p-4">
                     <h3 className="font-display text-lg font-semibold text-foreground mb-1">
@@ -305,7 +428,10 @@ const AdminClientDetail = () => {
                 </div>
               ))}
               {/* Add new board card */}
-              <div className="bg-card rounded-lg border-2 border-dashed border-border flex items-center justify-center min-h-[250px] cursor-pointer hover:border-gold/50 transition-colors">
+              <div 
+                className="bg-card rounded-lg border-2 border-dashed border-border flex items-center justify-center min-h-[250px] cursor-pointer hover:border-gold/50 transition-colors"
+                onClick={() => { setEditingBoard(null); setNewBoard({ title: "", image: "", notes: "" }); setShowAddBoardModal(true); }}
+              >
                 <div className="text-center">
                   <Plus className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
                   <p className="text-muted-foreground">Add New Board</p>
@@ -319,10 +445,10 @@ const AdminClientDetail = () => {
         {activeTab === "renderings" && (
           <div className="space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-2xl font-semibold text-foreground">Renderings for Approval</h2>
-              <Button variant="gold">
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Rendering
+              <h2 className="font-display text-2xl font-semibold text-foreground">Renderings</h2>
+              <Button variant="gold" onClick={() => { setEditingRendering(null); setNewRendering({ title: "", image: "" }); setShowAddRenderingModal(true); }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Rendering
               </Button>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -335,7 +461,7 @@ const AdminClientDetail = () => {
                       className="w-full h-full object-cover"
                     />
                     <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(rendering.status)}`}>
-                      {rendering.status === "approved" ? "Approved" : rendering.status === "pending" ? "Pending Approval" : "Needs Revision"}
+                      {getStatusLabel(rendering.status)}
                     </span>
                   </div>
                   <div className="p-4">
@@ -343,31 +469,87 @@ const AdminClientDetail = () => {
                       <h3 className="font-display text-lg font-semibold text-foreground">
                         {rendering.title}
                       </h3>
-                      <span className="text-sm text-muted-foreground">{rendering.comments} comments</span>
+                      {rendering.status !== "draft" && (
+                        <span className="text-sm text-muted-foreground">{rendering.comments} comments</span>
+                      )}
                     </div>
                     <div className="flex gap-2">
+                      {rendering.status === "draft" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleEditRendering(rendering)}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="gold"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleSendRendering(rendering.id)}
+                          >
+                            <Send className="w-4 h-4 mr-2" />
+                            Send
+                          </Button>
+                        </>
+                      )}
+                      {rendering.status === "sent" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleEditRendering(rendering)}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="gold"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleMarkComplete(rendering.id)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Mark Complete
+                          </Button>
+                        </>
+                      )}
+                      {rendering.status === "completed" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          disabled
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Completed
+                        </Button>
+                      )}
                       <Button
-                        variant={rendering.status === "approved" ? "gold" : "gold-outline"}
+                        variant="ghost"
                         size="sm"
-                        className="flex-1"
-                        onClick={() => handleApproveRendering(rendering.id, "approved")}
+                        onClick={() => handleDeleteRendering(rendering.id)}
                       >
-                        <ThumbsUp className="w-4 h-4 mr-2" />
-                        Approve
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => handleApproveRendering(rendering.id, "revision")}
-                      >
-                        <ThumbsDown className="w-4 h-4 mr-2" />
-                        Request Revision
+                        <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>
                   </div>
                 </div>
               ))}
+              {/* Add new rendering card */}
+              <div 
+                className="bg-card rounded-lg border-2 border-dashed border-border flex items-center justify-center min-h-[300px] cursor-pointer hover:border-gold/50 transition-colors"
+                onClick={() => { setEditingRendering(null); setNewRendering({ title: "", image: "" }); setShowAddRenderingModal(true); }}
+              >
+                <div className="text-center">
+                  <Plus className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-muted-foreground">Add New Rendering</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -422,6 +604,108 @@ const AdminClientDetail = () => {
           </div>
         )}
       </main>
+
+      {/* Add/Edit Inspiration Board Modal */}
+      <Dialog open={showAddBoardModal} onOpenChange={setShowAddBoardModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {editingBoard ? "Edit Inspiration Board" : "Add Inspiration Board"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="board-title">Title</Label>
+              <Input
+                id="board-title"
+                placeholder="e.g., Living Room Mood"
+                value={newBoard.title}
+                onChange={(e) => setNewBoard({ ...newBoard, title: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="board-image">Image URL</Label>
+              <Input
+                id="board-image"
+                placeholder="https://..."
+                value={newBoard.image}
+                onChange={(e) => setNewBoard({ ...newBoard, image: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="board-notes">Notes</Label>
+              <Textarea
+                id="board-notes"
+                placeholder="Describe the mood and style..."
+                value={newBoard.notes}
+                onChange={(e) => setNewBoard({ ...newBoard, notes: e.target.value })}
+              />
+            </div>
+            {newBoard.image && (
+              <div className="rounded-lg overflow-hidden border border-border">
+                <img src={newBoard.image} alt="Preview" className="w-full h-32 object-cover" />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddBoardModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="gold" onClick={handleSaveBoard}>
+              {editingBoard ? "Save Changes" : "Add Board"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add/Edit Rendering Modal */}
+      <Dialog open={showAddRenderingModal} onOpenChange={setShowAddRenderingModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {editingRendering ? "Edit Rendering" : "Add Rendering"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="rendering-title">Title</Label>
+              <Input
+                id="rendering-title"
+                placeholder="e.g., Living Room - Option A"
+                value={newRendering.title}
+                onChange={(e) => setNewRendering({ ...newRendering, title: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rendering-image">Image URL</Label>
+              <Input
+                id="rendering-image"
+                placeholder="https://..."
+                value={newRendering.image}
+                onChange={(e) => setNewRendering({ ...newRendering, image: e.target.value })}
+              />
+            </div>
+            {newRendering.image && (
+              <div className="rounded-lg overflow-hidden border border-border">
+                <img src={newRendering.image} alt="Preview" className="w-full h-40 object-cover" />
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground">
+              {editingRendering 
+                ? "Update the rendering details and save." 
+                : "New renderings will be saved as drafts. You can send them to the client when ready."}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddRenderingModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="gold" onClick={handleSaveRendering}>
+              {editingRendering ? "Save Changes" : "Add as Draft"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
