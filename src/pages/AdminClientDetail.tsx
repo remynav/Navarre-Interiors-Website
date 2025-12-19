@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/select";
 import { useSharedInspirations, useSharedRenderings } from "@/hooks/useSharedDesignState";
 import { ImageUpload } from "@/components/ImageUpload";
+import { FileUpload } from "@/components/FileUpload";
 
 // Mock client data
 const clientsData: Record<number, any> = {
@@ -89,6 +90,11 @@ const AdminClientDetail = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [showItemCommentsModal, setShowItemCommentsModal] = useState(false);
+  const [showBoardDetailModal, setShowBoardDetailModal] = useState(false);
+  const [showAddGalleryImageModal, setShowAddGalleryImageModal] = useState(false);
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [showItemDetailModal, setShowItemDetailModal] = useState(false);
+  const [showUploadDocModal, setShowUploadDocModal] = useState(false);
   const [editingRendering, setEditingRendering] = useState<any>(null);
   const [editingBoard, setEditingBoard] = useState<any>(null);
   const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
@@ -101,10 +107,101 @@ const AdminClientDetail = () => {
   // Form states
   const [newBoard, setNewBoard] = useState({ title: "", image: "", notes: "" });
   const [newRendering, setNewRendering] = useState({ title: "", image: "" });
+  const [newGalleryImage, setNewGalleryImage] = useState("");
+  const [newItem, setNewItem] = useState({ type: "", name: "", image: "", link: "" });
 
   const handleStatusChange = (newStatus: string) => {
     setClient({ ...client, status: newStatus });
     toast.success(`Project status changed to ${newStatus}`);
+  };
+
+  // Document upload handler
+  const handleDocumentUpload = (file: { name: string; size: string; type: string; data: string }) => {
+    const newDoc = {
+      id: Math.max(...documents.map(d => d.id), 0) + 1,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      data: file.data
+    };
+    setDocuments([...documents, newDoc]);
+    setShowUploadDocModal(false);
+    toast.success("Document uploaded successfully");
+  };
+
+  const handleDeleteDocument = (docId: number) => {
+    setDocuments(documents.filter(d => d.id !== docId));
+    toast.success("Document deleted");
+  };
+
+  // Board detail handlers
+  const handleOpenBoardDetail = (boardId: number) => {
+    setSelectedBoardId(boardId);
+    setGalleryIndex(0);
+    setShowBoardDetailModal(true);
+  };
+
+  const handleAddGalleryImage = () => {
+    if (!newGalleryImage.trim()) return;
+    setInspirations(inspirations.map(board => 
+      board.id === selectedBoardId 
+        ? { ...board, gallery: [...board.gallery, newGalleryImage] }
+        : board
+    ));
+    setNewGalleryImage("");
+    setShowAddGalleryImageModal(false);
+    toast.success("Image added to gallery");
+  };
+
+  const handleDeleteGalleryImage = (imageIndex: number) => {
+    setInspirations(inspirations.map(board => 
+      board.id === selectedBoardId 
+        ? { ...board, gallery: board.gallery.filter((_, idx) => idx !== imageIndex) }
+        : board
+    ));
+    toast.success("Image removed from gallery");
+  };
+
+  const handleAddDesignItem = () => {
+    if (!newItem.type.trim() || !newItem.name.trim() || !newItem.image.trim()) {
+      toast.error("Please fill in type, name, and image");
+      return;
+    }
+    setInspirations(inspirations.map(board => 
+      board.id === selectedBoardId 
+        ? { 
+            ...board, 
+            designItems: [...board.designItems, {
+              id: Math.max(...board.designItems.map(i => i.id), 0) + 1,
+              type: newItem.type,
+              name: newItem.name,
+              image: newItem.image,
+              link: newItem.link,
+              status: "pending",
+              commentsList: []
+            }]
+          }
+        : board
+    ));
+    setNewItem({ type: "", name: "", image: "", link: "" });
+    setShowAddItemModal(false);
+    toast.success("Item added successfully");
+  };
+
+  const handleDeleteDesignItem = (itemId: number) => {
+    setInspirations(inspirations.map(board => 
+      board.id === selectedBoardId 
+        ? { ...board, designItems: board.designItems.filter(i => i.id !== itemId) }
+        : board
+    ));
+    toast.success("Item removed");
+  };
+
+  const handleViewItemDetail = (boardId: number, itemId: number) => {
+    setSelectedBoardId(boardId);
+    setSelectedItemId(itemId);
+    setShowItemDetailModal(true);
   };
 
   const handleOpenGallery = (boardId: number) => {
@@ -486,43 +583,53 @@ const AdminClientDetail = () => {
           <div className="space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-semibold text-foreground">Documents</h2>
-              <Button variant="gold">
+              <Button variant="gold" onClick={() => setShowUploadDocModal(true)}>
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Document
               </Button>
             </div>
             <div className="bg-card rounded-lg shadow-soft overflow-hidden">
-              {documents.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="flex items-center justify-between p-4 border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gold/10 rounded-lg flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-gold" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{doc.name}</p>
-                      <p className="text-sm text-muted-foreground">{doc.size} • {doc.date}</p>
-                    </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Download</DropdownMenuItem>
-                      <DropdownMenuItem>Share with Client</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+              {documents.length === 0 ? (
+                <div className="p-8 text-center">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">No documents yet</p>
+                  <Button variant="outline" className="mt-4" onClick={() => setShowUploadDocModal(true)}>
+                    Upload First Document
+                  </Button>
                 </div>
-              ))}
+              ) : (
+                documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between p-4 border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gold/10 rounded-lg flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-gold" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{doc.name}</p>
+                        <p className="text-sm text-muted-foreground">{doc.size} • {doc.date}</p>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Download</DropdownMenuItem>
+                        <DropdownMenuItem>Share with Client</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteDocument(doc.id)}>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -539,12 +646,9 @@ const AdminClientDetail = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {inspirations.map((board) => (
-                <div key={board.id} className="bg-card rounded-lg overflow-hidden shadow-soft">
+                <div key={board.id} className="bg-card rounded-lg overflow-hidden shadow-soft cursor-pointer hover:shadow-medium transition-shadow" onClick={() => handleOpenBoardDetail(board.id)}>
                   {/* Clickable Gallery Cover */}
-                  <div 
-                    className="aspect-video relative overflow-hidden cursor-pointer group"
-                    onClick={() => handleOpenGallery(board.id)}
-                  >
+                  <div className="aspect-video relative overflow-hidden group">
                     <img
                       src={board.coverImage}
                       alt={board.title}
@@ -552,7 +656,7 @@ const AdminClientDetail = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-white font-medium text-sm bg-black/30 px-3 py-1 rounded-full">
-                        View Gallery ({board.gallery.length} images)
+                        View Details
                       </span>
                     </div>
                   </div>
@@ -561,7 +665,7 @@ const AdminClientDetail = () => {
                       <h3 className="font-display text-lg font-semibold text-foreground">
                         {board.title}
                       </h3>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button size="sm" variant="ghost" onClick={() => handleEditBoard(board)}>
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -570,37 +674,11 @@ const AdminClientDetail = () => {
                         </Button>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-4">{board.notes}</p>
-                    
-                    {/* Design Items Section */}
-                    {board.designItems.length > 0 && (
-                      <div className="border-t border-border pt-4 mt-4">
-                        <h4 className="text-sm font-medium text-foreground mb-3">Selections & Materials</h4>
-                        <div className="space-y-3">
-                          {board.designItems.map((item) => (
-                            <div key={item.id} className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
-                              <img src={item.image} alt={item.name} className="w-12 h-12 rounded object-cover" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs text-muted-foreground">{item.type}</p>
-                                <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getItemStatusColor(item.status)}`}>
-                                  {item.status === "approved" ? "Approved" : "Pending"}
-                                </span>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  onClick={() => handleViewItemComments(board.id, item.id)}
-                                >
-                                  <MessageSquare className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <p className="text-sm text-muted-foreground">{board.notes}</p>
+                    <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                      <span>{board.gallery.length} images</span>
+                      <span>{board.designItems.length} items</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1039,6 +1117,240 @@ const AdminClientDetail = () => {
               <Send className="w-4 h-4" />
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Document Modal */}
+      <Dialog open={showUploadDocModal} onOpenChange={setShowUploadDocModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">Upload Document</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <FileUpload onFileSelect={handleDocumentUpload} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowUploadDocModal(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Board Detail Modal */}
+      <Dialog open={showBoardDetailModal} onOpenChange={setShowBoardDetailModal}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">
+              {getSelectedBoard()?.title}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">{getSelectedBoard()?.notes}</p>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto space-y-6 py-4">
+            {/* Gallery Section */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-foreground">Gallery Images</h3>
+                <Button size="sm" variant="outline" onClick={() => { setNewGalleryImage(""); setShowAddGalleryImageModal(true); }}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Image
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {getSelectedBoard()?.gallery.map((img, idx) => (
+                  <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden">
+                    <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => { setGalleryIndex(idx); setShowGalleryModal(true); }}>
+                        <Image className="w-4 h-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => handleDeleteGalleryImage(idx)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {getSelectedBoard()?.gallery.length === 0 && (
+                  <div className="col-span-full text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
+                    No images yet
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Materials Section */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-foreground">Selections & Materials</h3>
+                <Button size="sm" variant="outline" onClick={() => { setNewItem({ type: "", name: "", image: "", link: "" }); setShowAddItemModal(true); }}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Item
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {getSelectedBoard()?.designItems.map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                    onClick={() => handleViewItemDetail(selectedBoardId!, item.id)}
+                  >
+                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground">{item.type}</p>
+                      <p className="text-sm font-medium text-foreground">{item.name}</p>
+                      {item.link && (
+                        <p className="text-xs text-gold truncate">Has link</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getItemStatusColor(item.status)}`}>
+                        {item.status === "approved" ? "Approved" : "Pending"}
+                      </span>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        className="h-7"
+                        onClick={(e) => { e.stopPropagation(); handleDeleteDesignItem(item.id); }}
+                      >
+                        <Trash2 className="w-3 h-3 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {getSelectedBoard()?.designItems.length === 0 && (
+                  <div className="col-span-full text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
+                    No items yet
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Gallery Image Modal */}
+      <Dialog open={showAddGalleryImageModal} onOpenChange={setShowAddGalleryImageModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">Add Gallery Image</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <ImageUpload
+              value={newGalleryImage}
+              onChange={setNewGalleryImage}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddGalleryImageModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="gold" onClick={handleAddGalleryImage} disabled={!newGalleryImage}>
+              Add Image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Design Item Modal */}
+      <Dialog open={showAddItemModal} onOpenChange={setShowAddItemModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">Add Material / Item</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="item-type">Type</Label>
+              <Input
+                id="item-type"
+                placeholder="e.g., Paint Color, Sofa, Faucet"
+                value={newItem.type}
+                onChange={(e) => setNewItem({ ...newItem, type: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="item-name">Name / Description</Label>
+              <Input
+                id="item-name"
+                placeholder="e.g., Benjamin Moore - Simply White"
+                value={newItem.name}
+                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Item Image</Label>
+              <ImageUpload
+                value={newItem.image}
+                onChange={(url) => setNewItem({ ...newItem, image: url })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="item-link">Product Link (optional)</Label>
+              <Input
+                id="item-link"
+                placeholder="https://..."
+                value={newItem.link}
+                onChange={(e) => setNewItem({ ...newItem, link: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddItemModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="gold" onClick={handleAddDesignItem}>
+              Add Item
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Item Detail Modal */}
+      <Dialog open={showItemDetailModal} onOpenChange={setShowItemDetailModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Item Details</DialogTitle>
+          </DialogHeader>
+          {getSelectedItem() && (
+            <div className="space-y-4 py-4">
+              <div className="aspect-video rounded-lg overflow-hidden">
+                <img src={getSelectedItem()?.image} alt={getSelectedItem()?.name} className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">{getSelectedItem()?.type}</p>
+                <p className="text-lg font-medium text-foreground">{getSelectedItem()?.name}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getItemStatusColor(getSelectedItem()?.status || "pending")}`}>
+                  {getSelectedItem()?.status === "approved" ? "Client Approved" : "Pending Approval"}
+                </span>
+              </div>
+              {getSelectedItem()?.link && (
+                <div>
+                  <Label className="text-sm text-muted-foreground">Product Link</Label>
+                  <a 
+                    href={getSelectedItem()?.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block mt-1 text-gold hover:underline truncate"
+                  >
+                    {getSelectedItem()?.link}
+                  </a>
+                </div>
+              )}
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1" onClick={() => { setShowItemDetailModal(false); handleViewItemComments(selectedBoardId!, selectedItemId!); }}>
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  View Comments
+                </Button>
+                {getSelectedItem()?.link && (
+                  <Button variant="gold" className="flex-1" onClick={() => window.open(getSelectedItem()?.link, '_blank')}>
+                    Open Link
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

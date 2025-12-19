@@ -15,6 +15,7 @@ interface DesignItem {
   name: string;
   image: string;
   status: string;
+  link?: string;
   commentsList: Comment[];
 }
 
@@ -55,9 +56,9 @@ const defaultInspirations: Inspiration[] = [
       "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800",
     ],
     designItems: [
-      { id: 1, type: "Paint Color", name: "Benjamin Moore - Simply White", image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200", status: "approved", commentsList: [] },
-      { id: 2, type: "Sofa", name: "Article Sven Charme Tan", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200", status: "pending", commentsList: [] },
-      { id: 3, type: "Coffee Table", name: "West Elm Streamline Round", image: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=200", status: "pending", commentsList: [] },
+      { id: 1, type: "Paint Color", name: "Benjamin Moore - Simply White", image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200", status: "approved", link: "https://www.benjaminmoore.com/en-us/paint-colors/color/oc-117/simply-white", commentsList: [] },
+      { id: 2, type: "Sofa", name: "Article Sven Charme Tan", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200", status: "pending", link: "https://www.article.com/product/1024/sven-charme-tan-sofa", commentsList: [] },
+      { id: 3, type: "Coffee Table", name: "West Elm Streamline Round", image: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=200", status: "pending", link: "https://www.westelm.com/products/streamline-coffee-table", commentsList: [] },
     ]
   },
   { 
@@ -71,8 +72,8 @@ const defaultInspirations: Inspiration[] = [
       "https://images.unsplash.com/photo-1556909190-4e67f6e0a9e5?w=800",
     ],
     designItems: [
-      { id: 1, type: "Countertop", name: "Calacatta Gold Marble", image: "https://images.unsplash.com/photo-1618221118493-9cfa1a1c00da?w=200", status: "approved", commentsList: [] },
-      { id: 2, type: "Faucet", name: "Kohler Purist in Brushed Nickel", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200", status: "pending", commentsList: [] },
+      { id: 1, type: "Countertop", name: "Calacatta Gold Marble", image: "https://images.unsplash.com/photo-1618221118493-9cfa1a1c00da?w=200", status: "approved", link: "https://www.msisurfaces.com/natural-stone-quartz/calacatta-gold", commentsList: [] },
+      { id: 2, type: "Faucet", name: "Kohler Purist in Brushed Nickel", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200", status: "pending", link: "https://www.kohler.com/en/products/kitchen-faucets/purist", commentsList: [] },
     ]
   },
   { 
@@ -86,8 +87,8 @@ const defaultInspirations: Inspiration[] = [
       "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800",
     ],
     designItems: [
-      { id: 1, type: "Bedding", name: "Parachute Linen Duvet - Bone", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=200", status: "pending", commentsList: [] },
-      { id: 2, type: "Nightstand", name: "CB2 Gwyneth Side Table", image: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?w=200", status: "pending", commentsList: [] },
+      { id: 1, type: "Bedding", name: "Parachute Linen Duvet - Bone", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=200", status: "pending", link: "https://www.parachutehome.com/products/linen-duvet-cover", commentsList: [] },
+      { id: 2, type: "Nightstand", name: "CB2 Gwyneth Side Table", image: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?w=200", status: "pending", link: "https://www.cb2.com/gwyneth-nightstand", commentsList: [] },
     ]
   },
 ];
