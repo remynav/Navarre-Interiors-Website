@@ -31,6 +31,7 @@ import {
   PauseCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useSharedInspirations, useSharedRenderings } from "@/hooks/useSharedDesignState";
 
 // Mock data for demo
 const projectData = {
@@ -57,103 +58,6 @@ const documents = [
   { id: 4, name: "Furniture Quote", type: "PDF", date: "Dec 1" },
 ];
 
-const initialInspirations = [
-  { 
-    id: 1, 
-    title: "Living Room Mood", 
-    coverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", 
-    notes: "Warm neutrals with brass accents",
-    gallery: [
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800",
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800",
-      "https://images.unsplash.com/photo-1567016432779-094069958ea5?w=800",
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800",
-    ],
-    designItems: [
-      { id: 1, type: "Paint Color", name: "Benjamin Moore - Simply White", image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200", status: "approved", commentsList: [] },
-      { id: 2, type: "Sofa", name: "Article Sven Charme Tan", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200", status: "pending", commentsList: [] },
-      { id: 3, type: "Coffee Table", name: "West Elm Streamline Round", image: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=200", status: "pending", commentsList: [] },
-    ]
-  },
-  { 
-    id: 2, 
-    title: "Kitchen Concept", 
-    coverImage: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400", 
-    notes: "Modern minimalist with marble",
-    gallery: [
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800",
-      "https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=800",
-      "https://images.unsplash.com/photo-1556909190-4e67f6e0a9e5?w=800",
-    ],
-    designItems: [
-      { id: 1, type: "Countertop", name: "Calacatta Gold Marble", image: "https://images.unsplash.com/photo-1618221118493-9cfa1a1c00da?w=200", status: "approved", commentsList: [] },
-      { id: 2, type: "Faucet", name: "Kohler Purist in Brushed Nickel", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200", status: "pending", commentsList: [] },
-    ]
-  },
-  { 
-    id: 3, 
-    title: "Bedroom Vision", 
-    coverImage: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400", 
-    notes: "Serene and organic textures",
-    gallery: [
-      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800",
-      "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800",
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800",
-    ],
-    designItems: [
-      { id: 1, type: "Bedding", name: "Parachute Linen Duvet - Bone", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=200", status: "pending", commentsList: [] },
-      { id: 2, type: "Nightstand", name: "CB2 Gwyneth Side Table", image: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?w=200", status: "pending", commentsList: [] },
-    ]
-  },
-];
-
-const initialRenderings = [
-  { 
-    id: 1, 
-    title: "Living Room - Option A", 
-    image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", 
-    status: "approved", 
-    sent: true,
-    commentsList: [
-      { id: 1, sender: "designer", name: "Sarah Mitchell", text: "Here's the first option for your living room!", time: "Dec 10, 2:30 PM" },
-      { id: 2, sender: "client", text: "Love the layout! Can we try a warmer color palette?", time: "Dec 10, 4:15 PM" },
-      { id: 3, sender: "designer", name: "Sarah Mitchell", text: "Absolutely! I'll work on that revision.", time: "Dec 11, 9:00 AM" },
-    ]
-  },
-  { 
-    id: 2, 
-    title: "Kitchen Rendering", 
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", 
-    status: "pending", 
-    sent: true,
-    commentsList: [
-      { id: 1, sender: "designer", name: "Sarah Mitchell", text: "Kitchen concept with marble counters as discussed.", time: "Dec 14, 11:00 AM" },
-    ]
-  },
-  { 
-    id: 3, 
-    title: "Master Bedroom", 
-    image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", 
-    status: "revision", 
-    sent: true,
-    commentsList: [
-      { id: 1, sender: "designer", name: "Sarah Mitchell", text: "Master bedroom with organic textures.", time: "Dec 12, 3:00 PM" },
-      { id: 2, sender: "client", text: "The bed position feels off. Can we try centering it?", time: "Dec 12, 5:30 PM" },
-      { id: 3, sender: "designer", name: "Sarah Mitchell", text: "Good point! Will adjust.", time: "Dec 12, 6:00 PM" },
-      { id: 4, sender: "client", text: "Also prefer lighter curtains", time: "Dec 13, 10:00 AM" },
-      { id: 5, sender: "designer", name: "Sarah Mitchell", text: "Noted! Working on the revision now.", time: "Dec 13, 11:00 AM" },
-    ]
-  },
-  { 
-    id: 4, 
-    title: "Guest Bathroom", 
-    image: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600", 
-    status: "draft", 
-    sent: false,
-    commentsList: []
-  },
-];
-
 const messages = [
   { id: 1, from: "Sarah Mitchell", message: "The furniture samples have arrived! When can you come to the showroom?", date: "2 hours ago", unread: true },
   { id: 2, from: "Project Team", message: "Weekly update: Phase 3 completed ahead of schedule.", date: "Yesterday", unread: false },
@@ -171,8 +75,8 @@ const ClientDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [allMessages, setAllMessages] = useState(chatMessages);
-  const [renderings, setRenderings] = useState(initialRenderings);
-  const [inspirations, setInspirations] = useState(initialInspirations);
+  const [inspirations, setInspirations] = useSharedInspirations();
+  const [renderings, setRenderings] = useSharedRenderings();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [showItemCommentsModal, setShowItemCommentsModal] = useState(false);
