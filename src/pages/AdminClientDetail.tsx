@@ -45,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSharedInspirations, useSharedRenderings } from "@/hooks/useSharedDesignState";
 
 // Mock client data
 const clientsData: Record<number, any> = {
@@ -59,90 +60,6 @@ const mockDocuments = [
   { id: 1, name: "Design Concept v2.pdf", type: "PDF", date: "Dec 15, 2024", size: "2.4 MB" },
   { id: 2, name: "Floor Plan Final.pdf", type: "PDF", date: "Dec 10, 2024", size: "1.8 MB" },
   { id: 3, name: "Material Selections.pdf", type: "PDF", date: "Dec 5, 2024", size: "3.2 MB" },
-];
-
-const mockInspirations = [
-  { 
-    id: 1, 
-    title: "Living Room Mood", 
-    coverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400", 
-    notes: "Warm neutrals with brass accents",
-    gallery: [
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800",
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800",
-      "https://images.unsplash.com/photo-1567016432779-094069958ea5?w=800",
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800",
-    ],
-    designItems: [
-      { id: 1, type: "Paint Color", name: "Benjamin Moore - Simply White", image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200", status: "approved", commentsList: [] },
-      { id: 2, type: "Sofa", name: "Article Sven Charme Tan", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200", status: "pending", commentsList: [] },
-      { id: 3, type: "Coffee Table", name: "West Elm Streamline Round", image: "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?w=200", status: "pending", commentsList: [] },
-    ]
-  },
-  { 
-    id: 2, 
-    title: "Kitchen Concept", 
-    coverImage: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400", 
-    notes: "Modern minimalist with marble",
-    gallery: [
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800",
-      "https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=800",
-      "https://images.unsplash.com/photo-1556909190-4e67f6e0a9e5?w=800",
-    ],
-    designItems: [
-      { id: 1, type: "Countertop", name: "Calacatta Gold Marble", image: "https://images.unsplash.com/photo-1618221118493-9cfa1a1c00da?w=200", status: "approved", commentsList: [] },
-      { id: 2, type: "Faucet", name: "Kohler Purist in Brushed Nickel", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200", status: "pending", commentsList: [] },
-    ]
-  },
-  { 
-    id: 3, 
-    title: "Bedroom Vision", 
-    coverImage: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400", 
-    notes: "Serene and organic textures",
-    gallery: [
-      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800",
-      "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800",
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800",
-    ],
-    designItems: [
-      { id: 1, type: "Bedding", name: "Parachute Linen Duvet - Bone", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=200", status: "pending", commentsList: [] },
-      { id: 2, type: "Nightstand", name: "CB2 Gwyneth Side Table", image: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?w=200", status: "pending", commentsList: [] },
-    ]
-  },
-];
-
-const mockRenderings = [
-  { 
-    id: 1, 
-    title: "Living Room - Option A", 
-    image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", 
-    status: "sent",
-    commentsList: [
-      { id: 1, sender: "admin", name: "You", text: "Here's the first option for your living room!", time: "Dec 10, 2:30 PM" },
-      { id: 2, sender: "client", name: "John Smith", text: "Love the layout! Can we try a warmer color palette?", time: "Dec 10, 4:15 PM" },
-      { id: 3, sender: "admin", name: "You", text: "Absolutely! I'll work on that revision.", time: "Dec 11, 9:00 AM" },
-    ]
-  },
-  { 
-    id: 2, 
-    title: "Kitchen Rendering", 
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", 
-    status: "draft",
-    commentsList: []
-  },
-  { 
-    id: 3, 
-    title: "Master Bedroom", 
-    image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", 
-    status: "completed",
-    commentsList: [
-      { id: 1, sender: "admin", name: "You", text: "Master bedroom with organic textures.", time: "Dec 12, 3:00 PM" },
-      { id: 2, sender: "client", name: "John Smith", text: "The bed position feels off. Can we try centering it?", time: "Dec 12, 5:30 PM" },
-      { id: 3, sender: "admin", name: "You", text: "Good point! Will adjust.", time: "Dec 12, 6:00 PM" },
-      { id: 4, sender: "client", name: "John Smith", text: "Also prefer lighter curtains", time: "Dec 13, 10:00 AM" },
-      { id: 5, sender: "admin", name: "You", text: "Noted! Working on the revision now.", time: "Dec 13, 11:00 AM" },
-    ]
-  },
 ];
 
 const mockMessages = [
@@ -160,8 +77,8 @@ const AdminClientDetail = () => {
   const [client, setClient] = useState(clientData);
   const [activeTab, setActiveTab] = useState("overview");
   const [documents, setDocuments] = useState(mockDocuments);
-  const [inspirations, setInspirations] = useState(mockInspirations);
-  const [renderings, setRenderings] = useState(mockRenderings);
+  const [inspirations, setInspirations] = useSharedInspirations();
+  const [renderings, setRenderings] = useSharedRenderings();
   const [messages, setMessages] = useState(mockMessages);
   const [newMessage, setNewMessage] = useState("");
   
@@ -402,8 +319,11 @@ const AdminClientDetail = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed": return "bg-green-500/10 text-green-600";
-      case "sent": return "bg-gold/10 text-gold";
+      case "completed": 
+      case "approved": return "bg-green-500/10 text-green-600";
+      case "sent": 
+      case "pending": return "bg-gold/10 text-gold";
+      case "revision": return "bg-orange-500/10 text-orange-600";
       case "draft": return "bg-muted text-muted-foreground";
       default: return "bg-muted text-muted-foreground";
     }
@@ -412,7 +332,10 @@ const AdminClientDetail = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "completed": return "Completed";
+      case "approved": return "Client Approved";
       case "sent": return "Sent to Client";
+      case "pending": return "Awaiting Approval";
+      case "revision": return "Revision Requested";
       case "draft": return "Draft";
       default: return status;
     }
