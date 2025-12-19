@@ -57,9 +57,37 @@ const mockInspirations = [
 ];
 
 const mockRenderings = [
-  { id: 1, title: "Living Room - Option A", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", status: "sent", comments: 3 },
-  { id: 2, title: "Kitchen Rendering", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", status: "draft", comments: 0 },
-  { id: 3, title: "Master Bedroom", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", status: "completed", comments: 5 },
+  { 
+    id: 1, 
+    title: "Living Room - Option A", 
+    image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", 
+    status: "sent",
+    commentsList: [
+      { id: 1, sender: "admin", name: "You", text: "Here's the first option for your living room!", time: "Dec 10, 2:30 PM" },
+      { id: 2, sender: "client", name: "John Smith", text: "Love the layout! Can we try a warmer color palette?", time: "Dec 10, 4:15 PM" },
+      { id: 3, sender: "admin", name: "You", text: "Absolutely! I'll work on that revision.", time: "Dec 11, 9:00 AM" },
+    ]
+  },
+  { 
+    id: 2, 
+    title: "Kitchen Rendering", 
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", 
+    status: "draft",
+    commentsList: []
+  },
+  { 
+    id: 3, 
+    title: "Master Bedroom", 
+    image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", 
+    status: "completed",
+    commentsList: [
+      { id: 1, sender: "admin", name: "You", text: "Master bedroom with organic textures.", time: "Dec 12, 3:00 PM" },
+      { id: 2, sender: "client", name: "John Smith", text: "The bed position feels off. Can we try centering it?", time: "Dec 12, 5:30 PM" },
+      { id: 3, sender: "admin", name: "You", text: "Good point! Will adjust.", time: "Dec 12, 6:00 PM" },
+      { id: 4, sender: "client", name: "John Smith", text: "Also prefer lighter curtains", time: "Dec 13, 10:00 AM" },
+      { id: 5, sender: "admin", name: "You", text: "Noted! Working on the revision now.", time: "Dec 13, 11:00 AM" },
+    ]
+  },
 ];
 
 const mockMessages = [
@@ -84,8 +112,11 @@ const AdminClientDetail = () => {
   // Modal states
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
   const [showAddRenderingModal, setShowAddRenderingModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [editingRendering, setEditingRendering] = useState<any>(null);
   const [editingBoard, setEditingBoard] = useState<any>(null);
+  const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
+  const [newComment, setNewComment] = useState("");
   
   // Form states
   const [newBoard, setNewBoard] = useState({ title: "", image: "", notes: "" });
@@ -148,7 +179,7 @@ const AdminClientDetail = () => {
         title: newRendering.title,
         image: newRendering.image,
         status: "draft",
-        comments: 0
+        commentsList: []
       }]);
       toast.success("Rendering added as draft");
     }
@@ -203,6 +234,34 @@ const AdminClientDetail = () => {
     setRenderings(renderings.filter(r => r.id !== id));
     toast.success("Rendering deleted");
   };
+
+  const handleViewComments = (renderingId: number) => {
+    setSelectedRenderingId(renderingId);
+    setNewComment("");
+    setShowCommentsModal(true);
+  };
+
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    setRenderings(renderings.map(r => 
+      r.id === selectedRenderingId 
+        ? { 
+            ...r, 
+            commentsList: [...r.commentsList, {
+              id: r.commentsList.length + 1,
+              sender: "admin",
+              name: "You",
+              text: newComment,
+              time: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            }]
+          } 
+        : r
+    ));
+    setNewComment("");
+    toast.success("Comment added");
+  };
+
+  const getSelectedRendering = () => renderings.find(r => r.id === selectedRenderingId);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -470,7 +529,12 @@ const AdminClientDetail = () => {
                         {rendering.title}
                       </h3>
                       {rendering.status !== "draft" && (
-                        <span className="text-sm text-muted-foreground">{rendering.comments} comments</span>
+                        <button 
+                          onClick={() => handleViewComments(rendering.id)}
+                          className="text-sm text-muted-foreground hover:text-gold transition-colors"
+                        >
+                          {rendering.commentsList.length} comments
+                        </button>
                       )}
                     </div>
                     <div className="flex gap-2">
@@ -527,6 +591,15 @@ const AdminClientDetail = () => {
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Completed
+                        </Button>
+                      )}
+                      {rendering.status !== "draft" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewComments(rendering.id)}
+                        >
+                          <MessageSquare className="w-4 h-4" />
                         </Button>
                       )}
                       <Button
@@ -704,6 +777,51 @@ const AdminClientDetail = () => {
               {editingRendering ? "Save Changes" : "Add as Draft"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Comments Modal */}
+      <Dialog open={showCommentsModal} onOpenChange={setShowCommentsModal}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{getSelectedRendering()?.title} - Comments</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-4 py-4 max-h-[400px]">
+            {getSelectedRendering()?.commentsList.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No comments yet. Start the conversation!</p>
+            ) : (
+              getSelectedRendering()?.commentsList.map((comment) => (
+                <div 
+                  key={comment.id} 
+                  className={`p-3 rounded-lg ${
+                    comment.sender === "admin" 
+                      ? "bg-gold/10 ml-8" 
+                      : "bg-muted mr-8"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-foreground">
+                      {comment.sender === "admin" ? "You" : comment.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{comment.time}</span>
+                  </div>
+                  <p className="text-sm text-foreground">{comment.text}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex gap-2 pt-4 border-t border-border">
+            <Input
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Reply to client..."
+              className="flex-1"
+              onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+            />
+            <Button variant="gold" onClick={handleAddComment}>
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

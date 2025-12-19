@@ -64,10 +64,50 @@ const inspirations = [
 ];
 
 const initialRenderings = [
-  { id: 1, title: "Living Room - Option A", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", status: "approved", comments: 3, sent: true },
-  { id: 2, title: "Kitchen Rendering", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", status: "pending", comments: 1, sent: true },
-  { id: 3, title: "Master Bedroom", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", status: "revision", comments: 5, sent: true },
-  { id: 4, title: "Guest Bathroom", image: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600", status: "draft", comments: 0, sent: false },
+  { 
+    id: 1, 
+    title: "Living Room - Option A", 
+    image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", 
+    status: "approved", 
+    sent: true,
+    commentsList: [
+      { id: 1, sender: "designer", name: "Sarah Mitchell", text: "Here's the first option for your living room!", time: "Dec 10, 2:30 PM" },
+      { id: 2, sender: "client", text: "Love the layout! Can we try a warmer color palette?", time: "Dec 10, 4:15 PM" },
+      { id: 3, sender: "designer", name: "Sarah Mitchell", text: "Absolutely! I'll work on that revision.", time: "Dec 11, 9:00 AM" },
+    ]
+  },
+  { 
+    id: 2, 
+    title: "Kitchen Rendering", 
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", 
+    status: "pending", 
+    sent: true,
+    commentsList: [
+      { id: 1, sender: "designer", name: "Sarah Mitchell", text: "Kitchen concept with marble counters as discussed.", time: "Dec 14, 11:00 AM" },
+    ]
+  },
+  { 
+    id: 3, 
+    title: "Master Bedroom", 
+    image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", 
+    status: "revision", 
+    sent: true,
+    commentsList: [
+      { id: 1, sender: "designer", name: "Sarah Mitchell", text: "Master bedroom with organic textures.", time: "Dec 12, 3:00 PM" },
+      { id: 2, sender: "client", text: "The bed position feels off. Can we try centering it?", time: "Dec 12, 5:30 PM" },
+      { id: 3, sender: "designer", name: "Sarah Mitchell", text: "Good point! Will adjust.", time: "Dec 12, 6:00 PM" },
+      { id: 4, sender: "client", text: "Also prefer lighter curtains", time: "Dec 13, 10:00 AM" },
+      { id: 5, sender: "designer", name: "Sarah Mitchell", text: "Noted! Working on the revision now.", time: "Dec 13, 11:00 AM" },
+    ]
+  },
+  { 
+    id: 4, 
+    title: "Guest Bathroom", 
+    image: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600", 
+    status: "draft", 
+    sent: false,
+    commentsList: []
+  },
 ];
 
 const messages = [
@@ -89,7 +129,9 @@ const ClientDashboard = () => {
   const [allMessages, setAllMessages] = useState(chatMessages);
   const [renderings, setRenderings] = useState(initialRenderings);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [revisionFeedback, setRevisionFeedback] = useState("");
+  const [newComment, setNewComment] = useState("");
   const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
 
   // Check if logged in
@@ -131,7 +173,16 @@ const ClientDashboard = () => {
     }
     setRenderings(renderings.map(r => 
       r.id === selectedRenderingId 
-        ? { ...r, status: "revision", comments: r.comments + 1 } 
+        ? { 
+            ...r, 
+            status: "revision", 
+            commentsList: [...r.commentsList, {
+              id: r.commentsList.length + 1,
+              sender: "client",
+              text: revisionFeedback,
+              time: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            }]
+          } 
         : r
     ));
     setShowRevisionModal(false);
@@ -148,6 +199,42 @@ const ClientDashboard = () => {
     ));
     toast.success("Rendering approved!");
   };
+
+  const handleUndoApproval = (renderingId: number) => {
+    setRenderings(renderings.map(r => 
+      r.id === renderingId 
+        ? { ...r, status: "pending" } 
+        : r
+    ));
+    toast.success("Approval undone - rendering is pending again");
+  };
+
+  const handleViewComments = (renderingId: number) => {
+    setSelectedRenderingId(renderingId);
+    setNewComment("");
+    setShowCommentsModal(true);
+  };
+
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    setRenderings(renderings.map(r => 
+      r.id === selectedRenderingId 
+        ? { 
+            ...r, 
+            commentsList: [...r.commentsList, {
+              id: r.commentsList.length + 1,
+              sender: "client",
+              text: newComment,
+              time: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            }]
+          } 
+        : r
+    ));
+    setNewComment("");
+    toast.success("Comment added");
+  };
+
+  const getSelectedRendering = () => renderings.find(r => r.id === selectedRenderingId);
 
   const navItems = [
     { id: "overview", label: "Overview", icon: Home },
@@ -520,12 +607,27 @@ const ClientDashboard = () => {
                         <h3 className="font-display text-lg font-semibold text-foreground">
                           {rendering.title}
                         </h3>
-                        <span className="text-sm text-muted-foreground">{rendering.comments} comments</span>
+                        <button 
+                          onClick={() => handleViewComments(rendering.id)}
+                          className="text-sm text-muted-foreground hover:text-gold transition-colors"
+                        >
+                          {rendering.commentsList.length} comments
+                        </button>
                       </div>
                       {rendering.status === "approved" && (
-                        <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
-                          <CheckCircle className="w-4 h-4" />
-                          <span className="text-sm font-medium">You approved this rendering</span>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="text-sm font-medium">You approved this rendering</span>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full"
+                            onClick={() => handleUndoApproval(rendering.id)}
+                          >
+                            Undo Approval
+                          </Button>
                         </div>
                       )}
                       {rendering.status === "pending" && (
@@ -556,6 +658,16 @@ const ClientDashboard = () => {
                           <span className="text-sm font-medium">Revision requested - awaiting update</span>
                         </div>
                       )}
+                      {/* Add Comment Button - available for all statuses */}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full mt-2"
+                        onClick={() => handleViewComments(rendering.id)}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        View & Add Comments
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -748,6 +860,51 @@ const ClientDashboard = () => {
               Submit Request
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Comments Modal */}
+      <Dialog open={showCommentsModal} onOpenChange={setShowCommentsModal}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{getSelectedRendering()?.title} - Comments</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto space-y-4 py-4 max-h-[400px]">
+            {getSelectedRendering()?.commentsList.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No comments yet. Be the first to comment!</p>
+            ) : (
+              getSelectedRendering()?.commentsList.map((comment) => (
+                <div 
+                  key={comment.id} 
+                  className={`p-3 rounded-lg ${
+                    comment.sender === "client" 
+                      ? "bg-gold/10 ml-8" 
+                      : "bg-muted mr-8"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-foreground">
+                      {comment.sender === "client" ? "You" : comment.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{comment.time}</span>
+                  </div>
+                  <p className="text-sm text-foreground">{comment.text}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex gap-2 pt-4 border-t border-border">
+            <Input
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Add a comment..."
+              className="flex-1"
+              onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+            />
+            <Button variant="gold" onClick={handleAddComment}>
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
