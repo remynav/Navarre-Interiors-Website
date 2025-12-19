@@ -15,7 +15,6 @@ import {
   FileText,
   Calendar,
   MessageSquare,
-  Settings,
   LogOut,
   Menu,
   X,
@@ -26,7 +25,6 @@ import {
   Image,
   Palette,
   ThumbsUp,
-  ThumbsDown,
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -128,9 +126,7 @@ const ClientDashboard = () => {
   const [newMessage, setNewMessage] = useState("");
   const [allMessages, setAllMessages] = useState(chatMessages);
   const [renderings, setRenderings] = useState(initialRenderings);
-  const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
-  const [revisionFeedback, setRevisionFeedback] = useState("");
   const [newComment, setNewComment] = useState("");
   const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
 
@@ -158,37 +154,6 @@ const ClientDashboard = () => {
     }]);
     setNewMessage("");
     toast.success("Message sent");
-  };
-
-  const handleRequestChanges = (renderingId: number) => {
-    setSelectedRenderingId(renderingId);
-    setRevisionFeedback("");
-    setShowRevisionModal(true);
-  };
-
-  const handleSubmitRevision = () => {
-    if (!revisionFeedback.trim()) {
-      toast.error("Please provide feedback for the revision request");
-      return;
-    }
-    setRenderings(renderings.map(r => 
-      r.id === selectedRenderingId 
-        ? { 
-            ...r, 
-            status: "revision", 
-            commentsList: [...r.commentsList, {
-              id: r.commentsList.length + 1,
-              sender: "client",
-              text: revisionFeedback,
-              time: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-            }]
-          } 
-        : r
-    ));
-    setShowRevisionModal(false);
-    setRevisionFeedback("");
-    setSelectedRenderingId(null);
-    toast.success("Revision request sent to designer");
   };
 
   const handleApproveRendering = (renderingId: number) => {
@@ -243,7 +208,6 @@ const ClientDashboard = () => {
     { id: "renderings", label: "Renderings", icon: Image },
     { id: "timeline", label: "Timeline", icon: Calendar },
     { id: "messages", label: "Messages", icon: MessageSquare },
-    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   const getStatusColor = (status: string) => {
@@ -631,32 +595,15 @@ const ClientDashboard = () => {
                         </div>
                       )}
                       {rendering.status === "pending" && (
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="gold" 
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => handleApproveRendering(rendering.id)}
-                          >
-                            <ThumbsUp className="w-4 h-4 mr-2" />
-                            Approve
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => handleRequestChanges(rendering.id)}
-                          >
-                            <ThumbsDown className="w-4 h-4 mr-2" />
-                            Request Changes
-                          </Button>
-                        </div>
-                      )}
-                      {rendering.status === "revision" && (
-                        <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="text-sm font-medium">Revision requested - awaiting update</span>
-                        </div>
+                        <Button 
+                          variant="gold" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handleApproveRendering(rendering.id)}
+                        >
+                          <ThumbsUp className="w-4 h-4 mr-2" />
+                          Approve
+                        </Button>
                       )}
                       {/* Add Comment Button - available for all statuses */}
                       <Button 
@@ -834,34 +781,6 @@ const ClientDashboard = () => {
           onClick={() => setSidebarOpen(false)}
         />
       )}
-
-      {/* Revision Request Modal */}
-      <Dialog open={showRevisionModal} onOpenChange={setShowRevisionModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Request Changes</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              Please describe what changes you'd like to see in this rendering:
-            </p>
-            <Textarea
-              value={revisionFeedback}
-              onChange={(e) => setRevisionFeedback(e.target.value)}
-              placeholder="e.g., I'd prefer a warmer color palette, and the sofa should be positioned closer to the window..."
-              className="min-h-[120px]"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRevisionModal(false)}>
-              Cancel
-            </Button>
-            <Button variant="gold" onClick={handleSubmitRevision}>
-              Submit Request
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Comments Modal */}
       <Dialog open={showCommentsModal} onOpenChange={setShowCommentsModal}>

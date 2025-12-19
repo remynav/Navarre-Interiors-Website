@@ -80,7 +80,6 @@ const AdminDashboard = () => {
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "clients", label: "Clients", icon: Users },
     { id: "projects", label: "Projects", icon: FolderOpen },
-    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   const filteredClients = clients.filter(
