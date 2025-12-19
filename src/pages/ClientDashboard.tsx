@@ -29,9 +29,12 @@ import {
   ChevronLeft,
   ChevronRight,
   PauseCircle,
+  Download,
+  Archive,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useSharedInspirations, useSharedRenderings } from "@/hooks/useSharedDesignState";
+import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
 
 // Mock data for demo
 const projectData = {
@@ -49,13 +52,6 @@ const milestones = [
   { id: 4, title: "Furniture Procurement", status: "in-progress", date: "Dec 15" },
   { id: 5, title: "Installation Phase 1", status: "upcoming", date: "Jan 10" },
   { id: 6, title: "Final Styling", status: "upcoming", date: "Feb 15" },
-];
-
-const documents = [
-  { id: 1, name: "Design Concept Presentation", type: "PDF", date: "Nov 5" },
-  { id: 2, name: "Floor Plan - Final", type: "PDF", date: "Nov 12" },
-  { id: 3, name: "Material Selections", type: "PDF", date: "Nov 20" },
-  { id: 4, name: "Furniture Quote", type: "PDF", date: "Dec 1" },
 ];
 
 const messages = [
@@ -77,9 +73,13 @@ const ClientDashboard = () => {
   const [allMessages, setAllMessages] = useState(chatMessages);
   const [inspirations, setInspirations] = useSharedInspirations();
   const [renderings, setRenderings] = useSharedRenderings();
+  const [documents] = useSharedDocuments();
+  const [docTab, setDocTab] = useState<"sent" | "archive">("sent");
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [showItemCommentsModal, setShowItemCommentsModal] = useState(false);
+  const [showDocPreviewModal, setShowDocPreviewModal] = useState(false);
+  const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
   const [newItemComment, setNewItemComment] = useState("");
   const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
@@ -94,6 +94,29 @@ const ClientDashboard = () => {
       navigate("/login");
     }
   }, [navigate]);
+
+  // Document handlers
+  const clientDocuments = documents.filter(d => d.status === "sent" || d.status === "archived");
+  const filteredClientDocs = clientDocuments.filter(d => docTab === "sent" ? d.status === "sent" : d.status === "archived");
+  const getSelectedDocument = () => documents.find(d => d.id === selectedDocId);
+
+  const handlePreviewDocument = (docId: number) => {
+    setSelectedDocId(docId);
+    setShowDocPreviewModal(true);
+  };
+
+  const handleDownloadDocument = (doc: any) => {
+    if (doc.data) {
+      const link = document.createElement('a');
+      link.href = doc.data;
+      link.download = doc.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      toast.error("Download not available for this document");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("clientLoggedIn");
@@ -527,28 +550,65 @@ const ClientDashboard = () => {
                   All your project files and documents
                 </p>
               </div>
+
+              {/* Document Tabs */}
+              <div className="flex gap-2 border-b border-border">
+                <button
+                  onClick={() => setDocTab("sent")}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    docTab === "sent" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Documents ({clientDocuments.filter(d => d.status === "sent").length})
+                </button>
+                <button
+                  onClick={() => setDocTab("archive")}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    docTab === "archive" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Archive className="w-4 h-4 inline mr-1" />
+                  Archive ({clientDocuments.filter(d => d.status === "archived").length})
+                </button>
+              </div>
+
               <div className="bg-card rounded-lg p-6 shadow-soft">
-                <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gold/10 rounded-lg flex items-center justify-center">
-                          <FileText className="w-6 h-6 text-gold" />
+                {filteredClientDocs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">
+                      {docTab === "sent" ? "No documents available yet" : "No archived documents"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredClientDocs.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                        onClick={() => handlePreviewDocument(doc.id)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gold/10 rounded-lg flex items-center justify-center">
+                            <FileText className="w-6 h-6 text-gold" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">{doc.name}</p>
+                            <p className="text-sm text-muted-foreground">{doc.type} • {doc.date}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-foreground">{doc.name}</p>
-                          <p className="text-sm text-muted-foreground">{doc.type} • Added {doc.date}</p>
+                        <div className="flex items-center gap-2">
+                          {doc.status === "archived" && (
+                            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Archived</span>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDownloadDocument(doc); }}>
+                            <Download className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        Download
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -23,6 +23,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ThumbsUp,
+  Download,
+  Archive,
+  Eye,
 } from "lucide-react";
 import {
   Dialog,
@@ -45,7 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSharedInspirations, useSharedRenderings } from "@/hooks/useSharedDesignState";
+import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
 import { ImageUpload } from "@/components/ImageUpload";
 import { FileUpload } from "@/components/FileUpload";
 
@@ -57,12 +60,6 @@ const clientsData: Record<number, any> = {
   4: { id: 4, name: "Emily Davis", email: "emily@example.com", phone: "+1 555-0104", project: "Urban Studio Apartment", status: "In Progress", address: "321 Metro Blvd, Chicago" },
   5: { id: 5, name: "Robert Wilson", email: "robert@example.com", phone: "+1 555-0105", project: "Classic Colonial Refresh", status: "On Hold", address: "654 Heritage Lane, Boston" },
 };
-
-const mockDocuments = [
-  { id: 1, name: "Design Concept v2.pdf", type: "PDF", date: "Dec 15, 2024", size: "2.4 MB" },
-  { id: 2, name: "Floor Plan Final.pdf", type: "PDF", date: "Dec 10, 2024", size: "1.8 MB" },
-  { id: 3, name: "Material Selections.pdf", type: "PDF", date: "Dec 5, 2024", size: "3.2 MB" },
-];
 
 const mockMessages = [
   { id: 1, sender: "admin", text: "Hi John! The furniture samples have arrived. When can you come to the showroom?", time: "10:30 AM" },
@@ -78,11 +75,12 @@ const AdminClientDetail = () => {
   
   const [client, setClient] = useState(clientData);
   const [activeTab, setActiveTab] = useState("overview");
-  const [documents, setDocuments] = useState(mockDocuments);
+  const [documents, setDocuments] = useSharedDocuments();
   const [inspirations, setInspirations] = useSharedInspirations();
   const [renderings, setRenderings] = useSharedRenderings();
   const [messages, setMessages] = useState(mockMessages);
   const [newMessage, setNewMessage] = useState("");
+  const [docTab, setDocTab] = useState<"sent" | "drafts" | "archive">("sent");
   
   // Modal states
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
@@ -95,6 +93,8 @@ const AdminClientDetail = () => {
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showItemDetailModal, setShowItemDetailModal] = useState(false);
   const [showUploadDocModal, setShowUploadDocModal] = useState(false);
+  const [showDocPreviewModal, setShowDocPreviewModal] = useState(false);
+  const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
   const [editingRendering, setEditingRendering] = useState<any>(null);
   const [editingBoard, setEditingBoard] = useState<any>(null);
   const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
@@ -109,13 +109,14 @@ const AdminClientDetail = () => {
   const [newRendering, setNewRendering] = useState({ title: "", image: "" });
   const [newGalleryImage, setNewGalleryImage] = useState("");
   const [newItem, setNewItem] = useState({ type: "", name: "", image: "", link: "" });
+  const [uploadAsDraft, setUploadAsDraft] = useState(true);
 
   const handleStatusChange = (newStatus: string) => {
     setClient({ ...client, status: newStatus });
     toast.success(`Project status changed to ${newStatus}`);
   };
 
-  // Document upload handler
+  // Document handlers
   const handleDocumentUpload = (file: { name: string; size: string; type: string; data: string }) => {
     const newDoc = {
       id: Math.max(...documents.map(d => d.id), 0) + 1,
@@ -123,17 +124,55 @@ const AdminClientDetail = () => {
       size: file.size,
       type: file.type,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      data: file.data
+      data: file.data,
+      status: uploadAsDraft ? "draft" as const : "sent" as const
     };
     setDocuments([...documents, newDoc]);
     setShowUploadDocModal(false);
-    toast.success("Document uploaded successfully");
+    toast.success(uploadAsDraft ? "Document saved as draft" : "Document sent to client");
   };
 
   const handleDeleteDocument = (docId: number) => {
     setDocuments(documents.filter(d => d.id !== docId));
     toast.success("Document deleted");
   };
+
+  const handleSendDocument = (docId: number) => {
+    setDocuments(documents.map(d => d.id === docId ? { ...d, status: "sent" as const } : d));
+    toast.success("Document sent to client");
+  };
+
+  const handleArchiveDocument = (docId: number) => {
+    setDocuments(documents.map(d => d.id === docId ? { ...d, status: "archived" as const } : d));
+    toast.success("Document archived");
+  };
+
+  const handleUnarchiveDocument = (docId: number) => {
+    setDocuments(documents.map(d => d.id === docId ? { ...d, status: "sent" as const } : d));
+    toast.success("Document restored from archive");
+  };
+
+  const handlePreviewDocument = (docId: number) => {
+    setSelectedDocId(docId);
+    setShowDocPreviewModal(true);
+  };
+
+  const handleDownloadDocument = (doc: any) => {
+    if (doc.data) {
+      const link = document.createElement('a');
+      link.href = doc.data;
+      link.download = doc.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      toast.error("Download not available for this document");
+    }
+  };
+
+  const getSelectedDocument = () => documents.find(d => d.id === selectedDocId);
+
+  const filteredDocuments = documents.filter(d => d.status === docTab);
 
   // Board detail handlers
   const handleOpenBoardDetail = (boardId: number) => {
@@ -583,27 +622,62 @@ const AdminClientDetail = () => {
           <div className="space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-semibold text-foreground">Documents</h2>
-              <Button variant="gold" onClick={() => setShowUploadDocModal(true)}>
+              <Button variant="gold" onClick={() => { setUploadAsDraft(true); setShowUploadDocModal(true); }}>
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Document
               </Button>
             </div>
+
+            {/* Document Tabs */}
+            <div className="flex gap-2 border-b border-border">
+              <button
+                onClick={() => setDocTab("sent")}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  docTab === "sent" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Sent ({documents.filter(d => d.status === "sent").length})
+              </button>
+              <button
+                onClick={() => setDocTab("drafts")}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  docTab === "drafts" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Drafts ({documents.filter(d => d.status === "draft").length})
+              </button>
+              <button
+                onClick={() => setDocTab("archive")}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  docTab === "archive" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Archive ({documents.filter(d => d.status === "archived").length})
+              </button>
+            </div>
+
             <div className="bg-card rounded-lg shadow-soft overflow-hidden">
-              {documents.length === 0 ? (
+              {filteredDocuments.length === 0 ? (
                 <div className="p-8 text-center">
                   <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">No documents yet</p>
-                  <Button variant="outline" className="mt-4" onClick={() => setShowUploadDocModal(true)}>
-                    Upload First Document
-                  </Button>
+                  <p className="text-muted-foreground">
+                    {docTab === "sent" && "No documents sent to client yet"}
+                    {docTab === "drafts" && "No draft documents"}
+                    {docTab === "archive" && "No archived documents"}
+                  </p>
+                  {docTab === "drafts" && (
+                    <Button variant="outline" className="mt-4" onClick={() => { setUploadAsDraft(true); setShowUploadDocModal(true); }}>
+                      Upload Draft
+                    </Button>
+                  )}
                 </div>
               ) : (
-                documents.map((doc) => (
+                filteredDocuments.map((doc) => (
                   <div
                     key={doc.id}
                     className="flex items-center justify-between p-4 border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 cursor-pointer flex-1" onClick={() => handlePreviewDocument(doc.id)}>
                       <div className="w-12 h-12 bg-gold/10 rounded-lg flex items-center justify-center">
                         <FileText className="w-6 h-6 text-gold" />
                       </div>
@@ -612,21 +686,48 @@ const AdminClientDetail = () => {
                         <p className="text-sm text-muted-foreground">{doc.size} • {doc.date}</p>
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="w-4 h-4" />
+                    <div className="flex items-center gap-2">
+                      {doc.status === "draft" && (
+                        <Button size="sm" variant="gold" onClick={() => handleSendDocument(doc.id)}>
+                          <Send className="w-4 h-4 mr-1" />
+                          Send
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Download</DropdownMenuItem>
-                        <DropdownMenuItem>Share with Client</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteDocument(doc.id)}>
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handlePreviewDocument(doc.id)}>
+                            Preview
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownloadDocument(doc)}>
+                            Download
+                          </DropdownMenuItem>
+                          {doc.status === "draft" && (
+                            <DropdownMenuItem onClick={() => handleSendDocument(doc.id)}>
+                              Send to Client
+                            </DropdownMenuItem>
+                          )}
+                          {doc.status === "sent" && (
+                            <DropdownMenuItem onClick={() => handleArchiveDocument(doc.id)}>
+                              Move to Archive
+                            </DropdownMenuItem>
+                          )}
+                          {doc.status === "archived" && (
+                            <DropdownMenuItem onClick={() => handleUnarchiveDocument(doc.id)}>
+                              Restore from Archive
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteDocument(doc.id)}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 ))
               )}
@@ -1126,13 +1227,89 @@ const AdminClientDetail = () => {
           <DialogHeader>
             <DialogTitle className="font-display">Upload Document</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="space-y-4 py-4">
             <FileUpload onFileSelect={handleDocumentUpload} />
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <input
+                type="checkbox"
+                id="upload-as-draft"
+                checked={uploadAsDraft}
+                onChange={(e) => setUploadAsDraft(e.target.checked)}
+                className="w-4 h-4 rounded border-border"
+              />
+              <label htmlFor="upload-as-draft" className="text-sm text-foreground cursor-pointer">
+                Save as draft (don't send to client yet)
+              </label>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowUploadDocModal(false)}>
               Cancel
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Preview Modal */}
+      <Dialog open={showDocPreviewModal} onOpenChange={setShowDocPreviewModal}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-3">
+              <FileText className="w-5 h-5 text-gold" />
+              {getSelectedDocument()?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {getSelectedDocument()?.data ? (
+              getSelectedDocument()?.type === "PDF" ? (
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <iframe
+                    src={getSelectedDocument()?.data}
+                    className="w-full h-[400px]"
+                    title="Document Preview"
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-muted/50 rounded-lg">
+                  <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-2">Preview not available for {getSelectedDocument()?.type} files</p>
+                  <Button variant="gold" onClick={() => handleDownloadDocument(getSelectedDocument())}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download to View
+                  </Button>
+                </div>
+              )
+            ) : (
+              <div className="text-center py-12 bg-muted/50 rounded-lg">
+                <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">This is a sample document without file data</p>
+              </div>
+            )}
+            <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+              <span>{getSelectedDocument()?.size} • {getSelectedDocument()?.date}</span>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                getSelectedDocument()?.status === "sent" ? "bg-green-500/10 text-green-600" :
+                getSelectedDocument()?.status === "archived" ? "bg-muted text-muted-foreground" :
+                "bg-gold/10 text-gold"
+              }`}>
+                {getSelectedDocument()?.status === "sent" ? "Sent" : 
+                 getSelectedDocument()?.status === "archived" ? "Archived" : "Draft"}
+              </span>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            {getSelectedDocument()?.status === "draft" && (
+              <Button variant="gold" onClick={() => { handleSendDocument(getSelectedDocument()!.id); setShowDocPreviewModal(false); }}>
+                <Send className="w-4 h-4 mr-2" />
+                Send to Client
+              </Button>
+            )}
+            {getSelectedDocument()?.data && (
+              <Button variant="outline" onClick={() => handleDownloadDocument(getSelectedDocument())}>
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

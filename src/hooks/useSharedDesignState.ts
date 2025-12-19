@@ -37,9 +37,20 @@ interface Rendering {
   commentsList: Comment[];
 }
 
+interface Document {
+  id: number;
+  name: string;
+  size: string;
+  type: string;
+  date: string;
+  data?: string;
+  status: "draft" | "sent" | "archived";
+}
+
 const STORAGE_KEYS = {
   INSPIRATIONS: "shared_inspirations",
   RENDERINGS: "shared_renderings",
+  DOCUMENTS: "shared_documents",
 };
 
 // Default data
@@ -140,6 +151,13 @@ const defaultRenderings: Rendering[] = [
   },
 ];
 
+const defaultDocuments: Document[] = [
+  { id: 1, name: "Design Concept v2.pdf", type: "PDF", date: "Dec 15, 2024", size: "2.4 MB", status: "sent" },
+  { id: 2, name: "Floor Plan Final.pdf", type: "PDF", date: "Dec 10, 2024", size: "1.8 MB", status: "sent" },
+  { id: 3, name: "Material Selections.pdf", type: "PDF", date: "Dec 5, 2024", size: "3.2 MB", status: "archived" },
+  { id: 4, name: "Budget Draft.xlsx", type: "XLSX", date: "Dec 18, 2024", size: "156 KB", status: "draft" },
+];
+
 // Custom event for cross-tab communication
 const SYNC_EVENT = "designStateSync";
 
@@ -225,4 +243,46 @@ export const useSharedRenderings = () => {
   }, []);
 
   return [renderings, setRenderings] as const;
+};
+
+export const useSharedDocuments = () => {
+  const [documents, setDocumentsState] = useState<Document[]>(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
+    return stored ? JSON.parse(stored) : defaultDocuments;
+  });
+
+  // Listen for changes from other tabs/components
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEYS.DOCUMENTS && e.newValue) {
+        setDocumentsState(JSON.parse(e.newValue));
+      }
+    };
+
+    const handleSyncEvent = () => {
+      const stored = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
+      if (stored) {
+        setDocumentsState(JSON.parse(stored));
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(SYNC_EVENT, handleSyncEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(SYNC_EVENT, handleSyncEvent);
+    };
+  }, []);
+
+  const setDocuments = useCallback((newData: Document[] | ((prev: Document[]) => Document[])) => {
+    setDocumentsState((prev) => {
+      const updated = typeof newData === "function" ? newData(prev) : newData;
+      localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(updated));
+      window.dispatchEvent(new Event(SYNC_EVENT));
+      return updated;
+    });
+  }, []);
+
+  return [documents, setDocuments] as const;
 };
