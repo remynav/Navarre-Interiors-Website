@@ -16,6 +16,7 @@ import {
   Edit,
   Trash2,
   Eye,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -79,6 +80,10 @@ const AdminDashboard = () => {
       default:
         return "bg-muted text-muted-foreground";
     }
+  };
+
+  const handleClientClick = (clientId: number) => {
+    navigate(`/admin/client/${clientId}`);
   };
 
   return (
@@ -199,7 +204,11 @@ const AdminDashboard = () => {
                     </thead>
                     <tbody>
                       {clients.slice(0, 5).map((client) => (
-                        <tr key={client.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                        <tr 
+                          key={client.id} 
+                          className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => handleClientClick(client.id)}
+                        >
                           <td className="p-4">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
@@ -282,7 +291,11 @@ const AdminDashboard = () => {
                     </thead>
                     <tbody>
                       {filteredClients.map((client) => (
-                        <tr key={client.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                        <tr 
+                          key={client.id} 
+                          className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => handleClientClick(client.id)}
+                        >
                           <td className="p-4">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
@@ -313,7 +326,7 @@ const AdminDashboard = () => {
                               <span className="text-sm text-muted-foreground">{client.progress}%</span>
                             </div>
                           </td>
-                          <td className="p-4 text-right">
+                          <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
@@ -321,7 +334,7 @@ const AdminDashboard = () => {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleClientClick(client.id)}>
                                   <Eye className="w-4 h-4 mr-2" />
                                   View Details
                                 </DropdownMenuItem>
@@ -364,19 +377,23 @@ const AdminDashboard = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {clients.map((client) => (
-                  <div key={client.id} className="bg-card rounded-lg p-6 shadow-soft hover:shadow-medium transition-all">
+                  <div 
+                    key={client.id} 
+                    className="bg-card rounded-lg p-6 shadow-soft hover:shadow-medium transition-all cursor-pointer"
+                    onClick={() => handleClientClick(client.id)}
+                  >
                     <div className="flex items-center justify-between mb-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
                         {client.status}
                       </span>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleClientClick(client.id)}>
                             <Eye className="w-4 h-4 mr-2" />
                             View Project
                           </DropdownMenuItem>
