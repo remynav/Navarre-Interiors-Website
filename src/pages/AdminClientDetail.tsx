@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSharedInspirations, useSharedRenderings } from "@/hooks/useSharedDesignState";
+import { ImageUpload } from "@/components/ImageUpload";
 
 // Mock client data
 const clientsData: Record<number, any> = {
@@ -814,12 +815,10 @@ const AdminClientDetail = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="board-image">Image URL</Label>
-              <Input
-                id="board-image"
-                placeholder="https://..."
+              <Label>Cover Image</Label>
+              <ImageUpload
                 value={newBoard.image}
-                onChange={(e) => setNewBoard({ ...newBoard, image: e.target.value })}
+                onChange={(url) => setNewBoard({ ...newBoard, image: url })}
               />
             </div>
             <div className="space-y-2">
@@ -831,11 +830,6 @@ const AdminClientDetail = () => {
                 onChange={(e) => setNewBoard({ ...newBoard, notes: e.target.value })}
               />
             </div>
-            {newBoard.image && (
-              <div className="rounded-lg overflow-hidden border border-border">
-                <img src={newBoard.image} alt="Preview" className="w-full h-32 object-cover" />
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddBoardModal(false)}>
@@ -867,19 +861,12 @@ const AdminClientDetail = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="rendering-image">Image URL</Label>
-              <Input
-                id="rendering-image"
-                placeholder="https://..."
+              <Label>Rendering Image</Label>
+              <ImageUpload
                 value={newRendering.image}
-                onChange={(e) => setNewRendering({ ...newRendering, image: e.target.value })}
+                onChange={(url) => setNewRendering({ ...newRendering, image: url })}
               />
             </div>
-            {newRendering.image && (
-              <div className="rounded-lg overflow-hidden border border-border">
-                <img src={newRendering.image} alt="Preview" className="w-full h-40 object-cover" />
-              </div>
-            )}
             <p className="text-sm text-muted-foreground">
               {editingRendering 
                 ? "Update the rendering details and save." 
