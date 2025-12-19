@@ -59,7 +59,7 @@ const ContactSection = () => {
                   <MapPin className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Studio</p>
+                  <p className="text-sm text-muted-foreground">Based in</p>
                   <p className="font-medium text-foreground">Pacific Palisades</p>
                 </div>
               </div>
