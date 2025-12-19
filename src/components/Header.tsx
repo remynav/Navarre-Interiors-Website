@@ -10,8 +10,8 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-semibold text-foreground tracking-tight">
-            Maison<span className="text-gold">.</span>
+          <Link to="/" className="font-display text-xl font-semibold text-foreground tracking-tight">
+            Navarre<span className="text-gold"> Interiors</span>
           </Link>
 
           {/* Desktop Navigation */}
