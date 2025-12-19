@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,14 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if already logged in
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("clientLoggedIn");
+    if (isLoggedIn === "true") {
+      navigate("/client");
+    }
+  }, [navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -17,6 +25,7 @@ const Login = () => {
     // Demo login - in production this would use proper auth
     setTimeout(() => {
       if (email === "demo@client.com" && password === "demo123") {
+        localStorage.setItem("clientLoggedIn", "true");
         toast.success("Welcome back!");
         navigate("/client");
       } else {
@@ -41,7 +50,7 @@ const Login = () => {
             Maison<span className="text-gold">.</span>
           </Link>
           <h2 className="font-display text-3xl text-primary-foreground mb-4">
-            Welcome to Your Client Portal
+            Welcome to Your Portal
           </h2>
           <p className="text-primary-foreground/70 max-w-md">
             Track your project progress, view design documents, and communicate with our team all in one place.
@@ -57,7 +66,7 @@ const Login = () => {
           </Link>
 
           <h1 className="font-display text-3xl font-semibold text-foreground mb-2">
-            Client Login
+            Client Portal
           </h1>
           <p className="text-muted-foreground mb-8">
             Sign in to access your project dashboard

@@ -33,7 +33,7 @@ const Header = () => {
           <div className="hidden md:flex items-center gap-4">
             <Link to="/login">
               <Button variant="ghost" size="sm">
-                Client Login
+                Client Portal
               </Button>
             </Link>
             <a href="#contact">
@@ -69,7 +69,7 @@ const Header = () => {
             </a>
             <Link to="/login">
               <Button variant="ghost" size="sm" className="w-full justify-start">
-                Client Login
+                Client Portal
               </Button>
             </Link>
             <a href="#contact">

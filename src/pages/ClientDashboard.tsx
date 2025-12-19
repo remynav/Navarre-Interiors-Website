@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,7 +80,16 @@ const ClientDashboard = () => {
   const [newMessage, setNewMessage] = useState("");
   const [allMessages, setAllMessages] = useState(chatMessages);
 
+  // Check if logged in
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("clientLoggedIn");
+    if (isLoggedIn !== "true") {
+      navigate("/login");
+    }
+  }, [navigate]);
+
   const handleLogout = () => {
+    localStorage.removeItem("clientLoggedIn");
     toast.success("Logged out successfully");
     navigate("/login");
   };
