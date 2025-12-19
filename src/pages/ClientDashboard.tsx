@@ -57,9 +57,10 @@ const inspirations = [
 ];
 
 const renderings = [
-  { id: 1, title: "Living Room - Option A", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", status: "approved", comments: 3 },
-  { id: 2, title: "Kitchen Rendering", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", status: "pending", comments: 1 },
-  { id: 3, title: "Master Bedroom", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", status: "revision", comments: 5 },
+  { id: 1, title: "Living Room - Option A", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600", status: "approved", comments: 3, sent: true },
+  { id: 2, title: "Kitchen Rendering", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600", status: "pending", comments: 1, sent: true },
+  { id: 3, title: "Master Bedroom", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", status: "revision", comments: 5, sent: true },
+  { id: 4, title: "Guest Bathroom", image: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600", status: "draft", comments: 0, sent: false },
 ];
 
 const messages = [
@@ -460,7 +461,7 @@ const ClientDashboard = () => {
                 </p>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {renderings.map((rendering) => (
+                {renderings.filter(r => r.sent).map((rendering) => (
                   <div key={rendering.id} className="bg-card rounded-lg overflow-hidden shadow-soft">
                     <div className="aspect-video relative">
                       <img
@@ -479,6 +480,12 @@ const ClientDashboard = () => {
                         </h3>
                         <span className="text-sm text-muted-foreground">{rendering.comments} comments</span>
                       </div>
+                      {rendering.status === "approved" && (
+                        <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">You approved this rendering</span>
+                        </div>
+                      )}
                       {rendering.status === "pending" && (
                         <div className="flex gap-2">
                           <Button variant="gold" size="sm" className="flex-1">
@@ -489,6 +496,12 @@ const ClientDashboard = () => {
                             <ThumbsDown className="w-4 h-4 mr-2" />
                             Request Changes
                           </Button>
+                        </div>
+                      )}
+                      {rendering.status === "revision" && (
+                        <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">Revision requested - awaiting update</span>
                         </div>
                       )}
                     </div>
