@@ -25,9 +25,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Mock data
-const clients = [
+// Mock data - using state now for dynamic updates
+const initialClients = [
   { id: 1, name: "John Smith", email: "john@example.com", project: "Modern Penthouse Renovation", status: "In Progress", progress: 65 },
   { id: 2, name: "Sarah Johnson", email: "sarah@example.com", project: "Coastal Beach House", status: "In Progress", progress: 40 },
   { id: 3, name: "Michael Chen", email: "michael@example.com", project: "Minimalist Loft", status: "Completed", progress: 100 },
@@ -47,6 +62,14 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [clients, setClients] = useState(initialClients);
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [newClient, setNewClient] = useState({
+    name: "",
+    email: "",
+    project: "",
+    status: "Planning",
+  });
 
   const handleLogout = () => {
     toast.success("Logged out successfully");
@@ -84,6 +107,27 @@ const AdminDashboard = () => {
 
   const handleClientClick = (clientId: number) => {
     navigate(`/admin/client/${clientId}`);
+  };
+
+  const handleAddClient = () => {
+    if (!newClient.name || !newClient.email || !newClient.project) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    const client = {
+      id: clients.length + 1,
+      name: newClient.name,
+      email: newClient.email,
+      project: newClient.project,
+      status: newClient.status,
+      progress: newClient.status === "Planning" ? 5 : 0,
+    };
+    
+    setClients([...clients, client]);
+    setNewClient({ name: "", email: "", project: "", status: "Planning" });
+    setShowAddClientModal(false);
+    toast.success("Client added successfully");
   };
 
   return (
@@ -259,7 +303,7 @@ const AdminDashboard = () => {
                     Manage your client base
                   </p>
                 </div>
-                <Button variant="gold">
+                <Button variant="gold" onClick={() => setShowAddClientModal(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Client
                 </Button>
@@ -453,6 +497,69 @@ const AdminDashboard = () => {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Add Client Modal */}
+      <Dialog open={showAddClientModal} onOpenChange={setShowAddClientModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">Add New Client</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="client-name">Full Name *</Label>
+              <Input
+                id="client-name"
+                value={newClient.name}
+                onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                placeholder="Enter client name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client-email">Email *</Label>
+              <Input
+                id="client-email"
+                type="email"
+                value={newClient.email}
+                onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                placeholder="Enter client email"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client-project">Project Name *</Label>
+              <Input
+                id="client-project"
+                value={newClient.project}
+                onChange={(e) => setNewClient({ ...newClient, project: e.target.value })}
+                placeholder="Enter project name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client-status">Status</Label>
+              <Select
+                value={newClient.status}
+                onValueChange={(value) => setNewClient({ ...newClient, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Planning">Planning</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="On Hold">On Hold</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddClientModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="gold" onClick={handleAddClient}>
+              Add Client
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
