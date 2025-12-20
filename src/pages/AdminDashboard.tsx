@@ -16,6 +16,9 @@ import {
   Trash2,
   Eye,
   Package,
+  MessageSquare,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -62,6 +65,8 @@ const AdminDashboard = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [chatSectionOpen, setChatSectionOpen] = useState(true);
+  const [clientChats, setClientChats] = useState<{ clientId: string; clientName: string; lastMessage: string; lastMessageTime: string; unread: boolean }[]>([]);
   const [newClient, setNewClient] = useState({
     name: "",
     email: "",
@@ -136,6 +141,57 @@ const AdminDashboard = () => {
 
     fetchClients();
   }, [user, isAdmin]);
+
+  // Fetch client chats (latest message per client)
+  useEffect(() => {
+    const fetchClientChats = async () => {
+      if (!user || !isAdmin || clients.length === 0) return;
+
+      try {
+        // Get all projects with their client ids
+        const { data: projects, error: projectsError } = await supabase
+          .from("projects")
+          .select("id, client_id");
+
+        if (projectsError) throw projectsError;
+
+        // Get latest messages for each project
+        const chatPromises = (projects || []).map(async (project) => {
+          const { data: messages } = await supabase
+            .from("messages")
+            .select("text, created_at, sender_id")
+            .eq("project_id", project.id)
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (messages && messages.length > 0) {
+            const client = clients.find((c) => c.id === project.client_id);
+            if (client) {
+              return {
+                clientId: client.id,
+                clientName: client.name,
+                lastMessage: messages[0].text,
+                lastMessageTime: messages[0].created_at,
+                unread: messages[0].sender_id === client.id, // Unread if client sent last
+              };
+            }
+          }
+          return null;
+        });
+
+        const results = await Promise.all(chatPromises);
+        const validChats = results
+          .filter((c): c is NonNullable<typeof c> => c !== null)
+          .sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
+
+        setClientChats(validChats);
+      } catch (error) {
+        console.error("Error fetching client chats:", error);
+      }
+    };
+
+    fetchClientChats();
+  }, [user, isAdmin, clients]);
 
   // Calculate stats from real data
   const stats = [
@@ -283,7 +339,7 @@ const AdminDashboard = () => {
             <p className="text-sm text-primary-foreground/60 mt-1">Admin Portal</p>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -301,6 +357,62 @@ const AdminDashboard = () => {
                 {item.label}
               </button>
             ))}
+
+            {/* Chat Section */}
+            <div className="pt-4 mt-4 border-t border-primary-foreground/10">
+              <button
+                onClick={() => setChatSectionOpen(!chatSectionOpen)}
+                className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5" />
+                  <span>Messages</span>
+                </div>
+                {chatSectionOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+
+              {chatSectionOpen && (
+                <div className="mt-2 space-y-1">
+                  {clientChats.length === 0 ? (
+                    <p className="px-4 py-2 text-xs text-primary-foreground/50">No conversations yet</p>
+                  ) : (
+                    clientChats.map((chat) => (
+                      <button
+                        key={chat.clientId}
+                        onClick={() => {
+                          navigate(`/admin/client/${chat.clientId}`);
+                          setSidebarOpen(false);
+                        }}
+                        className="w-full flex items-start gap-3 px-4 py-2 rounded-lg text-left hover:bg-primary-foreground/10 transition-colors group"
+                      >
+                        <div className="relative">
+                          <div className="w-8 h-8 bg-gold/20 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-gold text-xs font-medium">
+                              {chat.clientName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            </span>
+                          </div>
+                          {chat.unread && (
+                            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-gold rounded-full" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm truncate ${chat.unread ? "font-semibold text-primary-foreground" : "font-medium text-primary-foreground/80"}`}>
+                            {chat.clientName}
+                          </p>
+                          <p className="text-xs text-primary-foreground/50 truncate">
+                            {chat.lastMessage.slice(0, 30)}{chat.lastMessage.length > 30 ? "..." : ""}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </nav>
 
           <div className="p-4 border-t border-primary-foreground/10">
