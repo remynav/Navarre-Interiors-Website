@@ -55,6 +55,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { FileUpload } from "@/components/FileUpload";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
+import { sendNotification } from "@/hooks/useNotifications";
 
 interface ClientProfile {
   id: string;
@@ -722,7 +723,7 @@ const AdminClientDetail = () => {
   ];
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedProjectId) return;
+    if (!newMessage.trim() || !selectedProjectId || !clientId) return;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -738,6 +739,17 @@ const AdminClientDetail = () => {
       });
 
       if (error) throw error;
+      
+      // Notify client about new message
+      sendNotification({
+        userId: clientId,
+        type: 'message',
+        title: 'New message from your designer',
+        message: newMessage.slice(0, 100) + (newMessage.length > 100 ? '...' : ''),
+        referenceId: selectedProjectId,
+        referenceType: 'project'
+      });
+      
       setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);

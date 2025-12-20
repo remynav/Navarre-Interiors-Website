@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationBell } from "@/components/NotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -439,6 +440,7 @@ const AdminDashboard = () => {
           </button>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-4">
+            {user && <NotificationBell userId={user.id} />}
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">Admin User</p>
               <p className="text-xs text-muted-foreground">admin@navarre.com</p>
