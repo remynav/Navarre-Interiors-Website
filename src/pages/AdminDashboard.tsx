@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,6 +119,7 @@ const productCategories = [
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { user, isLoading: authLoading, isAdmin, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -130,7 +132,20 @@ const AdminDashboard = () => {
     status: "Planning",
   });
 
-  const handleLogout = () => {
+  // Check if logged in and is admin
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        navigate("/admin-login");
+      } else if (!isAdmin) {
+        toast.error("You don't have admin access");
+        navigate("/client");
+      }
+    }
+  }, [user, authLoading, isAdmin, navigate]);
+
+  const handleLogout = async () => {
+    await signOut();
     toast.success("Logged out successfully");
     navigate("/");
   };

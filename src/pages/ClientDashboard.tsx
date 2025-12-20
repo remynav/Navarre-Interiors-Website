@@ -34,6 +34,7 @@ import {
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
 
 // Mock data for demo
@@ -67,6 +68,7 @@ const chatMessages = [
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
+  const { user, isLoading: authLoading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
@@ -89,11 +91,10 @@ const ClientDashboard = () => {
 
   // Check if logged in
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("clientLoggedIn");
-    if (isLoggedIn !== "true") {
-      navigate("/login");
+    if (!authLoading && !user) {
+      navigate("/auth");
     }
-  }, [navigate]);
+  }, [user, authLoading, navigate]);
 
   // Document handlers
   const clientDocuments = documents.filter(d => d.status === "sent" || d.status === "archived");
@@ -118,8 +119,8 @@ const ClientDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("clientLoggedIn");
+  const handleLogout = async () => {
+    await signOut();
     toast.success("Logged out successfully");
     navigate("/");
   };
