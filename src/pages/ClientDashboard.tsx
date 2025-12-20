@@ -44,6 +44,8 @@ import { ClientProductsTab } from "@/components/client/ClientProductsTab";
 import { InspirationBoardsTab } from "@/components/client/InspirationBoardsTab";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationBell } from "@/components/NotificationBell";
+import { notifyAdmins } from "@/hooks/useNotifications";
 
 interface ProfileData {
   id: string;
@@ -303,6 +305,16 @@ const ClientDashboard = () => {
       const { error } = await supabase.from("messages").insert(messageData);
 
       if (error) throw error;
+      
+      // Notify admins about new message
+      notifyAdmins(
+        'message',
+        `New message from ${profile?.full_name || 'Client'}`,
+        messageText.slice(0, 100) + (messageText.length > 100 ? '...' : ''),
+        selectedProjectId,
+        'project'
+      );
+      
       setNewMessage("");
       setPendingReference(null);
     } catch (error) {
@@ -500,6 +512,7 @@ const ClientDashboard = () => {
             {sidebarOpen ? <X /> : <Menu />}
           </button>
           <div className="flex items-center gap-4">
+            {user && <NotificationBell userId={user.id} />}
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">
                 {profile?.full_name || profile?.email?.split('@')[0] || "User"}
