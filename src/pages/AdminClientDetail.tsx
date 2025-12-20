@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,11 +74,12 @@ interface ClientProfile {
 const AdminClientDetail = () => {
   const navigate = useNavigate();
   const { clientId } = useParams();
+  const [searchParams] = useSearchParams();
   
   const [client, setClient] = useState<ClientProfile | null>(null);
   const [isLoadingClient, setIsLoadingClient] = useState(true);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "overview");
   const [documents, setDocuments] = useSharedDocuments();
   const [inspirations, setInspirations] = useSharedInspirations();
   const [renderings, setRenderings] = useSharedRenderings();
