@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
 import { ClientProductsTab } from "@/components/client/ClientProductsTab";
+import { InspirationBoardsTab } from "@/components/client/InspirationBoardsTab";
 
 // Mock data for demo
 const projectData = {
@@ -620,75 +621,10 @@ const ClientDashboard = () => {
           {activeTab === "products" && <ClientProductsTab />}
 
           {activeTab === "inspiration" && (
-            <div className="space-y-6 animate-fade-in">
-              <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
-                  Inspiration Boards
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  Design concepts and mood boards for your project
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {inspirations.map((board) => (
-                  <div key={board.id} className="bg-card rounded-lg overflow-hidden shadow-soft">
-                    <div 
-                      className="aspect-video relative overflow-hidden cursor-pointer group"
-                      onClick={() => handleOpenGallery(board.id)}
-                    >
-                      <img
-                        src={board.coverImage}
-                        alt={board.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-white font-medium text-sm bg-black/30 px-3 py-1 rounded-full">
-                          View Gallery ({board.gallery.length} images)
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-display text-lg font-semibold text-foreground mb-1">
-                        {board.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4">{board.notes}</p>
-                      
-                      {/* Design Items Section */}
-                      {board.designItems.length > 0 && (
-                        <div className="border-t border-border pt-4">
-                          <h4 className="text-sm font-medium text-foreground mb-3">Selections & Materials</h4>
-                          <div className="space-y-3">
-                            {board.designItems.map((item) => (
-                              <div key={item.id} className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
-                                <img src={item.image} alt={item.name} className="w-12 h-12 rounded object-cover" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs text-muted-foreground">{item.type}</p>
-                                  <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                  {item.status === "approved" ? (
-                                    <Button size="sm" variant="ghost" onClick={() => handleUndoItemApproval(board.id, item.id)} className="text-xs h-7">
-                                      <CheckCircle className="w-3 h-3 mr-1 text-green-600" /> Undo
-                                    </Button>
-                                  ) : (
-                                    <Button size="sm" variant="outline" onClick={() => handleApproveItem(board.id, item.id)} className="text-xs h-7">
-                                      <ThumbsUp className="w-3 h-3 mr-1" /> Approve
-                                    </Button>
-                                  )}
-                                  <Button size="sm" variant="ghost" onClick={() => handleViewItemComments(board.id, item.id)} className="text-xs h-7">
-                                    <MessageSquare className="w-3 h-3 mr-1" /> Comment
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <InspirationBoardsTab
+              inspirations={inspirations}
+              setInspirations={setInspirations}
+            />
           )}
 
           {activeTab === "renderings" && (
