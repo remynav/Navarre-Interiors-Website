@@ -910,7 +910,7 @@ const ClientDashboard = () => {
                           </Button>
                         </div>
                       )}
-                      {rendering.status === "pending" && (
+                      {rendering.status !== "approved" && (
                         <Button 
                           variant="gold" 
                           size="sm" 

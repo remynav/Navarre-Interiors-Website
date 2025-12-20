@@ -131,15 +131,9 @@ const defaultRenderings: Rendering[] = [
     id: 3, 
     title: "Master Bedroom", 
     image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600", 
-    status: "revision", 
+    status: "pending", 
     sent: true,
-    commentsList: [
-      { id: 1, sender: "designer", name: "Sarah Mitchell", text: "Master bedroom with organic textures.", time: "Dec 12, 3:00 PM" },
-      { id: 2, sender: "client", text: "The bed position feels off. Can we try centering it?", time: "Dec 12, 5:30 PM" },
-      { id: 3, sender: "designer", name: "Sarah Mitchell", text: "Good point! Will adjust.", time: "Dec 12, 6:00 PM" },
-      { id: 4, sender: "client", text: "Also prefer lighter curtains", time: "Dec 13, 10:00 AM" },
-      { id: 5, sender: "designer", name: "Sarah Mitchell", text: "Noted! Working on the revision now.", time: "Dec 13, 11:00 AM" },
-    ]
+    commentsList: []
   },
   { 
     id: 4, 
