@@ -32,10 +32,12 @@ import {
   Download,
   Archive,
   Eye,
+  Package,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
+import { ClientProductsTab } from "@/components/client/ClientProductsTab";
 
 // Mock data for demo
 const projectData = {
@@ -282,6 +284,7 @@ const ClientDashboard = () => {
   const navItems = [
     { id: "overview", label: "Overview", icon: Home },
     { id: "documents", label: "Documents", icon: FileText },
+    { id: "products", label: "Products", icon: Package },
     { id: "inspiration", label: "Inspiration", icon: Palette },
     { id: "renderings", label: "Renderings", icon: Image },
     { id: "timeline", label: "Timeline", icon: Calendar },
@@ -613,6 +616,8 @@ const ClientDashboard = () => {
               </div>
             </div>
           )}
+
+          {activeTab === "products" && <ClientProductsTab />}
 
           {activeTab === "inspiration" && (
             <div className="space-y-6 animate-fade-in">
