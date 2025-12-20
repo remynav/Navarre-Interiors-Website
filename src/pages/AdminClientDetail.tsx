@@ -209,7 +209,54 @@ const AdminClientDetail = () => {
     }
   };
   const [newMessage, setNewMessage] = useState("");
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [docTab, setDocTab] = useState<"sent" | "draft" | "archived">("sent");
+
+  // Fetch messages and set up realtime subscription
+  useEffect(() => {
+    if (!selectedProjectId) return;
+
+    const fetchMessages = async () => {
+      setIsLoadingMessages(true);
+      try {
+        const { data, error } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("project_id", selectedProjectId)
+          .order("created_at", { ascending: true });
+
+        if (error) throw error;
+        setMessages(data || []);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    };
+
+    fetchMessages();
+
+    // Set up realtime subscription
+    const channel = supabase
+      .channel(`messages-${selectedProjectId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `project_id=eq.${selectedProjectId}`,
+        },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as any]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedProjectId]);
   
   // Modal states
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
@@ -673,16 +720,28 @@ const AdminClientDetail = () => {
     { id: "chat", label: "Chat", icon: MessageSquare },
   ];
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    setMessages([...messages, {
-      id: messages.length + 1,
-      sender: "admin",
-      text: newMessage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }]);
-    setNewMessage("");
-    toast.success("Message sent");
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedProjectId) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to send messages");
+        return;
+      }
+
+      const { error } = await supabase.from("messages").insert({
+        project_id: selectedProjectId,
+        sender_id: user.id,
+        text: newMessage.trim(),
+      });
+
+      if (error) throw error;
+      setNewMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
+    }
   };
 
   // Rendering workflow handlers
@@ -1333,27 +1392,40 @@ const AdminClientDetail = () => {
             <div className="bg-card rounded-lg shadow-soft overflow-hidden">
               {/* Messages */}
               <div className="h-[400px] overflow-y-auto p-4 space-y-4">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.sender === "admin" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[70%] rounded-lg p-3 ${
-                        msg.sender === "admin"
-                          ? "bg-gold text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      }`}
-                    >
-                      <p className="text-sm">{msg.text}</p>
-                      <p className={`text-xs mt-1 ${
-                        msg.sender === "admin" ? "text-primary-foreground/70" : "text-muted-foreground"
-                      }`}>
-                        {msg.time}
-                      </p>
-                    </div>
+                {isLoadingMessages ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
                   </div>
-                ))}
+                ) : messages.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    No messages yet. Start the conversation!
+                  </div>
+                ) : (
+                  messages.map((msg: any) => {
+                    const isAdmin = msg.sender_id !== client?.id;
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[70%] rounded-lg p-3 ${
+                            isAdmin
+                              ? "bg-gold text-primary-foreground"
+                              : "bg-muted text-foreground"
+                          }`}
+                        >
+                          <p className="text-sm">{msg.text}</p>
+                          <p className={`text-xs mt-1 ${
+                            isAdmin ? "text-primary-foreground/70" : "text-muted-foreground"
+                          }`}>
+                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
               {/* Input */}
               <div className="border-t border-border p-4">
