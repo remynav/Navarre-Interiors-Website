@@ -9,14 +9,22 @@ import {
   Package,
   X,
   ImageIcon,
+  Plus,
+  Upload,
+  Trash2,
 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ImageUpload } from "@/components/ImageUpload";
 
 interface Comment {
   id: number;
@@ -45,13 +53,23 @@ interface Inspiration {
   designItems: DesignItem[];
 }
 
-interface Product {
+interface BoardProduct {
   id: string;
-  name: string;
-  category: string;
-  supplier: string | null;
-  link: string | null;
-  image_url: string | null;
+  product_id: string;
+  product: {
+    id: string;
+    name: string;
+    category: string;
+    supplier: string | null;
+    link: string | null;
+    image_url: string | null;
+  };
+}
+
+interface ClientImage {
+  id: string;
+  image_url: string;
+  uploaded_by: string;
 }
 
 interface InspirationBoardsTabProps {
@@ -69,28 +87,136 @@ export const InspirationBoardsTab = ({
   const [showItemComments, setShowItemComments] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [newComment, setNewComment] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
+  const [boardProducts, setBoardProducts] = useState<BoardProduct[]>([]);
+  const [clientImages, setClientImages] = useState<ClientImage[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [showAddImageModal, setShowAddImageModal] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Fetch products when viewing a board
+  // Get current user
   useEffect(() => {
-    if (selectedBoard && activeTab === "products") {
-      setLoadingProducts(true);
-      supabase
-        .from("product_inventory")
-        .select("*")
-        .order("category", { ascending: true })
-        .order("name", { ascending: true })
-        .then(({ data, error }) => {
-          if (error) {
-            console.error("Error fetching products:", error);
-          } else {
-            setProducts(data || []);
-          }
-          setLoadingProducts(false);
-        });
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getUser();
+  }, []);
+
+  // Fetch board products and client images when viewing a board
+  useEffect(() => {
+    if (selectedBoard) {
+      fetchBoardData();
     }
-  }, [selectedBoard, activeTab]);
+  }, [selectedBoard]);
+
+  const fetchBoardData = async () => {
+    if (!selectedBoard) return;
+    
+    setLoadingProducts(true);
+    try {
+      // Fetch board products
+      const { data: productsData, error: productsError } = await supabase
+        .from("board_products")
+        .select(`
+          id,
+          product_id,
+          product:product_inventory (
+            id,
+            name,
+            category,
+            supplier,
+            link,
+            image_url
+          )
+        `)
+        .eq("mood_board_id", selectedBoard.id.toString());
+
+      if (productsError) {
+        console.error("Error fetching board products:", productsError);
+      } else {
+        setBoardProducts((productsData as unknown as BoardProduct[]) || []);
+      }
+
+      // Fetch client-uploaded images
+      const { data: imagesData, error: imagesError } = await supabase
+        .from("client_board_images")
+        .select("*")
+        .eq("mood_board_id", selectedBoard.id.toString())
+        .order("created_at", { ascending: false });
+
+      if (imagesError) {
+        console.error("Error fetching client images:", imagesError);
+      } else {
+        setClientImages(imagesData || []);
+      }
+    } catch (error) {
+      console.error("Error fetching board data:", error);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleAddClientImage = async () => {
+    if (!newImageUrl.trim() || !selectedBoard || !currentUserId) return;
+
+    try {
+      const { error } = await supabase
+        .from("client_board_images")
+        .insert({
+          mood_board_id: selectedBoard.id.toString(),
+          image_url: newImageUrl,
+          uploaded_by: currentUserId,
+        });
+
+      if (error) throw error;
+
+      setClientImages([
+        { id: crypto.randomUUID(), image_url: newImageUrl, uploaded_by: currentUserId },
+        ...clientImages,
+      ]);
+      setNewImageUrl("");
+      setShowAddImageModal(false);
+      toast.success("Image added to board");
+    } catch (error) {
+      console.error("Error adding image:", error);
+      toast.error("Failed to add image");
+    }
+  };
+
+  const handleDeleteClientImage = async (imageId: string) => {
+    try {
+      const { error } = await supabase
+        .from("client_board_images")
+        .delete()
+        .eq("id", imageId);
+
+      if (error) throw error;
+
+      setClientImages(clientImages.filter((img) => img.id !== imageId));
+      toast.success("Image removed");
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      toast.error("Failed to remove image");
+    }
+  };
+
+  const handleRemoveProductFromBoard = async (boardProductId: string) => {
+    try {
+      const { error } = await supabase
+        .from("board_products")
+        .delete()
+        .eq("id", boardProductId);
+
+      if (error) throw error;
+
+      setBoardProducts(boardProducts.filter((bp) => bp.id !== boardProductId));
+      toast.success("Product removed from board");
+    } catch (error) {
+      console.error("Error removing product:", error);
+      toast.error("Failed to remove product");
+    }
+  };
 
   const handleApproveItem = (itemId: number) => {
     if (!selectedBoard) return;
@@ -106,7 +232,6 @@ export const InspirationBoardsTab = ({
           : board
       )
     );
-    // Update local state
     setSelectedBoard((prev) =>
       prev
         ? {
@@ -195,6 +320,11 @@ export const InspirationBoardsTab = ({
   const getSelectedItem = () =>
     selectedBoard?.designItems.find((item) => item.id === selectedItemId);
 
+  // Combine gallery images with client-uploaded images
+  const allGalleryImages = selectedBoard
+    ? [...selectedBoard.gallery, ...clientImages.map((img) => img.image_url)]
+    : [];
+
   // Board List View
   if (!selectedBoard) {
     return (
@@ -259,7 +389,7 @@ export const InspirationBoardsTab = ({
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="font-display text-3xl font-semibold text-foreground">
             {selectedBoard.title}
           </h1>
@@ -277,7 +407,7 @@ export const InspirationBoardsTab = ({
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          Gallery ({selectedBoard.gallery.length})
+          Gallery ({allGalleryImages.length})
         </button>
         <button
           onClick={() => setActiveTab("products")}
@@ -287,26 +417,83 @@ export const InspirationBoardsTab = ({
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          Products ({selectedBoard.designItems.length + products.length})
+          Products ({selectedBoard.designItems.length + boardProducts.length})
         </button>
       </div>
 
       {/* Gallery Tab - Pinterest Style */}
       {activeTab === "gallery" && (
-        <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-          {selectedBoard.gallery.map((image, index) => (
-            <button
-              key={index}
-              onClick={() => setLightboxImage(image)}
-              className="w-full break-inside-avoid overflow-hidden rounded-lg hover:opacity-90 transition-opacity"
-            >
-              <img
-                src={image}
-                alt={`${selectedBoard.title} - Image ${index + 1}`}
-                className="w-full h-auto object-cover"
-              />
-            </button>
-          ))}
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowAddImageModal(true)} size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Image
+            </Button>
+          </div>
+          
+          <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+            {/* Designer images */}
+            {selectedBoard.gallery.map((image, index) => (
+              <button
+                key={`gallery-${index}`}
+                onClick={() => setLightboxImage(image)}
+                className="w-full break-inside-avoid overflow-hidden rounded-lg hover:opacity-90 transition-opacity"
+              >
+                <img
+                  src={image}
+                  alt={`${selectedBoard.title} - Image ${index + 1}`}
+                  className="w-full h-auto object-cover"
+                />
+              </button>
+            ))}
+            
+            {/* Client-uploaded images */}
+            {clientImages.map((img) => (
+              <div
+                key={img.id}
+                className="w-full break-inside-avoid overflow-hidden rounded-lg relative group"
+              >
+                <button
+                  onClick={() => setLightboxImage(img.image_url)}
+                  className="w-full hover:opacity-90 transition-opacity"
+                >
+                  <img
+                    src={img.image_url}
+                    alt="Client inspiration"
+                    className="w-full h-auto object-cover"
+                  />
+                </button>
+                {img.uploaded_by === currentUserId && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDeleteClientImage(img.id)}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                )}
+                <span className="absolute bottom-2 left-2 px-2 py-1 bg-background/80 rounded text-xs text-muted-foreground">
+                  Your upload
+                </span>
+              </div>
+            ))}
+          </div>
+          
+          {allGalleryImages.length === 0 && (
+            <div className="text-center py-12">
+              <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No images in this board yet</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setShowAddImageModal(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add your first image
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -402,27 +589,27 @@ export const InspirationBoardsTab = ({
             </div>
           )}
 
-          {/* Products from Inventory */}
+          {/* Board Products */}
           {loadingProducts ? (
             <div className="flex items-center justify-center h-32">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
             </div>
-          ) : products.length > 0 ? (
+          ) : boardProducts.length > 0 ? (
             <div>
               <h3 className="font-display text-lg font-semibold text-foreground mb-4">
-                Product Inventory
+                Products for this Board
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {products.map((product) => (
+                {boardProducts.map((bp) => (
                   <div
-                    key={product.id}
-                    className="bg-card rounded-lg overflow-hidden border border-border hover:border-gold/50 transition-colors"
+                    key={bp.id}
+                    className="bg-card rounded-lg overflow-hidden border border-border hover:border-gold/50 transition-colors group"
                   >
                     <div className="aspect-square relative overflow-hidden bg-muted">
-                      {product.image_url ? (
+                      {bp.product.image_url ? (
                         <img
-                          src={product.image_url}
-                          alt={product.name}
+                          src={bp.product.image_url}
+                          alt={bp.product.name}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -431,26 +618,34 @@ export const InspirationBoardsTab = ({
                         </div>
                       )}
                       <span className="absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium bg-background/90 text-foreground">
-                        {product.category}
+                        {bp.product.category}
                       </span>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveProductFromBoard(bp.id)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                     </div>
                     <div className="p-4">
-                      {product.link ? (
+                      {bp.product.link ? (
                         <a
-                          href={product.link}
+                          href={bp.product.link}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-medium text-foreground hover:text-gold transition-colors flex items-center gap-1"
                         >
-                          {product.name}
+                          {bp.product.name}
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       ) : (
-                        <p className="font-medium text-foreground">{product.name}</p>
+                        <p className="font-medium text-foreground">{bp.product.name}</p>
                       )}
-                      {product.supplier && (
+                      {bp.product.supplier && (
                         <p className="text-sm text-muted-foreground mt-1">
-                          {product.supplier}
+                          {bp.product.supplier}
                         </p>
                       )}
                     </div>
@@ -460,10 +655,13 @@ export const InspirationBoardsTab = ({
             </div>
           ) : null}
 
-          {selectedBoard.designItems.length === 0 && products.length === 0 && !loadingProducts && (
+          {selectedBoard.designItems.length === 0 && boardProducts.length === 0 && !loadingProducts && (
             <div className="text-center py-12">
               <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No products selected yet</p>
+              <p className="text-muted-foreground">No products selected for this board yet</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Add products from the Products page
+              </p>
             </div>
           )}
         </div>
@@ -495,52 +693,71 @@ export const InspirationBoardsTab = ({
       {/* Item Comments Modal */}
       <Dialog open={showItemComments} onOpenChange={setShowItemComments}>
         <DialogContent className="sm:max-w-md">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-lg font-semibold text-foreground">
-                Comments - {getSelectedItem()?.name}
-              </h3>
-            </div>
-            <div className="max-h-64 overflow-y-auto space-y-3">
-              {getSelectedItem()?.commentsList.length === 0 ? (
-                <p className="text-muted-foreground text-sm text-center py-4">
-                  No comments yet
-                </p>
-              ) : (
-                getSelectedItem()?.commentsList.map((comment) => (
-                  <div
-                    key={comment.id}
-                    className={`p-3 rounded-lg ${
-                      comment.sender === "client"
-                        ? "bg-gold/10 ml-4"
-                        : "bg-muted mr-4"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-foreground">
-                        {comment.sender === "client" ? "You" : comment.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {comment.time}
-                      </span>
-                    </div>
-                    <p className="text-sm text-foreground">{comment.text}</p>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-              />
-              <Button variant="gold" onClick={handleAddComment}>
-                Send
-              </Button>
-            </div>
+          <DialogHeader>
+            <DialogTitle>Comments - {getSelectedItem()?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 max-h-64 overflow-y-auto">
+            {getSelectedItem()?.commentsList.map((comment) => (
+              <div
+                key={comment.id}
+                className={`p-3 rounded-lg ${
+                  comment.sender === "client"
+                    ? "bg-gold/10 ml-8"
+                    : "bg-muted mr-8"
+                }`}
+              >
+                <p className="text-sm">{comment.text}</p>
+                <p className="text-xs text-muted-foreground mt-1">{comment.time}</p>
+              </div>
+            ))}
+            {getSelectedItem()?.commentsList.length === 0 && (
+              <p className="text-center text-muted-foreground text-sm">
+                No comments yet
+              </p>
+            )}
           </div>
+          <div className="flex gap-2 mt-4">
+            <Input
+              placeholder="Add a comment..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+            />
+            <Button onClick={handleAddComment} size="sm">
+              Send
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Image Modal */}
+      <Dialog open={showAddImageModal} onOpenChange={setShowAddImageModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Inspiration Image</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Image URL</Label>
+              <Input
+                placeholder="https://example.com/image.jpg"
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+              />
+            </div>
+            <ImageUpload
+              value={newImageUrl}
+              onChange={(url) => setNewImageUrl(url)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddImageModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddClientImage} disabled={!newImageUrl.trim()}>
+              Add Image
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

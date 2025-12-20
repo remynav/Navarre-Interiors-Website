@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      board_products: {
+        Row: {
+          added_by: string
+          created_at: string
+          id: string
+          mood_board_id: string
+          product_id: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          id?: string
+          mood_board_id: string
+          product_id: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          id?: string
+          mood_board_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_products_mood_board_id_fkey"
+            columns: ["mood_board_id"]
+            isOneToOne: false
+            referencedRelation: "mood_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_board_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          mood_board_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          mood_board_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          mood_board_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_board_images_mood_board_id_fkey"
+            columns: ["mood_board_id"]
+            isOneToOne: false
+            referencedRelation: "mood_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       design_item_comments: {
         Row: {
           created_at: string
@@ -258,6 +329,35 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_inventory"
             referencedColumns: ["id"]
           },
         ]

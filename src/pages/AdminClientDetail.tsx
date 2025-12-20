@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ import {
   Download,
   Archive,
   Eye,
+  Package,
+  ExternalLink,
 } from "lucide-react";
 import {
   Dialog,
@@ -51,6 +53,7 @@ import {
 import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
 import { ImageUpload } from "@/components/ImageUpload";
 import { FileUpload } from "@/components/FileUpload";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock client data
 const clientsData: Record<number, any> = {
@@ -110,6 +113,149 @@ const AdminClientDetail = () => {
   const [newGalleryImage, setNewGalleryImage] = useState("");
   const [newItem, setNewItem] = useState({ type: "", name: "", image: "", link: "" });
   const [uploadAsDraft, setUploadAsDraft] = useState(true);
+  const [showAddProductToBoardModal, setShowAddProductToBoardModal] = useState(false);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [boardProducts, setBoardProducts] = useState<any[]>([]);
+  const [loadingBoardProducts, setLoadingBoardProducts] = useState(false);
+  const [boardDetailTab, setBoardDetailTab] = useState<"gallery" | "items" | "products">("gallery");
+  const [clientImages, setClientImages] = useState<any[]>([]);
+
+  // Fetch all products for the dropdown
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase
+        .from("product_inventory")
+        .select("*")
+        .order("category")
+        .order("name");
+      if (data) setAllProducts(data);
+    };
+    fetchProducts();
+  }, []);
+
+  // Fetch board products and client images when board detail modal opens
+  useEffect(() => {
+    if (showBoardDetailModal && selectedBoardId) {
+      fetchBoardProducts();
+      fetchClientImages();
+    }
+  }, [showBoardDetailModal, selectedBoardId]);
+
+  const fetchBoardProducts = async () => {
+    if (!selectedBoardId) return;
+    setLoadingBoardProducts(true);
+    try {
+      const { data, error } = await supabase
+        .from("board_products")
+        .select(`
+          id,
+          product_id,
+          product:product_inventory (
+            id,
+            name,
+            category,
+            supplier,
+            link,
+            image_url
+          )
+        `)
+        .eq("mood_board_id", selectedBoardId.toString());
+
+      if (!error && data) {
+        setBoardProducts(data);
+      }
+    } catch (error) {
+      console.error("Error fetching board products:", error);
+    } finally {
+      setLoadingBoardProducts(false);
+    }
+  };
+
+  const fetchClientImages = async () => {
+    if (!selectedBoardId) return;
+    try {
+      const { data, error } = await supabase
+        .from("client_board_images")
+        .select("*")
+        .eq("mood_board_id", selectedBoardId.toString())
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setClientImages(data);
+      }
+    } catch (error) {
+      console.error("Error fetching client images:", error);
+    }
+  };
+
+  const handleAddProductToBoard = async () => {
+    if (!selectedProductId || !selectedBoardId) return;
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in");
+        return;
+      }
+
+      const { error } = await supabase.from("board_products").insert({
+        mood_board_id: selectedBoardId.toString(),
+        product_id: selectedProductId,
+        added_by: user.id,
+      });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast.error("Product already added to this board");
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success("Product added to board");
+        setShowAddProductToBoardModal(false);
+        setSelectedProductId("");
+        fetchBoardProducts();
+      }
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast.error("Failed to add product");
+    }
+  };
+
+  const handleRemoveProductFromBoard = async (boardProductId: string) => {
+    try {
+      const { error } = await supabase
+        .from("board_products")
+        .delete()
+        .eq("id", boardProductId);
+
+      if (error) throw error;
+
+      setBoardProducts(boardProducts.filter((bp) => bp.id !== boardProductId));
+      toast.success("Product removed from board");
+    } catch (error) {
+      console.error("Error removing product:", error);
+      toast.error("Failed to remove product");
+    }
+  };
+
+  const handleDeleteClientImage = async (imageId: string) => {
+    try {
+      const { error } = await supabase
+        .from("client_board_images")
+        .delete()
+        .eq("id", imageId);
+
+      if (error) throw error;
+
+      setClientImages(clientImages.filter((img) => img.id !== imageId));
+      toast.success("Client image removed");
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      toast.error("Failed to remove image");
+    }
+  };
 
   const handleStatusChange = (newStatus: string) => {
     setClient({ ...client, status: newStatus });
@@ -1324,85 +1470,202 @@ const AdminClientDetail = () => {
             <p className="text-sm text-muted-foreground">{getSelectedBoard()?.notes}</p>
           </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto space-y-6 py-4">
-            {/* Gallery Section */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-foreground">Gallery Images</h3>
-                <Button size="sm" variant="outline" onClick={() => { setNewGalleryImage(""); setShowAddGalleryImageModal(true); }}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Image
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {getSelectedBoard()?.gallery.map((img, idx) => (
-                  <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden">
-                    <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => { setGalleryIndex(idx); setShowGalleryModal(true); }}>
-                        <Image className="w-4 h-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => handleDeleteGalleryImage(idx)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {getSelectedBoard()?.gallery.length === 0 && (
-                  <div className="col-span-full text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
-                    No images yet
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Materials Section */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-foreground">Selections & Materials</h3>
-                <Button size="sm" variant="outline" onClick={() => { setNewItem({ type: "", name: "", image: "", link: "" }); setShowAddItemModal(true); }}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Item
-                </Button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {getSelectedBoard()?.designItems.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => handleViewItemDetail(selectedBoardId!, item.id)}
-                  >
-                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded object-cover" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">{item.type}</p>
-                      <p className="text-sm font-medium text-foreground">{item.name}</p>
-                      {item.link && (
-                        <p className="text-xs text-gold truncate">Has link</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getItemStatusColor(item.status)}`}>
-                        {item.status === "approved" ? "Approved" : "Pending"}
-                      </span>
-                      <Button 
-                        size="sm" 
-                        variant="ghost"
-                        className="h-7"
-                        onClick={(e) => { e.stopPropagation(); handleDeleteDesignItem(item.id); }}
-                      >
-                        <Trash2 className="w-3 h-3 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {getSelectedBoard()?.designItems.length === 0 && (
-                  <div className="col-span-full text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
-                    No items yet
-                  </div>
-                )}
-              </div>
-            </div>
+          {/* Tabs */}
+          <div className="flex gap-1 border-b border-border">
+            <button
+              onClick={() => setBoardDetailTab("gallery")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                boardDetailTab === "gallery" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Gallery ({(getSelectedBoard()?.gallery.length || 0) + clientImages.length})
+            </button>
+            <button
+              onClick={() => setBoardDetailTab("items")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                boardDetailTab === "items" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Selections ({getSelectedBoard()?.designItems.length || 0})
+            </button>
+            <button
+              onClick={() => setBoardDetailTab("products")}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                boardDetailTab === "products" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Products ({boardProducts.length})
+            </button>
           </div>
+          
+          <div className="flex-1 overflow-y-auto space-y-6 py-4">
+            {/* Gallery Tab */}
+            {boardDetailTab === "gallery" && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-medium text-foreground">Gallery Images</h3>
+                  <Button size="sm" variant="outline" onClick={() => { setNewGalleryImage(""); setShowAddGalleryImageModal(true); }}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Image
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {getSelectedBoard()?.gallery.map((img, idx) => (
+                    <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden">
+                      <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => { setGalleryIndex(idx); setShowGalleryModal(true); }}>
+                          <Image className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => handleDeleteGalleryImage(idx)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Client uploaded images */}
+                  {clientImages.map((img) => (
+                    <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden">
+                      <img src={img.image_url} alt="Client upload" className="w-full h-full object-cover" />
+                      <span className="absolute bottom-1 left-1 px-2 py-0.5 bg-background/80 rounded text-xs text-muted-foreground">
+                        Client
+                      </span>
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => handleDeleteClientImage(img.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {(getSelectedBoard()?.gallery.length === 0 && clientImages.length === 0) && (
+                    <div className="col-span-full text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
+                      No images yet
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Items Tab */}
+            {boardDetailTab === "items" && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-medium text-foreground">Selections & Materials</h3>
+                  <Button size="sm" variant="outline" onClick={() => { setNewItem({ type: "", name: "", image: "", link: "" }); setShowAddItemModal(true); }}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Item
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {getSelectedBoard()?.designItems.map((item) => (
+                    <div 
+                      key={item.id} 
+                      className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                      onClick={() => handleViewItemDetail(selectedBoardId!, item.id)}
+                    >
+                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">{item.type}</p>
+                        <p className="text-sm font-medium text-foreground">{item.name}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getItemStatusColor(item.status)}`}>
+                          {item.status === "approved" ? "Approved" : "Pending"}
+                        </span>
+                        <Button size="sm" variant="ghost" className="h-7" onClick={(e) => { e.stopPropagation(); handleDeleteDesignItem(item.id); }}>
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {getSelectedBoard()?.designItems.length === 0 && (
+                    <div className="col-span-full text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
+                      No items yet
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Products Tab */}
+            {boardDetailTab === "products" && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-medium text-foreground">Products</h3>
+                  <Button size="sm" variant="outline" onClick={() => { setSelectedProductId(""); setShowAddProductToBoardModal(true); }}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Product
+                  </Button>
+                </div>
+                {loadingBoardProducts ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
+                  </div>
+                ) : boardProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {boardProducts.map((bp) => (
+                      <div key={bp.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg group">
+                        {bp.product?.image_url ? (
+                          <img src={bp.product.image_url} alt={bp.product.name} className="w-16 h-16 rounded object-cover" />
+                        ) : (
+                          <div className="w-16 h-16 rounded bg-muted flex items-center justify-center">
+                            <Package className="w-6 h-6 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground">{bp.product?.category}</p>
+                          {bp.product?.link ? (
+                            <a href={bp.product.link} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-foreground hover:text-gold flex items-center gap-1">
+                              {bp.product?.name}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : (
+                            <p className="text-sm font-medium text-foreground">{bp.product?.name}</p>
+                          )}
+                          {bp.product?.supplier && <p className="text-xs text-muted-foreground">{bp.product.supplier}</p>}
+                        </div>
+                        <Button size="sm" variant="ghost" className="h-7 opacity-0 group-hover:opacity-100" onClick={() => handleRemoveProductFromBoard(bp.id)}>
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
+                    No products added yet
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Product to Board Modal */}
+      <Dialog open={showAddProductToBoardModal} onOpenChange={setShowAddProductToBoardModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Product to Board</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label>Select Product</Label>
+            <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a product..." />
+              </SelectTrigger>
+              <SelectContent>
+                {allProducts.map((product) => (
+                  <SelectItem key={product.id} value={product.id}>
+                    {product.name} ({product.category})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddProductToBoardModal(false)}>Cancel</Button>
+            <Button variant="gold" onClick={handleAddProductToBoard} disabled={!selectedProductId}>Add</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
