@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -33,21 +34,33 @@ import {
   Archive,
   Eye,
   Package,
+  User,
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
 import { ClientProductsTab } from "@/components/client/ClientProductsTab";
 import { InspirationBoardsTab } from "@/components/client/InspirationBoardsTab";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock data for demo
-const projectData = {
-  name: "Modern Penthouse Renovation",
-  status: "In Progress",
-  startDate: "October 15, 2024",
-  estimatedCompletion: "March 2025",
-  designer: "Sarah Mitchell",
-};
+interface ProfileData {
+  id: string;
+  full_name: string;
+  email: string;
+  phone_number: string;
+  address: string;
+}
+
+interface ProjectData {
+  id: string;
+  name: string;
+  status: string;
+  start_date: string | null;
+  estimated_completion: string | null;
+  designer: string | null;
+  progress: number;
+}
 
 const milestones = [
   { id: 1, title: "Concept Development", status: "completed", date: "Oct 20" },
@@ -58,13 +71,8 @@ const milestones = [
   { id: 6, title: "Final Styling", status: "upcoming", date: "Feb 15" },
 ];
 
-const messages = [
-  { id: 1, from: "Sarah Mitchell", message: "The furniture samples have arrived! When can you come to the showroom?", date: "2 hours ago", unread: true },
-  { id: 2, from: "Project Team", message: "Weekly update: Phase 3 completed ahead of schedule.", date: "Yesterday", unread: false },
-];
-
 const chatMessages = [
-  { id: 1, sender: "designer", name: "Sarah Mitchell", text: "Hi John! The furniture samples have arrived. When can you come to the showroom?", time: "10:30 AM" },
+  { id: 1, sender: "designer", name: "Sarah Mitchell", text: "Hi! The furniture samples have arrived. When can you come to the showroom?", time: "10:30 AM" },
   { id: 2, sender: "client", text: "That's great news! I can come by tomorrow afternoon, around 2pm?", time: "10:45 AM" },
   { id: 3, sender: "designer", name: "Sarah Mitchell", text: "Perfect! I'll have everything set up for you. Looking forward to seeing you!", time: "10:48 AM" },
 ];
@@ -92,12 +100,107 @@ const ClientDashboard = () => {
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
 
-  // Check if logged in
+  // Profile and project state
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [projects, setProjects] = useState<ProjectData[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [editProfile, setEditProfile] = useState({
+    full_name: "",
+    phone_number: "",
+    address: "",
+  });
+
+  // Check if logged in and fetch profile
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
+      return;
+    }
+
+    if (user) {
+      fetchProfileAndProjects();
     }
   }, [user, authLoading, navigate]);
+
+  const fetchProfileAndProjects = async () => {
+    if (!user) return;
+    
+    setIsLoadingProfile(true);
+    try {
+      // Fetch profile
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, phone_number, address")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      if (profileData) {
+        setProfile(profileData as ProfileData);
+        setEditProfile({
+          full_name: profileData.full_name || "",
+          phone_number: profileData.phone_number || "",
+          address: profileData.address || "",
+        });
+      }
+
+      // Fetch projects for this client
+      const { data: projectsData, error: projectsError } = await supabase
+        .from("projects")
+        .select("id, name, status, start_date, estimated_completion, designer, progress")
+        .eq("client_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (projectsError) throw projectsError;
+
+      setProjects(projectsData || []);
+      if (projectsData && projectsData.length > 0) {
+        setSelectedProjectId(projectsData[0].id);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      toast.error("Failed to load profile");
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    setIsSavingProfile(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: editProfile.full_name,
+          phone_number: editProfile.phone_number,
+          address: editProfile.address,
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setProfile(prev => prev ? {
+        ...prev,
+        full_name: editProfile.full_name,
+        phone_number: editProfile.phone_number,
+        address: editProfile.address,
+      } : null);
+      
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const getSelectedProject = () => projects.find(p => p.id === selectedProjectId);
 
   // Document handlers
   const clientDocuments = documents.filter(d => d.status === "sent" || d.status === "archived");
@@ -284,6 +387,7 @@ const ClientDashboard = () => {
 
   const navItems = [
     { id: "overview", label: "Overview", icon: Home },
+    { id: "profile", label: "Profile", icon: User },
     { id: "documents", label: "Documents", icon: FileText },
     { id: "products", label: "Products", icon: Package },
     { id: "inspiration", label: "Inspiration", icon: Palette },
@@ -371,11 +475,15 @@ const ClientDashboard = () => {
           </button>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-medium text-foreground">John Smith</p>
-              <p className="text-xs text-muted-foreground">john@example.com</p>
+              <p className="text-sm font-medium text-foreground">
+                {profile?.full_name || profile?.email?.split('@')[0] || "User"}
+              </p>
+              <p className="text-xs text-muted-foreground">{profile?.email}</p>
             </div>
             <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
-              <span className="text-gold font-medium">JS</span>
+              <span className="text-gold font-medium">
+                {(profile?.full_name || profile?.email || "U").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+              </span>
             </div>
           </div>
         </header>
@@ -399,7 +507,7 @@ const ClientDashboard = () => {
             <div className="space-y-8 animate-fade-in">
               <div>
                 <h1 className="font-display text-3xl font-semibold text-foreground">
-                  Welcome back, John
+                  Welcome back, {profile?.full_name?.split(" ")[0] || "there"}
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   Here's an overview of your project
@@ -414,32 +522,57 @@ const ClientDashboard = () => {
                       Current Project
                     </p>
                     <h2 className="font-display text-2xl font-semibold text-foreground">
-                      {projectData.name}
+                      {getSelectedProject()?.name || "No project assigned"}
                     </h2>
                   </div>
                   <span className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-2 rounded-full text-sm font-medium">
                     <Clock className="w-4 h-4" />
-                    {projectData.status}
+                    {getSelectedProject()?.status || "New"}
                   </span>
                 </div>
 
+                {projects.length > 1 && (
+                  <div className="mb-4">
+                    <p className="text-sm text-muted-foreground mb-2">Select Project</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {projects.map(project => (
+                        <Button
+                          key={project.id}
+                          variant={selectedProjectId === project.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedProjectId(project.id)}
+                        >
+                          {project.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <div>
                     <p className="text-sm text-muted-foreground">Start Date</p>
-                    <p className="font-medium text-foreground">{projectData.startDate}</p>
+                    <p className="font-medium text-foreground">
+                      {getSelectedProject()?.start_date 
+                        ? new Date(getSelectedProject()!.start_date!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                        : "TBD"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Est. Completion</p>
-                    <p className="font-medium text-foreground">{projectData.estimatedCompletion}</p>
+                    <p className="font-medium text-foreground">
+                      {getSelectedProject()?.estimated_completion 
+                        ? new Date(getSelectedProject()!.estimated_completion!).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                        : "TBD"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Lead Designer</p>
-                    <p className="font-medium text-foreground">{projectData.designer}</p>
+                    <p className="font-medium text-foreground">{getSelectedProject()?.designer || "TBD"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Next Milestone</p>
-                    <p className="font-medium text-gold">Furniture Delivery</p>
+                    <p className="text-sm text-muted-foreground">Progress</p>
+                    <p className="font-medium text-gold">{getSelectedProject()?.progress || 0}%</p>
                   </div>
                 </div>
               </div>
@@ -525,21 +658,99 @@ const ClientDashboard = () => {
                     </Button>
                   </div>
                   <div className="space-y-3">
-                    {messages.map((msg) => (
+                    {allMessages.slice(0, 2).map((msg) => (
                       <div
                         key={msg.id}
-                        className={`p-3 rounded-lg transition-colors cursor-pointer ${
-                          msg.unread ? "bg-gold/5 border border-gold/20" : "bg-muted/50 hover:bg-muted"
-                        }`}
+                        className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-medium text-foreground">{msg.from}</p>
-                          <p className="text-xs text-muted-foreground">{msg.date}</p>
+                          <p className="text-sm font-medium text-foreground">
+                            {msg.sender === "designer" ? msg.name : "You"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{msg.time}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-1">{msg.message}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-1">{msg.text}</p>
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "profile" && (
+            <div className="space-y-6 animate-fade-in">
+              <div>
+                <h1 className="font-display text-3xl font-semibold text-foreground">
+                  Profile Settings
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  Update your personal information
+                </p>
+              </div>
+
+              <div className="bg-card rounded-lg p-6 shadow-soft max-w-2xl">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="full_name">Full Name</Label>
+                    <Input
+                      id="full_name"
+                      value={editProfile.full_name}
+                      onChange={(e) => setEditProfile(prev => ({ ...prev, full_name: e.target.value }))}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      value={profile?.email || ""}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone_number">Phone Number</Label>
+                    <Input
+                      id="phone_number"
+                      value={editProfile.phone_number}
+                      onChange={(e) => setEditProfile(prev => ({ ...prev, phone_number: e.target.value }))}
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Textarea
+                      id="address"
+                      value={editProfile.address}
+                      onChange={(e) => setEditProfile(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="Enter your address"
+                      rows={3}
+                    />
+                  </div>
+
+                  <Button 
+                    variant="gold" 
+                    onClick={handleSaveProfile}
+                    disabled={isSavingProfile}
+                    className="w-full sm:w-auto"
+                  >
+                    {isSavingProfile ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>

@@ -55,33 +55,87 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { FileUpload } from "@/components/FileUpload";
 import { supabase } from "@/integrations/supabase/client";
 
-// Mock client data
-const clientsData: Record<number, any> = {
-  1: { id: 1, name: "John Smith", email: "john@example.com", phone: "+1 555-0101", project: "Modern Penthouse Renovation", status: "In Progress", address: "123 Park Avenue, NYC" },
-  2: { id: 2, name: "Sarah Johnson", email: "sarah@example.com", phone: "+1 555-0102", project: "Coastal Beach House", status: "In Progress", address: "456 Ocean Drive, Miami" },
-  3: { id: 3, name: "Michael Chen", email: "michael@example.com", phone: "+1 555-0103", project: "Minimalist Loft", status: "Completed", address: "789 Design St, LA" },
-  4: { id: 4, name: "Emily Davis", email: "emily@example.com", phone: "+1 555-0104", project: "Urban Studio Apartment", status: "In Progress", address: "321 Metro Blvd, Chicago" },
-  5: { id: 5, name: "Robert Wilson", email: "robert@example.com", phone: "+1 555-0105", project: "Classic Colonial Refresh", status: "On Hold", address: "654 Heritage Lane, Boston" },
-};
-
-const mockMessages = [
-  { id: 1, sender: "admin", text: "Hi John! The furniture samples have arrived. When can you come to the showroom?", time: "10:30 AM" },
-  { id: 2, sender: "client", text: "That's great news! I can come by tomorrow afternoon, around 2pm?", time: "10:45 AM" },
-  { id: 3, sender: "admin", text: "Perfect! I'll have everything set up for you. Looking forward to seeing you!", time: "10:48 AM" },
-  { id: 4, sender: "client", text: "Thank you! Can you also have the fabric swatches ready?", time: "11:02 AM" },
-];
+interface ClientProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  projects: Array<{
+    id: string;
+    name: string;
+    status: string;
+    progress: number;
+  }>;
+}
 
 const AdminClientDetail = () => {
   const navigate = useNavigate();
   const { clientId } = useParams();
-  const clientData = clientsData[Number(clientId)] || clientsData[1];
   
-  const [client, setClient] = useState(clientData);
+  const [client, setClient] = useState<ClientProfile | null>(null);
+  const [isLoadingClient, setIsLoadingClient] = useState(true);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [documents, setDocuments] = useSharedDocuments();
   const [inspirations, setInspirations] = useSharedInspirations();
   const [renderings, setRenderings] = useSharedRenderings();
-  const [messages, setMessages] = useState(mockMessages);
+  const [messages, setMessages] = useState<any[]>([]);
+
+  // Fetch client data from Supabase
+  useEffect(() => {
+    const fetchClientData = async () => {
+      if (!clientId) return;
+      
+      setIsLoadingClient(true);
+      try {
+        // Fetch client profile
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, email, full_name, phone_number, address")
+          .eq("id", clientId)
+          .maybeSingle();
+
+        if (profileError) throw profileError;
+
+        if (!profile) {
+          toast.error("Client not found");
+          navigate("/admin");
+          return;
+        }
+
+        // Fetch projects for this client
+        const { data: projects, error: projectsError } = await supabase
+          .from("projects")
+          .select("id, name, status, progress")
+          .eq("client_id", clientId)
+          .order("created_at", { ascending: false });
+
+        if (projectsError) throw projectsError;
+
+        setClient({
+          id: profile.id,
+          name: profile.full_name || profile.email,
+          email: profile.email,
+          phone: profile.phone_number || "",
+          address: profile.address || "",
+          projects: projects || [],
+        });
+
+        // Set first project as selected if exists
+        if (projects && projects.length > 0) {
+          setSelectedProjectId(projects[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching client:", error);
+        toast.error("Failed to load client data");
+      } finally {
+        setIsLoadingClient(false);
+      }
+    };
+
+    fetchClientData();
+  }, [clientId, navigate]);
   const [newMessage, setNewMessage] = useState("");
   const [docTab, setDocTab] = useState<"sent" | "draft" | "archived">("sent");
   
@@ -259,9 +313,30 @@ const AdminClientDetail = () => {
     }
   };
 
-  const handleStatusChange = (newStatus: string) => {
-    setClient({ ...client, status: newStatus });
-    toast.success(`Project status changed to ${newStatus}`);
+  const getSelectedProject = () => client?.projects.find(p => p.id === selectedProjectId);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!selectedProjectId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .update({ status: newStatus })
+        .eq("id", selectedProjectId);
+
+      if (error) throw error;
+
+      setClient(prev => prev ? {
+        ...prev,
+        projects: prev.projects.map(p => 
+          p.id === selectedProjectId ? { ...p, status: newStatus } : p
+        )
+      } : null);
+      toast.success(`Project status changed to ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status");
+    }
   };
 
   // Document handlers
@@ -685,6 +760,25 @@ const AdminClientDetail = () => {
     }
   };
 
+  if (isLoadingClient) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold"></div>
+      </div>
+    );
+  }
+
+  if (!client) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-4">Client not found</p>
+          <Button onClick={() => navigate("/admin")}>Back to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -697,15 +791,31 @@ const AdminClientDetail = () => {
             <h1 className="font-display text-2xl font-semibold text-foreground">
               {client.name}
             </h1>
-            <p className="text-sm text-muted-foreground">{client.project}</p>
+            <p className="text-sm text-muted-foreground">
+              {getSelectedProject()?.name || "No project assigned"}
+            </p>
           </div>
           <div className="flex items-center gap-2">
+            {client.projects.length > 1 && (
+              <Select value={selectedProjectId || ""} onValueChange={setSelectedProjectId}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {client.projects.map(project => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-              client.status === "In Progress" ? "bg-gold/10 text-gold" :
-              client.status === "Completed" ? "bg-green-500/10 text-green-600" :
+              getSelectedProject()?.status === "In Progress" ? "bg-gold/10 text-gold" :
+              getSelectedProject()?.status === "Completed" ? "bg-green-500/10 text-green-600" :
               "bg-muted text-muted-foreground"
             }`}>
-              {client.status}
+              {getSelectedProject()?.status || "New"}
             </span>
           </div>
         </div>
@@ -767,7 +877,7 @@ const AdminClientDetail = () => {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="project-status" className="text-sm text-muted-foreground">Current Status</Label>
-                    <Select value={client.status} onValueChange={handleStatusChange}>
+                    <Select value={getSelectedProject()?.status || "New"} onValueChange={handleStatusChange}>
                       <SelectTrigger className="w-full mt-1">
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
