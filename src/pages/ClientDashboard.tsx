@@ -121,7 +121,7 @@ const ClientDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("clientLoggedIn");
     toast.success("Logged out successfully");
-    navigate("/login");
+    navigate("/");
   };
 
   const handleSendMessage = () => {
@@ -306,8 +306,8 @@ const ClientDashboard = () => {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 border-b border-border">
-            <Link to="/" className="font-display text-2xl font-semibold text-foreground">
-              Maison<span className="text-gold">.</span>
+            <Link to="/" className="font-display text-xl font-semibold text-foreground tracking-tight">
+              Navarre<span className="text-gold"> Interiors</span>
             </Link>
             <p className="text-sm text-muted-foreground mt-1">Client Portal</p>
           </div>

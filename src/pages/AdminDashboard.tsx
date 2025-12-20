@@ -17,6 +17,11 @@ import {
   Trash2,
   Eye,
   ArrowLeft,
+  Package,
+  Paintbrush,
+  Sofa,
+  Lamp,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -57,6 +62,60 @@ const stats = [
   { label: "Revenue", value: "$284K", change: "+12% vs last month" },
 ];
 
+// Product inventory mock data
+const productCategories = [
+  {
+    id: "fixtures",
+    name: "Fixtures",
+    icon: "Wrench",
+    items: [
+      { id: 1, name: "Delta Faucet Matte Black", project: "Modern Penthouse", supplier: "Ferguson", link: "https://ferguson.com" },
+      { id: 2, name: "Kohler Shower System", project: "Coastal Beach House", supplier: "Build.com", link: "https://build.com" },
+      { id: 3, name: "Hansgrohe Rain Shower", project: "Minimalist Loft", supplier: "Ferguson", link: "https://ferguson.com" },
+    ]
+  },
+  {
+    id: "paint",
+    name: "Paint Colors",
+    icon: "Paintbrush",
+    items: [
+      { id: 1, name: "Benjamin Moore White Dove", project: "Modern Penthouse", supplier: "Benjamin Moore", link: "https://benjaminmoore.com" },
+      { id: 2, name: "Sherwin Williams Sea Salt", project: "Coastal Beach House", supplier: "Sherwin Williams", link: "https://sherwin-williams.com" },
+      { id: 3, name: "Farrow & Ball Hague Blue", project: "Urban Studio", supplier: "Farrow & Ball", link: "https://farrow-ball.com" },
+    ]
+  },
+  {
+    id: "furniture",
+    name: "Furniture",
+    icon: "Sofa",
+    items: [
+      { id: 1, name: "RH Cloud Modular Sofa", project: "Modern Penthouse", supplier: "Restoration Hardware", link: "https://rh.com" },
+      { id: 2, name: "West Elm Dining Table", project: "Coastal Beach House", supplier: "West Elm", link: "https://westelm.com" },
+      { id: 3, name: "CB2 Accent Chair", project: "Urban Studio", supplier: "CB2", link: "https://cb2.com" },
+      { id: 4, name: "Arhaus Bedroom Set", project: "Classic Colonial", supplier: "Arhaus", link: "https://arhaus.com" },
+    ]
+  },
+  {
+    id: "lighting",
+    name: "Lighting",
+    icon: "Lamp",
+    items: [
+      { id: 1, name: "Visual Comfort Chandelier", project: "Modern Penthouse", supplier: "Circa Lighting", link: "https://circalighting.com" },
+      { id: 2, name: "Kelly Wearstler Sconce", project: "Coastal Beach House", supplier: "Circa Lighting", link: "https://circalighting.com" },
+      { id: 3, name: "Tom Dixon Pendant", project: "Minimalist Loft", supplier: "Design Within Reach", link: "https://dwr.com" },
+    ]
+  },
+  {
+    id: "textiles",
+    name: "Textiles & Rugs",
+    icon: "Package",
+    items: [
+      { id: 1, name: "Loloi Rug 9x12", project: "Modern Penthouse", supplier: "Loloi", link: "https://loloirugs.com" },
+      { id: 2, name: "Custom Drapery Fabric", project: "Coastal Beach House", supplier: "Robert Allen", link: "https://robertallendesign.com" },
+    ]
+  },
+];
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -73,13 +132,14 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     toast.success("Logged out successfully");
-    navigate("/admin-login");
+    navigate("/");
   };
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "clients", label: "Clients", icon: Users },
     { id: "projects", label: "Projects", icon: FolderOpen },
+    { id: "inventory", label: "Product Inventory", icon: Package },
   ];
 
   const filteredClients = clients.filter(
@@ -139,8 +199,8 @@ const AdminDashboard = () => {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 border-b border-primary-foreground/10">
-            <Link to="/" className="font-display text-2xl font-semibold text-primary-foreground">
-              Maison<span className="text-gold">.</span>
+            <Link to="/" className="font-display text-xl font-semibold text-primary-foreground tracking-tight">
+              Navarre<span className="text-gold"> Interiors</span>
             </Link>
             <p className="text-sm text-primary-foreground/60 mt-1">Admin Portal</p>
           </div>
@@ -191,7 +251,7 @@ const AdminDashboard = () => {
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">Admin User</p>
-              <p className="text-xs text-muted-foreground">admin@maison.com</p>
+              <p className="text-xs text-muted-foreground">admin@navarre.com</p>
             </div>
             <div className="w-10 h-10 bg-gold rounded-full flex items-center justify-center">
               <span className="text-primary font-medium">A</span>
@@ -467,6 +527,125 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "inventory" && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="font-display text-3xl font-semibold text-foreground">
+                    Product Inventory
+                  </h1>
+                  <p className="text-muted-foreground mt-1">
+                    Track products used across all projects
+                  </p>
+                </div>
+                <Button variant="gold">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Product
+                </Button>
+              </div>
+
+              {/* Category Tabs */}
+              <div className="flex flex-wrap gap-2">
+                {productCategories.map((category) => {
+                  const IconComponent = category.icon === "Wrench" ? Wrench : 
+                                        category.icon === "Paintbrush" ? Paintbrush :
+                                        category.icon === "Sofa" ? Sofa :
+                                        category.icon === "Lamp" ? Lamp : Package;
+                  return (
+                    <div
+                      key={category.id}
+                      className="flex items-center gap-2 px-4 py-2 bg-card rounded-lg border border-border"
+                    >
+                      <IconComponent className="w-4 h-4 text-gold" />
+                      <span className="text-sm font-medium text-foreground">{category.name}</span>
+                      <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
+                        {category.items.length}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Products by Category */}
+              <div className="space-y-6">
+                {productCategories.map((category) => {
+                  const IconComponent = category.icon === "Wrench" ? Wrench : 
+                                        category.icon === "Paintbrush" ? Paintbrush :
+                                        category.icon === "Sofa" ? Sofa :
+                                        category.icon === "Lamp" ? Lamp : Package;
+                  return (
+                    <div key={category.id} className="bg-card rounded-lg shadow-soft overflow-hidden">
+                      <div className="p-4 border-b border-border flex items-center gap-3">
+                        <IconComponent className="w-5 h-5 text-gold" />
+                        <h3 className="font-display text-lg font-semibold text-foreground">
+                          {category.name}
+                        </h3>
+                        <span className="text-sm text-muted-foreground">
+                          ({category.items.length} items)
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-border bg-muted/30">
+                              <th className="text-left p-4 text-sm font-medium text-muted-foreground">Product Name</th>
+                              <th className="text-left p-4 text-sm font-medium text-muted-foreground">Project</th>
+                              <th className="text-left p-4 text-sm font-medium text-muted-foreground">Supplier</th>
+                              <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {category.items.map((item) => (
+                              <tr key={item.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                                <td className="p-4">
+                                  <p className="font-medium text-foreground">{item.name}</p>
+                                </td>
+                                <td className="p-4 text-muted-foreground">{item.project}</td>
+                                <td className="p-4">
+                                  <a 
+                                    href={item.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-gold hover:underline"
+                                  >
+                                    {item.supplier}
+                                  </a>
+                                </td>
+                                <td className="p-4 text-right">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => window.open(item.link, '_blank')}>
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        View Product
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem>
+                                        <Edit className="w-4 h-4 mr-2" />
+                                        Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem className="text-destructive">
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
