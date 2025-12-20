@@ -53,6 +53,7 @@ import {
 import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
 import { ImageUpload } from "@/components/ImageUpload";
 import { FileUpload } from "@/components/FileUpload";
+import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ClientProfile {
@@ -1723,68 +1724,14 @@ const AdminClientDetail = () => {
       </Dialog>
 
       {/* Document Preview Modal */}
-      <Dialog open={showDocPreviewModal} onOpenChange={setShowDocPreviewModal}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="font-display flex items-center gap-3">
-              <FileText className="w-5 h-5 text-gold" />
-              {getSelectedDocument()?.name}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            {getSelectedDocument()?.data ? (
-              getSelectedDocument()?.type === "PDF" ? (
-                <div className="border border-border rounded-lg overflow-hidden">
-                  <iframe
-                    src={getSelectedDocument()?.data}
-                    className="w-full h-[400px]"
-                    title="Document Preview"
-                  />
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-muted/50 rounded-lg">
-                  <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-2">Preview not available for {getSelectedDocument()?.type} files</p>
-                  <Button variant="gold" onClick={() => handleDownloadDocument(getSelectedDocument())}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download to View
-                  </Button>
-                </div>
-              )
-            ) : (
-              <div className="text-center py-12 bg-muted/50 rounded-lg">
-                <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">This is a sample document without file data</p>
-              </div>
-            )}
-            <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-              <span>{getSelectedDocument()?.size} • {getSelectedDocument()?.date}</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                getSelectedDocument()?.status === "sent" ? "bg-green-500/10 text-green-600" :
-                getSelectedDocument()?.status === "archived" ? "bg-muted text-muted-foreground" :
-                "bg-gold/10 text-gold"
-              }`}>
-                {getSelectedDocument()?.status === "sent" ? "Sent" : 
-                 getSelectedDocument()?.status === "archived" ? "Archived" : "Draft"}
-              </span>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            {getSelectedDocument()?.status === "draft" && (
-              <Button variant="gold" onClick={() => { handleSendDocument(getSelectedDocument()!.id); setShowDocPreviewModal(false); }}>
-                <Send className="w-4 h-4 mr-2" />
-                Send to Client
-              </Button>
-            )}
-            {getSelectedDocument()?.data && (
-              <Button variant="outline" onClick={() => handleDownloadDocument(getSelectedDocument())}>
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DocumentPreviewModal
+        open={showDocPreviewModal}
+        onOpenChange={setShowDocPreviewModal}
+        document={getSelectedDocument()}
+        onDownload={handleDownloadDocument}
+        onSend={handleSendDocument}
+        isAdmin={true}
+      />
 
       {/* Board Detail Modal */}
       <Dialog open={showBoardDetailModal} onOpenChange={setShowBoardDetailModal}>
