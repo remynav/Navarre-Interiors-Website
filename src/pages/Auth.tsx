@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -12,15 +12,10 @@ const passwordSchema = z.string().min(6, "Password must be at least 6 characters
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { user, isLoading: authLoading, isAdmin, signIn, signUp } = useAuth();
+  const { user, isLoading: authLoading, isAdmin, signIn } = useAuth();
   
-  const [mode, setMode] = useState<"login" | "signup">(
-    searchParams.get("mode") === "signup" ? "signup" : "login"
-  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
@@ -60,28 +55,15 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      if (mode === "login") {
-        const { error } = await signIn(email, password);
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            toast.error("Invalid email or password");
-          } else {
-            toast.error(error.message);
-          }
+      const { error } = await signIn(email, password);
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Invalid email or password");
         } else {
-          toast.success("Welcome back!");
+          toast.error(error.message);
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
-        if (error) {
-          if (error.message.includes("User already registered")) {
-            toast.error("An account with this email already exists. Please sign in instead.");
-          } else {
-            toast.error(error.message);
-          }
-        } else {
-          toast.success("Account created successfully!");
-        }
+        toast.success("Welcome back!");
       }
     } catch (err) {
       toast.error("An unexpected error occurred");
@@ -129,31 +111,13 @@ const Auth = () => {
           </Link>
 
           <h1 className="font-display text-3xl font-semibold text-foreground mb-2">
-            {mode === "login" ? "Client Portal" : "Create Account"}
+            Client Portal
           </h1>
           <p className="text-muted-foreground mb-8">
-            {mode === "login" 
-              ? "Sign in to access your project dashboard" 
-              : "Sign up to get started with your project"
-            }
+            Sign in to access your project dashboard
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {mode === "signup" && (
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Full Name
-                </label>
-                <Input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Your full name"
-                  className="h-12"
-                />
-              </div>
-            )}
-            
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Email Address
@@ -201,35 +165,12 @@ const Auth = () => {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading 
-                ? (mode === "login" ? "Signing in..." : "Creating account...") 
-                : (mode === "login" ? "Sign In" : "Create Account")
-              }
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
           <p className="text-center text-muted-foreground text-sm mt-6">
-            {mode === "login" ? (
-              <>
-                Don't have an account?{" "}
-                <button 
-                  onClick={() => setMode("signup")} 
-                  className="text-gold hover:underline"
-                >
-                  Sign up
-                </button>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <button 
-                  onClick={() => setMode("login")} 
-                  className="text-gold hover:underline"
-                >
-                  Sign in
-                </button>
-              </>
-            )}
+            Contact your designer for portal access
           </p>
 
           <div className="mt-12 pt-8 border-t border-border">
