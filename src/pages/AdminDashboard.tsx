@@ -89,7 +89,15 @@ const AdminDashboard = () => {
       
       setIsLoadingClients(true);
       try {
-        // Fetch all projects with their client profiles
+        // Fetch all client profiles first
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, email, full_name")
+          .eq("role", "client");
+
+        if (profilesError) throw profilesError;
+
+        // Fetch all projects
         const { data: projects, error } = await supabase
           .from("projects")
           .select(`
@@ -103,24 +111,17 @@ const AdminDashboard = () => {
 
         if (error) throw error;
 
-        // Fetch all client profiles
-        const { data: profiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, email, full_name")
-          .eq("role", "client");
-
-        if (profilesError) throw profilesError;
-
-        // Combine projects with their client info
-        const clientsData: Client[] = (projects || []).map((project) => {
-          const profile = profiles?.find((p) => p.id === project.client_id);
+        // Create client entries for all client profiles
+        const clientsData: Client[] = (profiles || []).map((profile) => {
+          // Find project for this client (if any)
+          const project = projects?.find((p) => p.client_id === profile.id);
           return {
-            id: project.id,
-            name: profile?.full_name || "Unknown Client",
-            email: profile?.email || "",
-            project: project.name,
-            status: project.status,
-            progress: project.progress,
+            id: profile.id, // Use profile id as the client id
+            name: profile.full_name || profile.email,
+            email: profile.email,
+            project: project?.name || "No project assigned",
+            status: project?.status || "New",
+            progress: project?.progress || 0,
           };
         });
 
@@ -234,13 +235,6 @@ const AdminDashboard = () => {
   // Refetch clients function
   const refetchClients = async () => {
     try {
-      const { data: projects, error } = await supabase
-        .from("projects")
-        .select(`id, name, status, progress, client_id`)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, email, full_name")
@@ -248,15 +242,22 @@ const AdminDashboard = () => {
 
       if (profilesError) throw profilesError;
 
-      const clientsData: Client[] = (projects || []).map((project) => {
-        const profile = profiles?.find((p) => p.id === project.client_id);
+      const { data: projects, error } = await supabase
+        .from("projects")
+        .select(`id, name, status, progress, client_id`)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const clientsData: Client[] = (profiles || []).map((profile) => {
+        const project = projects?.find((p) => p.client_id === profile.id);
         return {
-          id: project.id,
-          name: profile?.full_name || "Unknown Client",
-          email: profile?.email || "",
-          project: project.name,
-          status: project.status,
-          progress: project.progress,
+          id: profile.id,
+          name: profile.full_name || profile.email,
+          email: profile.email,
+          project: project?.name || "No project assigned",
+          status: project?.status || "New",
+          progress: project?.progress || 0,
         };
       });
 
