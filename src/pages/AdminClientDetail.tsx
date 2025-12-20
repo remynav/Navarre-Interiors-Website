@@ -1416,6 +1416,28 @@ const AdminClientDetail = () => {
                               : "bg-muted text-foreground"
                           }`}
                         >
+                          {/* Reference card for messages about specific items */}
+                          {msg.reference_type && msg.reference_title && (
+                            <div 
+                              className={`flex items-center gap-2 p-2 rounded mb-2 ${
+                                isAdmin ? "bg-primary-foreground/10" : "bg-background/50"
+                              }`}
+                            >
+                              {msg.reference_image_url && (
+                                <img 
+                                  src={msg.reference_image_url} 
+                                  alt={msg.reference_title}
+                                  className="w-10 h-10 rounded object-cover"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-xs ${isAdmin ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                                  Re: {msg.reference_type === "rendering" ? "Rendering" : "Inspiration"}
+                                </p>
+                                <p className="text-sm font-medium truncate">{msg.reference_title}</p>
+                              </div>
+                            </div>
+                          )}
                           <p className="text-sm">{msg.text}</p>
                           <p className={`text-xs mt-1 ${
                             isAdmin ? "text-primary-foreground/70" : "text-muted-foreground"
