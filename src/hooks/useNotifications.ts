@@ -66,3 +66,16 @@ export async function notifyAdmins(
     console.error('Failed to notify admins:', error);
   }
 }
+
+export async function markNotificationsAsRead(userId: string, type: string) {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('user_id', userId)
+    .eq('type', type)
+    .eq('is_read', false);
+
+  if (error) {
+    console.error('Failed to mark notifications as read:', error);
+  }
+}

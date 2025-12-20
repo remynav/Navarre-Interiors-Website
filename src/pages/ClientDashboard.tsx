@@ -45,7 +45,7 @@ import { InspirationBoardsTab } from "@/components/client/InspirationBoardsTab";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/NotificationBell";
-import { notifyAdmins } from "@/hooks/useNotifications";
+import { notifyAdmins, markNotificationsAsRead } from "@/hooks/useNotifications";
 
 interface ProfileData {
   id: string;
@@ -129,6 +129,24 @@ const ClientDashboard = () => {
       fetchProfileAndProjects();
     }
   }, [user, authLoading, navigate]);
+
+  // Mark notifications as read when switching tabs
+  useEffect(() => {
+    if (!user) return;
+    
+    const typeMap: Record<string, string> = {
+      messages: 'message',
+      renderings: 'rendering',
+      documents: 'document',
+      inspiration: 'inspiration',
+      timeline: 'milestone',
+    };
+    
+    const notificationType = typeMap[activeTab];
+    if (notificationType) {
+      markNotificationsAsRead(user.id, notificationType);
+    }
+  }, [activeTab, user]);
 
   const fetchProfileAndProjects = async () => {
     if (!user) return;
