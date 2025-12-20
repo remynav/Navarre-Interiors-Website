@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Lock } from "lucide-react";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -16,11 +17,11 @@ const AdminLogin = () => {
 
     // Demo login - in production this would use proper auth
     setTimeout(() => {
-      if (email === "admin@maison.com" && password === "admin123") {
+      if (email === "admin@navarre.com" && password === "admin123") {
         toast.success("Welcome, Admin!");
         navigate("/admin");
       } else {
-        toast.error("Invalid credentials. Try admin@maison.com / admin123");
+        toast.error("Invalid credentials. Try admin@navarre.com / admin123");
       }
       setIsLoading(false);
     }, 1000);
@@ -30,8 +31,8 @@ const AdminLogin = () => {
     <div className="min-h-screen bg-primary flex items-center justify-center px-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="font-display text-3xl font-semibold text-primary-foreground tracking-tight">
-            Maison<span className="text-gold">.</span>
+          <Link to="/" className="font-display text-2xl font-semibold text-primary-foreground tracking-tight">
+            Navarre<span className="text-gold"> Interiors</span>
           </Link>
           <p className="text-primary-foreground/70 mt-2">Admin Portal</p>
         </div>
@@ -50,7 +51,7 @@ const AdminLogin = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@maison.com"
+                placeholder="admin@navarre.com"
                 required
                 className="h-12"
               />
@@ -80,13 +81,14 @@ const AdminLogin = () => {
           </form>
 
           <p className="text-center text-muted-foreground text-sm mt-6">
-            Demo: admin@maison.com / admin123
+            Demo: admin@navarre.com / admin123
           </p>
         </div>
 
         <div className="mt-6 text-center">
-          <Link to="/login" className="text-sm text-primary-foreground/70 hover:text-gold transition-colors">
-            ← Back to Client Portal
+          <Link to="/login" className="inline-flex items-center gap-2 text-sm text-primary-foreground/70 hover:text-gold transition-colors">
+            <Lock className="w-4 h-4" />
+            Back to Client Portal
           </Link>
         </div>
       </div>

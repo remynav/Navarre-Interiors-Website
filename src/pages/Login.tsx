@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Lock } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -46,8 +47,8 @@ const Login = () => {
           <div className="absolute top-1/2 left-1/3 w-48 h-48 border border-gold/40 rounded-full" />
         </div>
         <div className="relative z-10 flex flex-col justify-center px-16">
-          <Link to="/" className="font-display text-4xl font-semibold text-primary-foreground tracking-tight mb-8">
-            Maison<span className="text-gold">.</span>
+          <Link to="/" className="font-display text-3xl font-semibold text-primary-foreground tracking-tight mb-8">
+            Navarre<span className="text-gold"> Interiors</span>
           </Link>
           <h2 className="font-display text-3xl text-primary-foreground mb-4">
             Welcome to Your Portal
@@ -61,8 +62,8 @@ const Login = () => {
       {/* Right Side - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 md:px-16 lg:px-24">
         <div className="max-w-md w-full mx-auto">
-          <Link to="/" className="lg:hidden font-display text-3xl font-semibold text-foreground tracking-tight mb-8 block">
-            Maison<span className="text-gold">.</span>
+          <Link to="/" className="lg:hidden font-display text-2xl font-semibold text-foreground tracking-tight mb-8 block">
+            Navarre<span className="text-gold"> Interiors</span>
           </Link>
 
           <h1 className="font-display text-3xl font-semibold text-foreground mb-2">
@@ -126,9 +127,10 @@ const Login = () => {
           <div className="mt-12 pt-8 border-t border-border">
             <Link
               to="/admin-login"
-              className="text-sm text-muted-foreground hover:text-gold transition-colors block text-center"
+              className="inline-flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-gold transition-colors w-full"
             >
-              Admin Login →
+              <Lock className="w-4 h-4" />
+              Admin Login
             </Link>
           </div>
 
