@@ -83,7 +83,8 @@ const ClientDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
-  const [allMessages, setAllMessages] = useState(chatMessages);
+  const [allMessages, setAllMessages] = useState<any[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [inspirations, setInspirations] = useSharedInspirations();
   const [renderings, setRenderings] = useSharedRenderings();
   const [documents] = useSharedDocuments();
@@ -202,6 +203,52 @@ const ClientDashboard = () => {
 
   const getSelectedProject = () => projects.find(p => p.id === selectedProjectId);
 
+  // Fetch messages and set up realtime subscription
+  useEffect(() => {
+    if (!selectedProjectId) return;
+
+    const fetchMessages = async () => {
+      setIsLoadingMessages(true);
+      try {
+        const { data, error } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("project_id", selectedProjectId)
+          .order("created_at", { ascending: true });
+
+        if (error) throw error;
+        setAllMessages(data || []);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    };
+
+    fetchMessages();
+
+    // Set up realtime subscription
+    const channel = supabase
+      .channel(`client-messages-${selectedProjectId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `project_id=eq.${selectedProjectId}`,
+        },
+        (payload) => {
+          setAllMessages((prev) => [...prev, payload.new as any]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedProjectId]);
+
   // Document handlers
   const clientDocuments = documents.filter(d => d.status === "sent" || d.status === "archived");
   const filteredClientDocs = clientDocuments.filter(d => docTab === "sent" ? d.status === "sent" : d.status === "archived");
@@ -231,16 +278,22 @@ const ClientDashboard = () => {
     navigate("/");
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    setAllMessages([...allMessages, {
-      id: allMessages.length + 1,
-      sender: "client",
-      text: newMessage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }]);
-    setNewMessage("");
-    toast.success("Message sent");
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedProjectId || !user) return;
+
+    try {
+      const { error } = await supabase.from("messages").insert({
+        project_id: selectedProjectId,
+        sender_id: user.id,
+        text: newMessage.trim(),
+      });
+
+      if (error) throw error;
+      setNewMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
+    }
   };
 
   const handleApproveRendering = (renderingId: number) => {
@@ -998,39 +1051,56 @@ const ClientDashboard = () => {
               <div className="bg-card rounded-lg shadow-soft overflow-hidden">
                 {/* Messages */}
                 <div className="h-[400px] overflow-y-auto p-4 space-y-4">
-                  {allMessages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.sender === "client" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div className={`max-w-[70%] ${msg.sender === "client" ? "" : "flex gap-3"}`}>
-                        {msg.sender !== "client" && (
-                          <div className="w-8 h-8 bg-gold/20 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-gold text-xs font-medium">SM</span>
-                          </div>
-                        )}
-                        <div>
-                          {msg.sender !== "client" && msg.name && (
-                            <p className="text-xs text-muted-foreground mb-1">{msg.name}</p>
-                          )}
-                          <div
-                            className={`rounded-lg p-3 ${
-                              msg.sender === "client"
-                                ? "bg-gold text-primary-foreground"
-                                : "bg-muted text-foreground"
-                            }`}
-                          >
-                            <p className="text-sm">{msg.text}</p>
-                          </div>
-                          <p className={`text-xs mt-1 ${
-                            msg.sender === "client" ? "text-right" : ""
-                          } text-muted-foreground`}>
-                            {msg.time}
-                          </p>
-                        </div>
-                      </div>
+                  {isLoadingMessages ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
                     </div>
-                  ))}
+                  ) : !selectedProjectId ? (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      No project selected.
+                    </div>
+                  ) : allMessages.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      No messages yet. Start the conversation with your design team!
+                    </div>
+                  ) : (
+                    allMessages.map((msg) => {
+                      const isClient = msg.sender_id === user?.id;
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isClient ? "justify-end" : "justify-start"}`}
+                        >
+                          <div className={`max-w-[70%] ${isClient ? "" : "flex gap-3"}`}>
+                            {!isClient && (
+                              <div className="w-8 h-8 bg-gold/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-gold text-xs font-medium">NI</span>
+                              </div>
+                            )}
+                            <div>
+                              {!isClient && (
+                                <p className="text-xs text-muted-foreground mb-1">Navarre Interiors</p>
+                              )}
+                              <div
+                                className={`rounded-lg p-3 ${
+                                  isClient
+                                    ? "bg-gold text-primary-foreground"
+                                    : "bg-muted text-foreground"
+                                }`}
+                              >
+                                <p className="text-sm">{msg.text}</p>
+                              </div>
+                              <p className={`text-xs mt-1 ${
+                                isClient ? "text-right" : ""
+                              } text-muted-foreground`}>
+                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
                 {/* Input */}
                 <div className="border-t border-border p-4">
