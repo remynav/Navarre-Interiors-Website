@@ -31,7 +31,7 @@ const Header = () => {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            <Link to="/login">
+            <Link to="/auth">
               <Button variant="ghost" size="sm">
                 Client Portal
               </Button>
@@ -67,7 +67,7 @@ const Header = () => {
             <a href="#contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Contact
             </a>
-            <Link to="/login">
+            <Link to="/auth">
               <Button variant="ghost" size="sm" className="w-full justify-start">
                 Client Portal
               </Button>
