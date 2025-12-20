@@ -207,6 +207,10 @@ export type Database = {
           created_at: string
           id: string
           project_id: string
+          reference_id: string | null
+          reference_image_url: string | null
+          reference_title: string | null
+          reference_type: string | null
           sender_id: string
           text: string
         }
@@ -214,6 +218,10 @@ export type Database = {
           created_at?: string
           id?: string
           project_id: string
+          reference_id?: string | null
+          reference_image_url?: string | null
+          reference_title?: string | null
+          reference_type?: string | null
           sender_id: string
           text: string
         }
@@ -221,6 +229,10 @@ export type Database = {
           created_at?: string
           id?: string
           project_id?: string
+          reference_id?: string | null
+          reference_image_url?: string | null
+          reference_title?: string | null
+          reference_type?: string | null
           sender_id?: string
           text?: string
         }

@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Home,
@@ -90,17 +89,19 @@ const ClientDashboard = () => {
   const [renderings, setRenderings] = useSharedRenderings();
   const [documents] = useSharedDocuments();
   const [docTab, setDocTab] = useState<"sent" | "archive">("sent");
-  const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
-  const [showItemCommentsModal, setShowItemCommentsModal] = useState(false);
   const [showDocPreviewModal, setShowDocPreviewModal] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
-  const [newComment, setNewComment] = useState("");
-  const [newItemComment, setNewItemComment] = useState("");
-  const [selectedRenderingId, setSelectedRenderingId] = useState<number | null>(null);
   const [selectedBoardId, setSelectedBoardId] = useState<number | null>(null);
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  
+  // Reference for messages (for "Ask a Question" feature)
+  const [pendingReference, setPendingReference] = useState<{
+    type: string;
+    id: string;
+    title: string;
+    image: string;
+  } | null>(null);
 
   // Profile and project state
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -279,22 +280,46 @@ const ClientDashboard = () => {
     navigate("/");
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedProjectId || !user) return;
+  const handleSendMessage = async (customText?: string) => {
+    const messageText = customText || newMessage;
+    if (!messageText.trim() || !selectedProjectId || !user) return;
 
     try {
-      const { error } = await supabase.from("messages").insert({
+      const messageData: any = {
         project_id: selectedProjectId,
         sender_id: user.id,
-        text: newMessage.trim(),
-      });
+        text: messageText.trim(),
+      };
+      
+      // Include reference if present
+      if (pendingReference) {
+        messageData.reference_type = pendingReference.type;
+        messageData.reference_id = pendingReference.id;
+        messageData.reference_title = pendingReference.title;
+        messageData.reference_image_url = pendingReference.image;
+      }
+
+      const { error } = await supabase.from("messages").insert(messageData);
 
       if (error) throw error;
       setNewMessage("");
+      setPendingReference(null);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
     }
+  };
+
+  // Handle "Ask a Question" from renderings or design items
+  const handleAskQuestion = (item: { type: string; id: number; title: string; image: string }) => {
+    setPendingReference({
+      type: item.type,
+      id: item.id.toString(),
+      title: item.title,
+      image: item.image,
+    });
+    setActiveTab("messages");
+    toast.info(`Asking about: ${item.title}`);
   };
 
   const handleApproveRendering = (renderingId: number) => {
@@ -315,37 +340,16 @@ const ClientDashboard = () => {
     toast.success("Approval undone - rendering is pending again");
   };
 
-  const handleViewComments = (renderingId: number) => {
-    setSelectedRenderingId(renderingId);
-    setNewComment("");
-    setShowCommentsModal(true);
+  const handleAskAboutRendering = (rendering: any) => {
+    handleAskQuestion({
+      type: 'rendering',
+      id: rendering.id,
+      title: rendering.title,
+      image: rendering.image,
+    });
   };
 
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    setRenderings(renderings.map(r => 
-      r.id === selectedRenderingId 
-        ? { 
-            ...r, 
-            commentsList: [...r.commentsList, {
-              id: r.commentsList.length + 1,
-              sender: "client",
-              text: newComment,
-              time: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-            }]
-          } 
-        : r
-    ));
-    setNewComment("");
-    toast.success("Comment added");
-  };
-
-  const getSelectedRendering = () => renderings.find(r => r.id === selectedRenderingId);
   const getSelectedBoard = () => inspirations.find(b => b.id === selectedBoardId);
-  const getSelectedItem = () => {
-    const board = inspirations.find(b => b.id === selectedBoardId);
-    return board?.designItems.find(item => item.id === selectedItemId);
-  };
 
   const handleOpenGallery = (boardId: number) => {
     setSelectedBoardId(boardId);
@@ -364,39 +368,6 @@ const ClientDashboard = () => {
     if (galleryIndex > 0) {
       setGalleryIndex(galleryIndex - 1);
     }
-  };
-
-  const handleViewItemComments = (boardId: number, itemId: number) => {
-    setSelectedBoardId(boardId);
-    setSelectedItemId(itemId);
-    setNewItemComment("");
-    setShowItemCommentsModal(true);
-  };
-
-  const handleAddItemComment = () => {
-    if (!newItemComment.trim()) return;
-    setInspirations(inspirations.map(board => 
-      board.id === selectedBoardId 
-        ? {
-            ...board,
-            designItems: board.designItems.map(item =>
-              item.id === selectedItemId
-                ? {
-                    ...item,
-                    commentsList: [...item.commentsList, {
-                      id: item.commentsList.length + 1,
-                      sender: "client",
-                      text: newItemComment,
-                      time: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                    }]
-                  }
-                : item
-            )
-          }
-        : board
-    ));
-    setNewItemComment("");
-    toast.success("Comment added");
   };
 
   const handleApproveItem = (boardId: number, itemId: number) => {
@@ -889,6 +860,7 @@ const ClientDashboard = () => {
             <InspirationBoardsTab
               inspirations={inspirations}
               setInspirations={setInspirations}
+              onAskQuestion={handleAskQuestion}
             />
           )}
 
@@ -920,12 +892,6 @@ const ClientDashboard = () => {
                         <h3 className="font-display text-lg font-semibold text-foreground">
                           {rendering.title}
                         </h3>
-                        <button 
-                          onClick={() => handleViewComments(rendering.id)}
-                          className="text-sm text-muted-foreground hover:text-gold transition-colors"
-                        >
-                          {rendering.commentsList.length} comments
-                        </button>
                       </div>
                       {rendering.status === "approved" && (
                         <div className="space-y-2">
@@ -954,15 +920,15 @@ const ClientDashboard = () => {
                           Approve
                         </Button>
                       )}
-                      {/* Add Comment Button - available for all statuses */}
+                      {/* Ask a Question Button */}
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         className="w-full mt-2"
-                        onClick={() => handleViewComments(rendering.id)}
+                        onClick={() => handleAskAboutRendering(rendering)}
                       >
                         <MessageSquare className="w-4 h-4 mr-2" />
-                        View & Add Comments
+                        Ask a Question
                       </Button>
                     </div>
                   </div>
@@ -1067,6 +1033,7 @@ const ClientDashboard = () => {
                   ) : (
                     allMessages.map((msg) => {
                       const isClient = msg.sender_id === user?.id;
+                      const hasReference = msg.reference_type && msg.reference_title;
                       return (
                         <div
                           key={msg.id}
@@ -1081,6 +1048,28 @@ const ClientDashboard = () => {
                             <div>
                               {!isClient && (
                                 <p className="text-xs text-muted-foreground mb-1">Navarre Interiors</p>
+                              )}
+                              {/* Reference Card */}
+                              {hasReference && (
+                                <div className={`mb-2 rounded-lg border ${isClient ? "border-primary-foreground/20" : "border-border"} overflow-hidden`}>
+                                  <div className="flex items-center gap-2 p-2 bg-muted/50">
+                                    {msg.reference_image_url && (
+                                      <img 
+                                        src={msg.reference_image_url} 
+                                        alt={msg.reference_title} 
+                                        className="w-10 h-10 rounded object-cover"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs text-muted-foreground capitalize">
+                                        Re: {msg.reference_type?.replace('_', ' ')}
+                                      </p>
+                                      <p className="text-sm font-medium text-foreground truncate">
+                                        {msg.reference_title}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
                               )}
                               <div
                                 className={`rounded-lg p-3 ${
@@ -1105,15 +1094,45 @@ const ClientDashboard = () => {
                 </div>
                 {/* Input */}
                 <div className="border-t border-border p-4">
+                  {/* Pending Reference Card */}
+                  {pendingReference && (
+                    <div className="mb-3 rounded-lg border border-gold/30 bg-gold/5 overflow-hidden">
+                      <div className="flex items-center gap-2 p-2">
+                        {pendingReference.image && (
+                          <img 
+                            src={pendingReference.image} 
+                            alt={pendingReference.title} 
+                            className="w-10 h-10 rounded object-cover"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground capitalize">
+                            Asking about: {pendingReference.type.replace('_', ' ')}
+                          </p>
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {pendingReference.title}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setPendingReference(null)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Input
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type a message..."
+                      placeholder={pendingReference ? "Type your question..." : "Type a message..."}
                       className="flex-1"
                       onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                     />
-                    <Button variant="gold" onClick={handleSendMessage}>
+                    <Button variant="gold" onClick={() => handleSendMessage()}>
                       <Send className="w-4 h-4" />
                     </Button>
                   </div>
@@ -1148,51 +1167,6 @@ const ClientDashboard = () => {
         />
       )}
 
-      {/* Comments Modal */}
-      <Dialog open={showCommentsModal} onOpenChange={setShowCommentsModal}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{getSelectedRendering()?.title} - Comments</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto space-y-4 py-4 max-h-[400px]">
-            {getSelectedRendering()?.commentsList.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No comments yet. Be the first to comment!</p>
-            ) : (
-              getSelectedRendering()?.commentsList.map((comment) => (
-                <div 
-                  key={comment.id} 
-                  className={`p-3 rounded-lg ${
-                    comment.sender === "client" 
-                      ? "bg-gold/10 ml-8" 
-                      : "bg-muted mr-8"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-foreground">
-                      {comment.sender === "client" ? "You" : comment.name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{comment.time}</span>
-                  </div>
-                  <p className="text-sm text-foreground">{comment.text}</p>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="flex gap-2 pt-4 border-t border-border">
-            <Input
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              className="flex-1"
-              onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-            />
-            <Button variant="gold" onClick={handleAddComment}>
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Gallery Modal */}
       <Dialog open={showGalleryModal} onOpenChange={setShowGalleryModal}>
         <DialogContent className="sm:max-w-3xl">
@@ -1222,44 +1196,6 @@ const ClientDashboard = () => {
                 </div>
               </>
             )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Item Comments Modal */}
-      <Dialog open={showItemCommentsModal} onOpenChange={setShowItemCommentsModal}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              {getSelectedItem() && (
-                <>
-                  <img src={getSelectedItem()?.image} alt={getSelectedItem()?.name} className="w-12 h-12 rounded object-cover" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">{getSelectedItem()?.type}</p>
-                    <p className="font-medium">{getSelectedItem()?.name}</p>
-                  </div>
-                </>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto space-y-4 py-4 max-h-[300px]">
-            {getSelectedItem()?.commentsList.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No comments yet on this item.</p>
-            ) : (
-              getSelectedItem()?.commentsList.map((comment: any) => (
-                <div key={comment.id} className={`p-3 rounded-lg ${comment.sender === "client" ? "bg-gold/10 ml-8" : "bg-muted mr-8"}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-foreground">{comment.sender === "client" ? "You" : comment.name || "Designer"}</span>
-                    <span className="text-xs text-muted-foreground">{comment.time}</span>
-                  </div>
-                  <p className="text-sm text-foreground">{comment.text}</p>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="flex gap-2 pt-4 border-t border-border">
-            <Input value={newItemComment} onChange={(e) => setNewItemComment(e.target.value)} placeholder="Add a comment..." className="flex-1" onKeyDown={(e) => e.key === "Enter" && handleAddItemComment()} />
-            <Button variant="gold" onClick={handleAddItemComment}><Send className="w-4 h-4" /></Button>
           </div>
         </DialogContent>
       </Dialog>

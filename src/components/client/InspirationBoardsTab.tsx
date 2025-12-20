@@ -75,18 +75,17 @@ interface ClientImage {
 interface InspirationBoardsTabProps {
   inspirations: Inspiration[];
   setInspirations: (data: Inspiration[] | ((prev: Inspiration[]) => Inspiration[])) => void;
+  onAskQuestion?: (item: { type: string; id: number; title: string; image: string }) => void;
 }
 
 export const InspirationBoardsTab = ({
   inspirations,
   setInspirations,
+  onAskQuestion,
 }: InspirationBoardsTabProps) => {
   const [selectedBoard, setSelectedBoard] = useState<Inspiration | null>(null);
   const [activeTab, setActiveTab] = useState<"gallery" | "products">("gallery");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
-  const [showItemComments, setShowItemComments] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-  const [newComment, setNewComment] = useState("");
   const [boardProducts, setBoardProducts] = useState<BoardProduct[]>([]);
   const [clientImages, setClientImages] = useState<ClientImage[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -272,53 +271,16 @@ export const InspirationBoardsTab = ({
     toast.success("Approval undone");
   };
 
-  const handleAddComment = () => {
-    if (!newComment.trim() || !selectedBoard || !selectedItemId) return;
-    
-    const newCommentObj = {
-      id: Date.now(),
-      sender: "client",
-      text: newComment,
-      time: new Date().toLocaleString([], {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-
-    setInspirations((prev) =>
-      prev.map((board) =>
-        board.id === selectedBoard.id
-          ? {
-              ...board,
-              designItems: board.designItems.map((item) =>
-                item.id === selectedItemId
-                  ? { ...item, commentsList: [...item.commentsList, newCommentObj] }
-                  : item
-              ),
-            }
-          : board
-      )
-    );
-    setSelectedBoard((prev) =>
-      prev
-        ? {
-            ...prev,
-            designItems: prev.designItems.map((item) =>
-              item.id === selectedItemId
-                ? { ...item, commentsList: [...item.commentsList, newCommentObj] }
-                : item
-            ),
-          }
-        : null
-    );
-    setNewComment("");
-    toast.success("Comment added");
+  const handleAskQuestion = (item: DesignItem) => {
+    if (onAskQuestion) {
+      onAskQuestion({
+        type: 'design_item',
+        id: item.id,
+        title: `${item.type}: ${item.name}`,
+        image: item.image,
+      });
+    }
   };
-
-  const getSelectedItem = () =>
-    selectedBoard?.designItems.find((item) => item.id === selectedItemId);
 
   // Combine gallery images with client-uploaded images
   const allGalleryImages = selectedBoard
@@ -570,16 +532,11 @@ export const InspirationBoardsTab = ({
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => {
-                            setSelectedItemId(item.id);
-                            setShowItemComments(true);
-                          }}
+                          onClick={() => handleAskQuestion(item)}
                           className="h-8 text-xs"
                         >
-                          <MessageSquare className="w-3 h-3" />
-                          {item.commentsList.length > 0 && (
-                            <span className="ml-1">{item.commentsList.length}</span>
-                          )}
+                          <MessageSquare className="w-3 h-3 mr-1" />
+                          Ask Question
                         </Button>
                       </div>
                     </div>
@@ -686,46 +643,6 @@ export const InspirationBoardsTab = ({
                 className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
               />
             )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Item Comments Modal */}
-      <Dialog open={showItemComments} onOpenChange={setShowItemComments}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Comments - {getSelectedItem()?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 max-h-64 overflow-y-auto">
-            {getSelectedItem()?.commentsList.map((comment) => (
-              <div
-                key={comment.id}
-                className={`p-3 rounded-lg ${
-                  comment.sender === "client"
-                    ? "bg-gold/10 ml-8"
-                    : "bg-muted mr-8"
-                }`}
-              >
-                <p className="text-sm">{comment.text}</p>
-                <p className="text-xs text-muted-foreground mt-1">{comment.time}</p>
-              </div>
-            ))}
-            {getSelectedItem()?.commentsList.length === 0 && (
-              <p className="text-center text-muted-foreground text-sm">
-                No comments yet
-              </p>
-            )}
-          </div>
-          <div className="flex gap-2 mt-4">
-            <Input
-              placeholder="Add a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
-            />
-            <Button onClick={handleAddComment} size="sm">
-              Send
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
