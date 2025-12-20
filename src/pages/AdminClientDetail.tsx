@@ -1488,14 +1488,6 @@ const AdminClientDetail = () => {
             >
               Selections ({getSelectedBoard()?.designItems.length || 0})
             </button>
-            <button
-              onClick={() => setBoardDetailTab("products")}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                boardDetailTab === "products" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Products ({boardProducts.length})
-            </button>
           </div>
           
           <div className="flex-1 overflow-y-auto space-y-6 py-4">
@@ -1586,86 +1578,7 @@ const AdminClientDetail = () => {
                 </div>
               </div>
             )}
-
-            {/* Products Tab */}
-            {boardDetailTab === "products" && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-foreground">Products</h3>
-                  <Button size="sm" variant="outline" onClick={() => { setSelectedProductId(""); setShowAddProductToBoardModal(true); }}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add Product
-                  </Button>
-                </div>
-                {loadingBoardProducts ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
-                  </div>
-                ) : boardProducts.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {boardProducts.map((bp) => (
-                      <div key={bp.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg group">
-                        {bp.product?.image_url ? (
-                          <img src={bp.product.image_url} alt={bp.product.name} className="w-16 h-16 rounded object-cover" />
-                        ) : (
-                          <div className="w-16 h-16 rounded bg-muted flex items-center justify-center">
-                            <Package className="w-6 h-6 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-muted-foreground">{bp.product?.category}</p>
-                          {bp.product?.link ? (
-                            <a href={bp.product.link} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-foreground hover:text-gold flex items-center gap-1">
-                              {bp.product?.name}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          ) : (
-                            <p className="text-sm font-medium text-foreground">{bp.product?.name}</p>
-                          )}
-                          {bp.product?.supplier && <p className="text-xs text-muted-foreground">{bp.product.supplier}</p>}
-                        </div>
-                        <Button size="sm" variant="ghost" className="h-7 opacity-0 group-hover:opacity-100" onClick={() => handleRemoveProductFromBoard(bp.id)}>
-                          <Trash2 className="w-3 h-3 text-destructive" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
-                    No products added yet
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Product to Board Modal */}
-      <Dialog open={showAddProductToBoardModal} onOpenChange={setShowAddProductToBoardModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Product to Board</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Label>Select Product</Label>
-            <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a product..." />
-              </SelectTrigger>
-              <SelectContent>
-                {allProducts.map((product) => (
-                  <SelectItem key={product.id} value={product.id}>
-                    {product.name} ({product.category})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddProductToBoardModal(false)}>Cancel</Button>
-            <Button variant="gold" onClick={handleAddProductToBoard} disabled={!selectedProductId}>Add</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
