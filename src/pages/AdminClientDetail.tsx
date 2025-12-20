@@ -55,7 +55,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { FileUpload } from "@/components/FileUpload";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
-import { sendNotification } from "@/hooks/useNotifications";
+import { sendNotification, markNotificationsAsRead } from "@/hooks/useNotifications";
 
 interface ClientProfile {
   id: string;
@@ -184,6 +184,28 @@ const AdminClientDetail = () => {
 
     fetchClientData();
   }, [clientId, navigate]);
+
+  // Mark notifications as read when switching to chat tab
+  useEffect(() => {
+    const fetchUserAndMarkRead = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const typeMap: Record<string, string> = {
+        chat: 'message',
+        renderings: 'rendering',
+        documents: 'document',
+        inspiration: 'inspiration',
+      };
+      
+      const notificationType = typeMap[activeTab];
+      if (notificationType) {
+        markNotificationsAsRead(user.id, notificationType);
+      }
+    };
+    
+    fetchUserAndMarkRead();
+  }, [activeTab]);
 
   // Handle adding a new project
   const handleAddProject = async () => {
