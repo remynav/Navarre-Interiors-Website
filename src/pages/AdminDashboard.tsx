@@ -385,7 +385,7 @@ const AdminDashboard = () => {
                       <button
                         key={chat.clientId}
                         onClick={() => {
-                          navigate(`/admin/client/${chat.clientId}`);
+                          navigate(`/admin/client/${chat.clientId}?tab=chat`);
                           setSidebarOpen(false);
                         }}
                         className="w-full flex items-start gap-3 px-4 py-2 rounded-lg text-left hover:bg-primary-foreground/10 transition-colors group"
