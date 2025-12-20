@@ -244,26 +244,24 @@ export const ProductInventoryTab = () => {
                             )}
                           </td>
                           <td className="p-4">
-                            <p className="font-medium text-foreground">{product.name}</p>
-                          </td>
-                          <td className="p-4 text-muted-foreground">
-                            {product.project_name || "—"}
-                          </td>
-                          <td className="p-4">
                             {product.link ? (
                               <a
                                 href={product.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gold hover:underline"
+                                className="font-medium text-gold hover:underline"
                               >
-                                {product.supplier || "View"}
+                                {product.name}
                               </a>
                             ) : (
-                              <span className="text-muted-foreground">
-                                {product.supplier || "—"}
-                              </span>
+                              <p className="font-medium text-foreground">{product.name}</p>
                             )}
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            {product.project_name || "—"}
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            {product.supplier || "—"}
                           </td>
                           <td className="p-4 text-right">
                             <DropdownMenu>
