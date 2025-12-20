@@ -111,7 +111,9 @@ const AdminClientDetail = () => {
   const [newBoard, setNewBoard] = useState({ title: "", image: "", notes: "" });
   const [newRendering, setNewRendering] = useState({ title: "", image: "" });
   const [newGalleryImage, setNewGalleryImage] = useState("");
-  const [newItem, setNewItem] = useState({ type: "", name: "", image: "", link: "" });
+  const [newItem, setNewItem] = useState({ type: "", name: "", image: "", link: "", supplier: "" });
+  const [addItemMode, setAddItemMode] = useState<"existing" | "new">("existing");
+  const [selectedExistingProductId, setSelectedExistingProductId] = useState<string>("");
   const [uploadAsDraft, setUploadAsDraft] = useState(true);
   const [showAddProductToBoardModal, setShowAddProductToBoardModal] = useState(false);
   const [allProducts, setAllProducts] = useState<any[]>([]);
@@ -348,30 +350,89 @@ const AdminClientDetail = () => {
     toast.success("Image removed from gallery");
   };
 
-  const handleAddDesignItem = () => {
-    if (!newItem.type.trim() || !newItem.name.trim() || !newItem.image.trim()) {
-      toast.error("Please fill in type, name, and image");
-      return;
+  const handleAddDesignItem = async () => {
+    if (addItemMode === "existing") {
+      // Add from existing product
+      if (!selectedExistingProductId) {
+        toast.error("Please select a product");
+        return;
+      }
+      const product = allProducts.find(p => p.id === selectedExistingProductId);
+      if (!product) {
+        toast.error("Product not found");
+        return;
+      }
+      setInspirations(inspirations.map(board => 
+        board.id === selectedBoardId 
+          ? { 
+              ...board, 
+              designItems: [...board.designItems, {
+                id: Math.max(...board.designItems.map(i => i.id), 0) + 1,
+                type: product.category,
+                name: product.name,
+                image: product.image_url || "",
+                link: product.link || "",
+                status: "pending",
+                commentsList: []
+              }]
+            }
+          : board
+      ));
+      setSelectedExistingProductId("");
+      setShowAddItemModal(false);
+      toast.success("Product added to board");
+    } else {
+      // Add new product - also save to inventory
+      if (!newItem.type.trim() || !newItem.name.trim()) {
+        toast.error("Please fill in category and name");
+        return;
+      }
+
+      try {
+        // First, add to product inventory
+        const { data: newProduct, error } = await supabase
+          .from("product_inventory")
+          .insert({
+            name: newItem.name,
+            category: newItem.type,
+            image_url: newItem.image || null,
+            link: newItem.link || null,
+            supplier: newItem.supplier || null,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Add to allProducts state
+        setAllProducts([...allProducts, newProduct]);
+
+        // Add to board
+        setInspirations(inspirations.map(board => 
+          board.id === selectedBoardId 
+            ? { 
+                ...board, 
+                designItems: [...board.designItems, {
+                  id: Math.max(...board.designItems.map(i => i.id), 0) + 1,
+                  type: newItem.type,
+                  name: newItem.name,
+                  image: newItem.image,
+                  link: newItem.link,
+                  status: "pending",
+                  commentsList: []
+                }]
+              }
+            : board
+        ));
+        
+        setNewItem({ type: "", name: "", image: "", link: "", supplier: "" });
+        setShowAddItemModal(false);
+        toast.success("New product added to inventory and board");
+      } catch (error) {
+        console.error("Error adding product:", error);
+        toast.error("Failed to add product");
+      }
     }
-    setInspirations(inspirations.map(board => 
-      board.id === selectedBoardId 
-        ? { 
-            ...board, 
-            designItems: [...board.designItems, {
-              id: Math.max(...board.designItems.map(i => i.id), 0) + 1,
-              type: newItem.type,
-              name: newItem.name,
-              image: newItem.image,
-              link: newItem.link,
-              status: "pending",
-              commentsList: []
-            }]
-          }
-        : board
-    ));
-    setNewItem({ type: "", name: "", image: "", link: "" });
-    setShowAddItemModal(false);
-    toast.success("Item added successfully");
   };
 
   const handleDeleteDesignItem = (itemId: number) => {
@@ -1543,7 +1604,7 @@ const AdminClientDetail = () => {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-medium text-foreground">Selections & Materials</h3>
-                  <Button size="sm" variant="outline" onClick={() => { setNewItem({ type: "", name: "", image: "", link: "" }); setShowAddItemModal(true); }}>
+                  <Button size="sm" variant="outline" onClick={() => { setNewItem({ type: "", name: "", image: "", link: "", supplier: "" }); setAddItemMode("existing"); setSelectedExistingProductId(""); setShowAddItemModal(true); }}>
                     <Plus className="w-4 h-4 mr-1" />
                     Add Item
                   </Button>
@@ -1609,50 +1670,144 @@ const AdminClientDetail = () => {
       <Dialog open={showAddItemModal} onOpenChange={setShowAddItemModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display">Add Material / Item</DialogTitle>
+            <DialogTitle className="font-display">Add Selection / Material</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="item-type">Type</Label>
-              <Input
-                id="item-type"
-                placeholder="e.g., Paint Color, Sofa, Faucet"
-                value={newItem.type}
-                onChange={(e) => setNewItem({ ...newItem, type: e.target.value })}
-              />
+            {/* Mode Toggle */}
+            <div className="flex gap-2 p-1 bg-muted rounded-lg">
+              <button
+                onClick={() => setAddItemMode("existing")}
+                className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                  addItemMode === "existing" 
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                From Inventory
+              </button>
+              <button
+                onClick={() => setAddItemMode("new")}
+                className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                  addItemMode === "new" 
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Add New Product
+              </button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="item-name">Name / Description</Label>
-              <Input
-                id="item-name"
-                placeholder="e.g., Benjamin Moore - Simply White"
-                value={newItem.name}
-                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Item Image</Label>
-              <ImageUpload
-                value={newItem.image}
-                onChange={(url) => setNewItem({ ...newItem, image: url })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="item-link">Product Link (optional)</Label>
-              <Input
-                id="item-link"
-                placeholder="https://..."
-                value={newItem.link}
-                onChange={(e) => setNewItem({ ...newItem, link: e.target.value })}
-              />
-            </div>
+
+            {addItemMode === "existing" ? (
+              <div className="space-y-2">
+                <Label>Select Product</Label>
+                <Select value={selectedExistingProductId} onValueChange={setSelectedExistingProductId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose from inventory..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allProducts.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        <div className="flex items-center gap-2">
+                          {product.image_url && (
+                            <img src={product.image_url} alt="" className="w-6 h-6 rounded object-cover" />
+                          )}
+                          <span>{product.name}</span>
+                          <span className="text-muted-foreground">({product.category})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedExistingProductId && (() => {
+                  const product = allProducts.find(p => p.id === selectedExistingProductId);
+                  return product ? (
+                    <div className="mt-3 p-3 bg-muted/50 rounded-lg flex items-center gap-3">
+                      {product.image_url ? (
+                        <img src={product.image_url} alt={product.name} className="w-16 h-16 rounded object-cover" />
+                      ) : (
+                        <div className="w-16 h-16 rounded bg-muted flex items-center justify-center">
+                          <Package className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-foreground">{product.name}</p>
+                        <p className="text-sm text-muted-foreground">{product.category}</p>
+                        {product.supplier && <p className="text-xs text-muted-foreground">{product.supplier}</p>}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="item-type">Category *</Label>
+                  <Select value={newItem.type} onValueChange={(val) => setNewItem({ ...newItem, type: val })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Fixtures">Fixtures</SelectItem>
+                      <SelectItem value="Paint Colors">Paint Colors</SelectItem>
+                      <SelectItem value="Furniture">Furniture</SelectItem>
+                      <SelectItem value="Lighting">Lighting</SelectItem>
+                      <SelectItem value="Textiles & Rugs">Textiles & Rugs</SelectItem>
+                      <SelectItem value="Accessories">Accessories</SelectItem>
+                      <SelectItem value="Hardware">Hardware</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item-name">Name *</Label>
+                  <Input
+                    id="item-name"
+                    placeholder="e.g., Benjamin Moore - Simply White"
+                    value={newItem.name}
+                    onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item-supplier">Supplier (optional)</Label>
+                  <Input
+                    id="item-supplier"
+                    placeholder="e.g., West Elm, RH, Custom"
+                    value={newItem.supplier}
+                    onChange={(e) => setNewItem({ ...newItem, supplier: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Product Image (optional)</Label>
+                  <ImageUpload
+                    value={newItem.image}
+                    onChange={(url) => setNewItem({ ...newItem, image: url })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item-link">Product Link (optional)</Label>
+                  <Input
+                    id="item-link"
+                    placeholder="https://..."
+                    value={newItem.link}
+                    onChange={(e) => setNewItem({ ...newItem, link: e.target.value })}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  This product will also be added to your product inventory.
+                </p>
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddItemModal(false)}>
               Cancel
             </Button>
-            <Button variant="gold" onClick={handleAddDesignItem}>
-              Add Item
+            <Button 
+              variant="gold" 
+              onClick={handleAddDesignItem}
+              disabled={addItemMode === "existing" ? !selectedExistingProductId : !newItem.type || !newItem.name}
+            >
+              {addItemMode === "existing" ? "Add to Board" : "Create & Add"}
             </Button>
           </DialogFooter>
         </DialogContent>
