@@ -43,7 +43,7 @@ const Footer = () => {
           <div>
             <h4 className="font-display text-lg font-medium mb-4">Contact</h4>
             <ul className="space-y-2 text-primary-foreground/70">
-              <li>hello@maisondesign.com</li>
+              <li>hello@navarreinteriors.com</li>
               <li>+1 (555) 123-4567</li>
               <li>123 Design Avenue</li>
               <li>New York, NY 10001</li>
@@ -53,7 +53,7 @@ const Footer = () => {
 
         <div className="mt-12 pt-8 border-t border-primary-foreground/20 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-primary-foreground/50 text-sm">
-            © 2024 Maison Design Studio. All rights reserved.
+            © 2024 Navarre Interiors. All rights reserved.
           </p>
           <div className="flex gap-6">
             <a href="#" className="text-primary-foreground/50 hover:text-gold text-sm transition-colors">
