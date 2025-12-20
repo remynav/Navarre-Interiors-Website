@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -131,6 +132,7 @@ const AdminDashboard = () => {
     project: "",
     status: "Planning",
   });
+  const [isSendingInvitation, setIsSendingInvitation] = useState(false);
 
   // Check if logged in and is admin
   useEffect(() => {
@@ -183,25 +185,51 @@ const AdminDashboard = () => {
     navigate(`/admin/client/${clientId}`);
   };
 
-  const handleAddClient = () => {
+  const handleAddClient = async () => {
     if (!newClient.name || !newClient.email || !newClient.project) {
       toast.error("Please fill in all required fields");
       return;
     }
     
-    const client = {
-      id: clients.length + 1,
-      name: newClient.name,
-      email: newClient.email,
-      project: newClient.project,
-      status: newClient.status,
-      progress: newClient.status === "Planning" ? 5 : 0,
-    };
+    setIsSendingInvitation(true);
     
-    setClients([...clients, client]);
-    setNewClient({ name: "", email: "", project: "", status: "Planning" });
-    setShowAddClientModal(false);
-    toast.success("Client added successfully");
+    try {
+      // Send invitation email
+      const { data, error } = await supabase.functions.invoke('send-client-invitation', {
+        body: {
+          clientName: newClient.name,
+          clientEmail: newClient.email,
+          projectName: newClient.project,
+          portalUrl: `${window.location.origin}/auth`,
+        },
+      });
+
+      if (error) {
+        console.error("Error sending invitation:", error);
+        toast.error("Failed to send invitation email");
+        setIsSendingInvitation(false);
+        return;
+      }
+
+      const client = {
+        id: clients.length + 1,
+        name: newClient.name,
+        email: newClient.email,
+        project: newClient.project,
+        status: newClient.status,
+        progress: newClient.status === "Planning" ? 5 : 0,
+      };
+      
+      setClients([...clients, client]);
+      setNewClient({ name: "", email: "", project: "", status: "Planning" });
+      setShowAddClientModal(false);
+      toast.success("Client added and invitation email sent!");
+    } catch (err) {
+      console.error("Error adding client:", err);
+      toast.error("Failed to add client");
+    } finally {
+      setIsSendingInvitation(false);
+    }
   };
 
   return (
@@ -744,11 +772,11 @@ const AdminDashboard = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddClientModal(false)}>
+            <Button variant="outline" onClick={() => setShowAddClientModal(false)} disabled={isSendingInvitation}>
               Cancel
             </Button>
-            <Button variant="gold" onClick={handleAddClient}>
-              Add Client
+            <Button variant="gold" onClick={handleAddClient} disabled={isSendingInvitation}>
+              {isSendingInvitation ? "Sending Invitation..." : "Add Client & Send Invitation"}
             </Button>
           </DialogFooter>
         </DialogContent>

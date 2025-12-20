@@ -1,1 +1,4 @@
 project_id = "mqcarteptfrbizavvhbr"
+
+[functions.send-client-invitation]
+verify_jwt = false
