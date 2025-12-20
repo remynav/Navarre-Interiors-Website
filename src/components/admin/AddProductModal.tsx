@@ -201,13 +201,13 @@ export const AddProductModal = ({
             <Label htmlFor="product-project">Project (Optional)</Label>
             <Select
               value={formData.project_id}
-              onValueChange={(value) => setFormData({ ...formData, project_id: value })}
+              onValueChange={(value) => setFormData({ ...formData, project_id: value === "none" ? "" : value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No project</SelectItem>
+                <SelectItem value="none">No project</SelectItem>
                 {projects.map((proj) => (
                   <SelectItem key={proj.id} value={proj.id}>
                     {proj.name}
