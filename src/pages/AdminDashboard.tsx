@@ -43,21 +43,14 @@ import {
 } from "@/components/ui/select";
 import { ProductInventoryTab } from "@/components/admin/ProductInventoryTab";
 
-// Mock data - using state now for dynamic updates
-const initialClients = [
-  { id: 1, name: "John Smith", email: "john@example.com", project: "Modern Penthouse Renovation", status: "In Progress", progress: 65 },
-  { id: 2, name: "Sarah Johnson", email: "sarah@example.com", project: "Coastal Beach House", status: "In Progress", progress: 40 },
-  { id: 3, name: "Michael Chen", email: "michael@example.com", project: "Minimalist Loft", status: "Completed", progress: 100 },
-  { id: 4, name: "Emily Davis", email: "emily@example.com", project: "Urban Studio Apartment", status: "Planning", progress: 15 },
-  { id: 5, name: "Robert Wilson", email: "robert@example.com", project: "Classic Colonial Refresh", status: "On Hold", progress: 30 },
-];
-
-const stats = [
-  { label: "Total Clients", value: "24", change: "+3 this month" },
-  { label: "Active Projects", value: "18", change: "5 completing soon" },
-  { label: "Completed", value: "47", change: "+8 this year" },
-  { label: "Revenue", value: "$284K", change: "+12% vs last month" },
-];
+interface Client {
+  id: string;
+  name: string;
+  email: string;
+  project: string;
+  status: string;
+  progress: number;
+}
 
 
 const AdminDashboard = () => {
@@ -66,7 +59,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [clients, setClients] = useState(initialClients);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [newClient, setNewClient] = useState({
     name: "",
@@ -87,6 +81,68 @@ const AdminDashboard = () => {
       }
     }
   }, [user, authLoading, isAdmin, navigate]);
+
+  // Fetch clients from database
+  useEffect(() => {
+    const fetchClients = async () => {
+      if (!user || !isAdmin) return;
+      
+      setIsLoadingClients(true);
+      try {
+        // Fetch all projects with their client profiles
+        const { data: projects, error } = await supabase
+          .from("projects")
+          .select(`
+            id,
+            name,
+            status,
+            progress,
+            client_id
+          `)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        // Fetch all client profiles
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, email, full_name")
+          .eq("role", "client");
+
+        if (profilesError) throw profilesError;
+
+        // Combine projects with their client info
+        const clientsData: Client[] = (projects || []).map((project) => {
+          const profile = profiles?.find((p) => p.id === project.client_id);
+          return {
+            id: project.id,
+            name: profile?.full_name || "Unknown Client",
+            email: profile?.email || "",
+            project: project.name,
+            status: project.status,
+            progress: project.progress,
+          };
+        });
+
+        setClients(clientsData);
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+        toast.error("Failed to load clients");
+      } finally {
+        setIsLoadingClients(false);
+      }
+    };
+
+    fetchClients();
+  }, [user, isAdmin]);
+
+  // Calculate stats from real data
+  const stats = [
+    { label: "Total Clients", value: clients.length.toString(), change: "Active clients" },
+    { label: "Active Projects", value: clients.filter(c => c.status === "In Progress").length.toString(), change: "Currently in progress" },
+    { label: "Completed", value: clients.filter(c => c.status === "Completed").length.toString(), change: "Finished projects" },
+    { label: "Planning", value: clients.filter(c => c.status === "Planning").length.toString(), change: "Upcoming projects" },
+  ];
 
   const handleLogout = async () => {
     await signOut();
@@ -123,7 +179,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleClientClick = (clientId: number) => {
+  const handleClientClick = (clientId: string) => {
     navigate(`/admin/client/${clientId}`);
   };
 
@@ -153,8 +209,9 @@ const AdminDashboard = () => {
         return;
       }
 
-      const client = {
-        id: clients.length + 1,
+      // Add a temporary client entry (will be updated when client registers)
+      const tempClient: Client = {
+        id: crypto.randomUUID(),
         name: newClient.name,
         email: newClient.email,
         project: newClient.project,
@@ -162,7 +219,7 @@ const AdminDashboard = () => {
         progress: newClient.status === "Planning" ? 5 : 0,
       };
       
-      setClients([...clients, client]);
+      setClients([tempClient, ...clients]);
       setNewClient({ name: "", email: "", project: "", status: "Planning" });
       setShowAddClientModal(false);
       toast.success("Client added and invitation email sent!");
@@ -171,6 +228,41 @@ const AdminDashboard = () => {
       toast.error("Failed to add client");
     } finally {
       setIsSendingInvitation(false);
+    }
+  };
+
+  // Refetch clients function
+  const refetchClients = async () => {
+    try {
+      const { data: projects, error } = await supabase
+        .from("projects")
+        .select(`id, name, status, progress, client_id`)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .eq("role", "client");
+
+      if (profilesError) throw profilesError;
+
+      const clientsData: Client[] = (projects || []).map((project) => {
+        const profile = profiles?.find((p) => p.id === project.client_id);
+        return {
+          id: project.id,
+          name: profile?.full_name || "Unknown Client",
+          email: profile?.email || "",
+          project: project.name,
+          status: project.status,
+          progress: project.progress,
+        };
+      });
+
+      setClients(clientsData);
+    } catch (error) {
+      console.error("Error refetching clients:", error);
     }
   };
 
@@ -366,6 +458,18 @@ const AdminDashboard = () => {
 
               {/* Clients Table */}
               <div className="bg-card rounded-lg shadow-soft overflow-hidden">
+                {isLoadingClients ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
+                  </div>
+                ) : filteredClients.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      {searchQuery ? "No clients match your search" : "No clients yet. Add your first client to get started."}
+                    </p>
+                  </div>
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -442,6 +546,7 @@ const AdminDashboard = () => {
                     </tbody>
                   </table>
                 </div>
+                )}
               </div>
             </div>
           )}
