@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,11 +21,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-interface AddProductModalProps {
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  supplier: string | null;
+  link: string | null;
+  image_url: string | null;
+  project_id: string | null;
+}
+
+interface ProductModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onProductAdded: () => void;
+  onProductSaved: () => void;
   projects: { id: string; name: string }[];
+  product?: Product | null; // If provided, we're editing
 }
 
 const CATEGORIES = [
@@ -36,12 +47,14 @@ const CATEGORIES = [
   "Textiles & Rugs",
 ];
 
-export const AddProductModal = ({
+export const ProductModal = ({
   open,
   onOpenChange,
-  onProductAdded,
+  onProductSaved,
   projects,
-}: AddProductModalProps) => {
+  product,
+}: ProductModalProps) => {
+  const isEditing = !!product;
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -52,6 +65,32 @@ export const AddProductModal = ({
     link: "",
     project_id: "",
   });
+
+  // Reset form when modal opens or product changes
+  useEffect(() => {
+    if (open) {
+      if (product) {
+        setFormData({
+          name: product.name,
+          category: product.category,
+          supplier: product.supplier || "",
+          link: product.link || "",
+          project_id: product.project_id || "",
+        });
+        setImagePreview(product.image_url || "");
+      } else {
+        setFormData({
+          name: "",
+          category: "",
+          supplier: "",
+          link: "",
+          project_id: "",
+        });
+        setImagePreview("");
+      }
+      setImageFile(null);
+    }
+  }, [open, product]);
 
   const handleImageChange = (value: string) => {
     setImagePreview(value);
@@ -77,12 +116,12 @@ export const AddProductModal = ({
     setIsLoading(true);
 
     try {
-      let imageUrl = null;
+      let imageUrl = isEditing ? product?.image_url || null : null;
 
-      // Upload image if provided
+      // Upload new image if provided
       if (imageFile) {
         const fileName = `${Date.now()}-${imageFile.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("product-images")
           .upload(fileName, imageFile);
 
@@ -101,40 +140,51 @@ export const AddProductModal = ({
         imageUrl = urlData.publicUrl;
       }
 
-      // Insert product into database
-      const { error: insertError } = await supabase.from("product_inventory").insert({
+      const productData = {
         name: formData.name,
         category: formData.category,
         supplier: formData.supplier || null,
         link: formData.link || null,
         project_id: formData.project_id || null,
         image_url: imageUrl,
-      });
+      };
 
-      if (insertError) {
-        console.error("Insert error:", insertError);
-        toast.error("Failed to add product");
-        setIsLoading(false);
-        return;
+      if (isEditing && product) {
+        // Update existing product
+        const { error: updateError } = await supabase
+          .from("product_inventory")
+          .update(productData)
+          .eq("id", product.id);
+
+        if (updateError) {
+          console.error("Update error:", updateError);
+          toast.error("Failed to update product");
+          setIsLoading(false);
+          return;
+        }
+
+        toast.success("Product updated successfully!");
+      } else {
+        // Insert new product
+        const { error: insertError } = await supabase
+          .from("product_inventory")
+          .insert(productData);
+
+        if (insertError) {
+          console.error("Insert error:", insertError);
+          toast.error("Failed to add product");
+          setIsLoading(false);
+          return;
+        }
+
+        toast.success("Product added successfully!");
       }
 
-      toast.success("Product added successfully!");
-      
-      // Reset form
-      setFormData({
-        name: "",
-        category: "",
-        supplier: "",
-        link: "",
-        project_id: "",
-      });
-      setImageFile(null);
-      setImagePreview("");
       onOpenChange(false);
-      onProductAdded();
+      onProductSaved();
     } catch (error) {
-      console.error("Error adding product:", error);
-      toast.error("Failed to add product");
+      console.error("Error saving product:", error);
+      toast.error(isEditing ? "Failed to update product" : "Failed to add product");
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +194,9 @@ export const AddProductModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">Add New Product</DialogTitle>
+          <DialogTitle className="font-display text-xl">
+            {isEditing ? "Edit Product" : "Add New Product"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -200,7 +252,7 @@ export const AddProductModal = ({
           <div className="space-y-2">
             <Label htmlFor="product-project">Project (Optional)</Label>
             <Select
-              value={formData.project_id}
+              value={formData.project_id || "none"}
               onValueChange={(value) => setFormData({ ...formData, project_id: value === "none" ? "" : value })}
             >
               <SelectTrigger>
@@ -234,10 +286,10 @@ export const AddProductModal = ({
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Adding...
+                {isEditing ? "Saving..." : "Adding..."}
               </>
             ) : (
-              "Add Product"
+              isEditing ? "Save Changes" : "Add Product"
             )}
           </Button>
         </DialogFooter>

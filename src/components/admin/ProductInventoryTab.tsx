@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,10 +19,12 @@ import {
   Lamp,
   Wrench,
   ImageIcon,
+  Search,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AddProductModal } from "./AddProductModal";
+import { ProductModal } from "./ProductModal";
 import { ImageLightbox } from "./ImageLightbox";
 
 interface Product {
@@ -52,8 +55,10 @@ export const ProductInventoryTab = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchProducts = async () => {
     try {
@@ -110,15 +115,48 @@ export const ProductInventoryTab = () => {
     }
   };
 
-  // Group products by category
-  const productsByCategory = products.reduce((acc, product) => {
-    const category = product.category;
-    if (!acc[category]) {
-      acc[category] = [];
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setShowModal(true);
+  };
+
+  const handleAddProduct = () => {
+    setEditingProduct(null);
+    setShowModal(true);
+  };
+
+  const handleModalClose = (open: boolean) => {
+    setShowModal(open);
+    if (!open) {
+      setEditingProduct(null);
     }
-    acc[category].push(product);
-    return acc;
-  }, {} as Record<string, Product[]>);
+  };
+
+  // Filter products based on search query
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return products;
+    
+    const query = searchQuery.toLowerCase();
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(query) ||
+        product.category.toLowerCase().includes(query) ||
+        (product.supplier && product.supplier.toLowerCase().includes(query)) ||
+        (product.project_name && product.project_name.toLowerCase().includes(query))
+    );
+  }, [products, searchQuery]);
+
+  // Group filtered products by category
+  const productsByCategory = useMemo(() => {
+    return filteredProducts.reduce((acc, product) => {
+      const category = product.category;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(product);
+      return acc;
+    }, {} as Record<string, Product[]>);
+  }, [filteredProducts]);
 
   const categories = Object.keys(productsByCategory).sort();
 
@@ -141,33 +179,65 @@ export const ProductInventoryTab = () => {
             Track products used across all projects
           </p>
         </div>
-        <Button variant="gold" onClick={() => setShowAddModal(true)}>
+        <Button variant="gold" onClick={handleAddProduct}>
           <Plus className="w-4 h-4 mr-2" />
           Add Product
         </Button>
       </div>
 
-      {/* Category Overview */}
-      <div className="flex flex-wrap gap-2">
-        {categories.map((category) => {
-          const IconComponent = CATEGORY_ICONS[category] || Package;
-          return (
-            <div
-              key={category}
-              className="flex items-center gap-2 px-4 py-2 bg-card rounded-lg border border-border"
-            >
-              <IconComponent className="w-4 h-4 text-gold" />
-              <span className="text-sm font-medium text-foreground">{category}</span>
-              <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
-                {productsByCategory[category].length}
-              </span>
-            </div>
-          );
-        })}
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by name, category, or supplier..."
+          className="pl-10 pr-10"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
+      {/* Category Overview */}
+      {products.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {Object.keys(
+            products.reduce((acc, p) => ({ ...acc, [p.category]: true }), {} as Record<string, boolean>)
+          ).sort().map((category) => {
+            const IconComponent = CATEGORY_ICONS[category] || Package;
+            const count = products.filter((p) => p.category === category).length;
+            return (
+              <button
+                key={category}
+                onClick={() => setSearchQuery(category)}
+                className="flex items-center gap-2 px-4 py-2 bg-card rounded-lg border border-border hover:border-gold transition-colors"
+              >
+                <IconComponent className="w-4 h-4 text-gold" />
+                <span className="text-sm font-medium text-foreground">{category}</span>
+                <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Search Results Info */}
+      {searchQuery && (
+        <p className="text-sm text-muted-foreground">
+          Found {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""} matching "{searchQuery}"
+        </p>
+      )}
+
       {/* Products by Category */}
-      {categories.length === 0 ? (
+      {products.length === 0 ? (
         <div className="bg-card rounded-lg p-12 text-center">
           <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="font-display text-lg font-semibold text-foreground mb-2">
@@ -176,9 +246,22 @@ export const ProductInventoryTab = () => {
           <p className="text-muted-foreground mb-4">
             Add your first product to get started
           </p>
-          <Button variant="gold" onClick={() => setShowAddModal(true)}>
+          <Button variant="gold" onClick={handleAddProduct}>
             <Plus className="w-4 h-4 mr-2" />
             Add Product
+          </Button>
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="bg-card rounded-lg p-12 text-center">
+          <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+            No products found
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            Try a different search term
+          </p>
+          <Button variant="outline" onClick={() => setSearchQuery("")}>
+            Clear Search
           </Button>
         </div>
       ) : (
@@ -271,6 +354,10 @@ export const ProductInventoryTab = () => {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditProduct(product)}>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
                                 {product.link && (
                                   <DropdownMenuItem
                                     onClick={() => window.open(product.link!, "_blank")}
@@ -308,11 +395,12 @@ export const ProductInventoryTab = () => {
         </div>
       )}
 
-      <AddProductModal
-        open={showAddModal}
-        onOpenChange={setShowAddModal}
-        onProductAdded={fetchProducts}
+      <ProductModal
+        open={showModal}
+        onOpenChange={handleModalClose}
+        onProductSaved={fetchProducts}
         projects={projects}
+        product={editingProduct}
       />
 
       <ImageLightbox
