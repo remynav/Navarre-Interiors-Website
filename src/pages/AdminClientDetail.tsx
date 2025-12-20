@@ -82,6 +82,43 @@ const AdminClientDetail = () => {
   const [renderings, setRenderings] = useSharedRenderings();
   const [messages, setMessages] = useState<any[]>([]);
 
+  // State for add project modal
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+
+  // Helper to generate default project name from address
+  const getDefaultProjectName = (address: string, email: string) => {
+    if (address && address.trim()) {
+      // Get first part of address (before first comma or first few words)
+      const firstPart = address.split(",")[0].trim();
+      return firstPart || `${email.split("@")[0]}'s Project`;
+    }
+    return `${email.split("@")[0]}'s Project`;
+  };
+
+  // Create a project for client
+  const createProjectForClient = async (profileId: string, projectName: string) => {
+    try {
+      const { data: newProject, error } = await supabase
+        .from("projects")
+        .insert({
+          client_id: profileId,
+          name: projectName,
+          status: "Planning",
+          progress: 0,
+        })
+        .select("id, name, status, progress")
+        .single();
+
+      if (error) throw error;
+      return newProject;
+    } catch (error) {
+      console.error("Error creating project:", error);
+      throw error;
+    }
+  };
+
   // Fetch client data from Supabase
   useEffect(() => {
     const fetchClientData = async () => {
@@ -105,13 +142,21 @@ const AdminClientDetail = () => {
         }
 
         // Fetch projects for this client
-        const { data: projects, error: projectsError } = await supabase
+        let { data: projects, error: projectsError } = await supabase
           .from("projects")
           .select("id, name, status, progress")
           .eq("client_id", clientId)
           .order("created_at", { ascending: false });
 
         if (projectsError) throw projectsError;
+
+        // If no projects, create a default one
+        if (!projects || projects.length === 0) {
+          const defaultName = getDefaultProjectName(profile.address || "", profile.email);
+          const newProject = await createProjectForClient(profile.id, defaultName);
+          projects = [newProject];
+          toast.success(`Created project: ${defaultName}`);
+        }
 
         setClient({
           id: profile.id,
@@ -122,7 +167,7 @@ const AdminClientDetail = () => {
           projects: projects || [],
         });
 
-        // Set first project as selected if exists
+        // Set first project as selected
         if (projects && projects.length > 0) {
           setSelectedProjectId(projects[0].id);
         }
@@ -136,6 +181,33 @@ const AdminClientDetail = () => {
 
     fetchClientData();
   }, [clientId, navigate]);
+
+  // Handle adding a new project
+  const handleAddProject = async () => {
+    if (!client || !newProjectName.trim()) {
+      toast.error("Please enter a project name");
+      return;
+    }
+
+    setIsCreatingProject(true);
+    try {
+      const newProject = await createProjectForClient(client.id, newProjectName.trim());
+      
+      setClient(prev => prev ? {
+        ...prev,
+        projects: [newProject, ...prev.projects],
+      } : null);
+      
+      setSelectedProjectId(newProject.id);
+      setNewProjectName("");
+      setShowAddProjectModal(false);
+      toast.success(`Created project: ${newProject.name}`);
+    } catch (error) {
+      toast.error("Failed to create project");
+    } finally {
+      setIsCreatingProject(false);
+    }
+  };
   const [newMessage, setNewMessage] = useState("");
   const [docTab, setDocTab] = useState<"sent" | "draft" | "archived">("sent");
   
@@ -796,7 +868,7 @@ const AdminClientDetail = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {client.projects.length > 1 && (
+            {client.projects.length > 0 && (
               <Select value={selectedProjectId || ""} onValueChange={setSelectedProjectId}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Select project" />
@@ -810,6 +882,17 @@ const AdminClientDetail = () => {
                 </SelectContent>
               </Select>
             )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setNewProjectName("");
+                setShowAddProjectModal(true);
+              }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Project
+            </Button>
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
               getSelectedProject()?.status === "In Progress" ? "bg-gold/10 text-gold" :
               getSelectedProject()?.status === "Completed" ? "bg-green-500/10 text-green-600" :
@@ -1969,6 +2052,38 @@ const AdminClientDetail = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Project Modal */}
+      <Dialog open={showAddProjectModal} onOpenChange={setShowAddProjectModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="project-name">Project Name</Label>
+              <Input
+                id="project-name"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder="e.g., Living Room Renovation"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddProjectModal(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="gold" 
+              onClick={handleAddProject}
+              disabled={isCreatingProject || !newProjectName.trim()}
+            >
+              {isCreatingProject ? "Creating..." : "Create Project"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
