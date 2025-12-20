@@ -42,6 +42,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
 import { ClientProductsTab } from "@/components/client/ClientProductsTab";
 import { InspirationBoardsTab } from "@/components/client/InspirationBoardsTab";
+import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileData {
@@ -1262,6 +1263,14 @@ const ClientDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Document Preview Modal */}
+      <DocumentPreviewModal
+        open={showDocPreviewModal}
+        onOpenChange={setShowDocPreviewModal}
+        document={getSelectedDocument()}
+        onDownload={handleDownloadDocument}
+      />
     </div>
   );
 };
