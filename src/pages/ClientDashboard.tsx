@@ -35,6 +35,7 @@ import {
   Package,
   User,
   Save,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -1049,9 +1050,18 @@ const ClientDashboard = () => {
                               {!isClient && (
                                 <p className="text-xs text-muted-foreground mb-1">Navarre Interiors</p>
                               )}
-                              {/* Reference Card */}
+                              {/* Reference Card - Clickable */}
                               {hasReference && (
-                                <div className={`mb-2 rounded-lg border ${isClient ? "border-primary-foreground/20" : "border-border"} overflow-hidden`}>
+                                <button
+                                  onClick={() => {
+                                    if (msg.reference_type === 'rendering') {
+                                      setActiveTab('renderings');
+                                    } else if (msg.reference_type === 'design_item') {
+                                      setActiveTab('inspiration');
+                                    }
+                                  }}
+                                  className={`mb-2 rounded-lg border ${isClient ? "border-primary-foreground/20" : "border-border"} overflow-hidden w-full text-left hover:bg-muted/80 transition-colors cursor-pointer`}
+                                >
                                   <div className="flex items-center gap-2 p-2 bg-muted/50">
                                     {msg.reference_image_url && (
                                       <img 
@@ -1068,8 +1078,9 @@ const ClientDashboard = () => {
                                         {msg.reference_title}
                                       </p>
                                     </div>
+                                    <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                   </div>
-                                </div>
+                                </button>
                               )}
                               <div
                                 className={`rounded-lg p-3 ${
