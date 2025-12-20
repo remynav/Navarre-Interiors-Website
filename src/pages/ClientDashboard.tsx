@@ -885,7 +885,7 @@ const ClientDashboard = () => {
                         className="w-full h-full object-cover"
                       />
                       <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(rendering.status)}`}>
-                        {rendering.status === "approved" ? "Approved" : rendering.status === "pending" ? "Pending Approval" : "Needs Revision"}
+                        {rendering.status === "approved" ? "Approved" : "Pending Approval"}
                       </span>
                     </div>
                     <div className="p-4">
