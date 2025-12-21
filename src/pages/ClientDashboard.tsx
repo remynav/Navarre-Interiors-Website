@@ -354,11 +354,24 @@ const ClientDashboard = () => {
   };
 
   const handleApproveRendering = (renderingId: number) => {
+    const rendering = renderings.find(r => r.id === renderingId);
     setRenderings(renderings.map(r => 
       r.id === renderingId 
         ? { ...r, status: "approved" } 
         : r
     ));
+    
+    // Notify admins about rendering approval
+    if (rendering) {
+      notifyAdmins(
+        'rendering',
+        `Rendering approved by ${profile?.full_name || 'Client'}`,
+        `"${rendering.title}" has been approved`,
+        selectedProjectId || undefined,
+        'project'
+      );
+    }
+    
     toast.success("Rendering approved!");
   };
 
@@ -402,6 +415,9 @@ const ClientDashboard = () => {
   };
 
   const handleApproveItem = (boardId: number, itemId: number) => {
+    const board = inspirations.find(b => b.id === boardId);
+    const item = board?.designItems.find(i => i.id === itemId);
+    
     setInspirations(inspirations.map(board => 
       board.id === boardId 
         ? {
@@ -414,6 +430,18 @@ const ClientDashboard = () => {
           }
         : board
     ));
+    
+    // Notify admins about item approval
+    if (item) {
+      notifyAdmins(
+        'inspiration',
+        `Design item approved by ${profile?.full_name || 'Client'}`,
+        `"${item.name}" has been approved`,
+        selectedProjectId || undefined,
+        'project'
+      );
+    }
+    
     toast.success("Item approved!");
   };
 

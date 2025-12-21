@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageUpload } from "@/components/ImageUpload";
+import { notifyAdmins } from "@/hooks/useNotifications";
 
 interface Comment {
   id: number;
@@ -174,6 +175,14 @@ export const InspirationBoardsTab = ({
         { id: crypto.randomUUID(), image_url: newImageUrl, uploaded_by: currentUserId },
         ...clientImages,
       ]);
+      
+      // Notify admins about new client image
+      notifyAdmins(
+        'inspiration',
+        'Client added inspiration image',
+        `New image added to "${selectedBoard.title}" board`
+      );
+      
       setNewImageUrl("");
       setShowAddImageModal(false);
       toast.success("Image added to board");
@@ -219,6 +228,9 @@ export const InspirationBoardsTab = ({
 
   const handleApproveItem = (itemId: number) => {
     if (!selectedBoard) return;
+    
+    const item = selectedBoard.designItems.find(i => i.id === itemId);
+    
     setInspirations((prev) =>
       prev.map((board) =>
         board.id === selectedBoard.id
@@ -241,6 +253,16 @@ export const InspirationBoardsTab = ({
           }
         : null
     );
+    
+    // Notify admins about item approval
+    if (item) {
+      notifyAdmins(
+        'inspiration',
+        'Design item approved',
+        `"${item.name}" has been approved`
+      );
+    }
+    
     toast.success("Item approved!");
   };
 
