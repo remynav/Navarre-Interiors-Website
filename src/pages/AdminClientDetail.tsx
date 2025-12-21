@@ -505,7 +505,21 @@ const AdminClientDetail = () => {
   };
 
   const handleSendDocument = (docId: number) => {
+    const doc = documents.find(d => d.id === docId);
     setDocuments(documents.map(d => d.id === docId ? { ...d, status: "sent" as const } : d));
+    
+    // Notify client about new document
+    if (clientId && doc) {
+      sendNotification({
+        userId: clientId,
+        type: 'document',
+        title: 'New document available',
+        message: `"${doc.name}" has been shared with you`,
+        referenceId: selectedProjectId || undefined,
+        referenceType: 'project'
+      });
+    }
+    
     toast.success("Document sent to client");
   };
 
@@ -782,7 +796,21 @@ const AdminClientDetail = () => {
 
   // Rendering workflow handlers
   const handleSendRendering = (id: number) => {
+    const rendering = renderings.find(r => r.id === id);
     setRenderings(renderings.map(r => r.id === id ? { ...r, status: "sent" } : r));
+    
+    // Notify client about new rendering
+    if (clientId && rendering) {
+      sendNotification({
+        userId: clientId,
+        type: 'rendering',
+        title: 'New rendering for review',
+        message: `"${rendering.title}" is ready for your approval`,
+        referenceId: selectedProjectId || undefined,
+        referenceType: 'project'
+      });
+    }
+    
     toast.success("Rendering sent to client");
   };
 
@@ -857,6 +885,19 @@ const AdminClientDetail = () => {
         gallery: [newBoard.image],
         designItems: []
       }]);
+      
+      // Notify client about new inspiration board
+      if (clientId) {
+        sendNotification({
+          userId: clientId,
+          type: 'inspiration',
+          title: 'New inspiration board',
+          message: `"${newBoard.title}" has been created for your project`,
+          referenceId: selectedProjectId || undefined,
+          referenceType: 'project'
+        });
+      }
+      
       toast.success("Inspiration board added");
     }
     
