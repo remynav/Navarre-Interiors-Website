@@ -44,6 +44,7 @@ import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "
 import { ClientProductsTab } from "@/components/client/ClientProductsTab";
 import { InspirationBoardsTab } from "@/components/client/InspirationBoardsTab";
 import { OrderBudgetTab } from "@/components/OrderBudgetTab";
+import { OrderBudgetSummary } from "@/components/OrderBudgetSummary";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -704,6 +705,12 @@ const ClientDashboard = () => {
                   <span className="absolute top-4 right-4 w-3 h-3 bg-gold rounded-full" />
                 </button>
               </div>
+
+              {/* Orders & Budget Summary */}
+              <OrderBudgetSummary 
+                projectId={selectedProjectId} 
+                onViewAll={() => setActiveTab("orders")} 
+              />
 
               {/* Recent Updates */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
