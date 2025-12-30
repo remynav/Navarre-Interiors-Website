@@ -1,0 +1,968 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Package,
+  DollarSign,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Truck,
+} from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+
+interface Order {
+  id: string;
+  project_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  status: string;
+  supplier: string | null;
+  order_date: string;
+  expected_delivery: string | null;
+  actual_delivery: string | null;
+  notes: string | null;
+}
+
+interface BudgetItem {
+  id: string;
+  project_id: string;
+  category: string;
+  description: string | null;
+  allocated_amount: number;
+  spent_amount: number;
+}
+
+interface OrderBudgetTabProps {
+  projectId: string | null;
+  isAdmin: boolean;
+}
+
+const BUDGET_COLORS = [
+  "hsl(var(--gold))",
+  "hsl(var(--primary))",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#06B6D4",
+];
+
+const ORDER_STATUSES = ["pending", "ordered", "shipped", "delivered", "cancelled"];
+
+export const OrderBudgetTab = ({ projectId, isAdmin }: OrderBudgetTabProps) => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [isLoadingBudget, setIsLoadingBudget] = useState(true);
+  const [activeSubTab, setActiveSubTab] = useState("orders");
+
+  // Modal states
+  const [showAddOrderModal, setShowAddOrderModal] = useState(false);
+  const [showAddBudgetModal, setShowAddBudgetModal] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [editingBudget, setEditingBudget] = useState<BudgetItem | null>(null);
+
+  // Form states
+  const [orderForm, setOrderForm] = useState({
+    product_name: "",
+    quantity: 1,
+    unit_price: 0,
+    status: "pending",
+    supplier: "",
+    order_date: new Date().toISOString().split("T")[0],
+    expected_delivery: "",
+    notes: "",
+  });
+
+  const [budgetForm, setBudgetForm] = useState({
+    category: "",
+    description: "",
+    allocated_amount: 0,
+    spent_amount: 0,
+  });
+
+  // Fetch orders
+  useEffect(() => {
+    if (!projectId) return;
+
+    const fetchOrders = async () => {
+      setIsLoadingOrders(true);
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("project_id", projectId)
+          .order("order_date", { ascending: false });
+
+        if (error) throw error;
+        setOrders(data || []);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      } finally {
+        setIsLoadingOrders(false);
+      }
+    };
+
+    fetchOrders();
+  }, [projectId]);
+
+  // Fetch budget items
+  useEffect(() => {
+    if (!projectId) return;
+
+    const fetchBudget = async () => {
+      setIsLoadingBudget(true);
+      try {
+        const { data, error } = await supabase
+          .from("budget_items")
+          .select("*")
+          .eq("project_id", projectId)
+          .order("category");
+
+        if (error) throw error;
+        setBudgetItems(data || []);
+      } catch (error) {
+        console.error("Error fetching budget:", error);
+      } finally {
+        setIsLoadingBudget(false);
+      }
+    };
+
+    fetchBudget();
+  }, [projectId]);
+
+  // Order handlers
+  const handleAddOrder = async () => {
+    if (!projectId || !orderForm.product_name.trim()) {
+      toast.error("Please fill in product name");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .insert({
+          project_id: projectId,
+          product_name: orderForm.product_name,
+          quantity: orderForm.quantity,
+          unit_price: orderForm.unit_price,
+          status: orderForm.status,
+          supplier: orderForm.supplier || null,
+          order_date: orderForm.order_date,
+          expected_delivery: orderForm.expected_delivery || null,
+          notes: orderForm.notes || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setOrders([data, ...orders]);
+      setShowAddOrderModal(false);
+      resetOrderForm();
+      toast.success("Order added successfully");
+    } catch (error) {
+      console.error("Error adding order:", error);
+      toast.error("Failed to add order");
+    }
+  };
+
+  const handleUpdateOrder = async () => {
+    if (!editingOrder) return;
+
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          product_name: orderForm.product_name,
+          quantity: orderForm.quantity,
+          unit_price: orderForm.unit_price,
+          status: orderForm.status,
+          supplier: orderForm.supplier || null,
+          expected_delivery: orderForm.expected_delivery || null,
+          actual_delivery: orderForm.status === "delivered" ? new Date().toISOString().split("T")[0] : null,
+          notes: orderForm.notes || null,
+        })
+        .eq("id", editingOrder.id);
+
+      if (error) throw error;
+
+      setOrders(
+        orders.map((o) =>
+          o.id === editingOrder.id
+            ? {
+                ...o,
+                product_name: orderForm.product_name,
+                quantity: orderForm.quantity,
+                unit_price: orderForm.unit_price,
+                total_price: orderForm.quantity * orderForm.unit_price,
+                status: orderForm.status,
+                supplier: orderForm.supplier || null,
+                expected_delivery: orderForm.expected_delivery || null,
+                actual_delivery: orderForm.status === "delivered" ? new Date().toISOString().split("T")[0] : null,
+                notes: orderForm.notes || null,
+              }
+            : o
+        )
+      );
+      setEditingOrder(null);
+      resetOrderForm();
+      toast.success("Order updated successfully");
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast.error("Failed to update order");
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase.from("orders").delete().eq("id", orderId);
+
+      if (error) throw error;
+
+      setOrders(orders.filter((o) => o.id !== orderId));
+      toast.success("Order deleted");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast.error("Failed to delete order");
+    }
+  };
+
+  // Budget handlers
+  const handleAddBudget = async () => {
+    if (!projectId || !budgetForm.category.trim()) {
+      toast.error("Please fill in category");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("budget_items")
+        .insert({
+          project_id: projectId,
+          category: budgetForm.category,
+          description: budgetForm.description || null,
+          allocated_amount: budgetForm.allocated_amount,
+          spent_amount: budgetForm.spent_amount,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setBudgetItems([...budgetItems, data]);
+      setShowAddBudgetModal(false);
+      resetBudgetForm();
+      toast.success("Budget item added successfully");
+    } catch (error) {
+      console.error("Error adding budget item:", error);
+      toast.error("Failed to add budget item");
+    }
+  };
+
+  const handleUpdateBudget = async () => {
+    if (!editingBudget) return;
+
+    try {
+      const { error } = await supabase
+        .from("budget_items")
+        .update({
+          category: budgetForm.category,
+          description: budgetForm.description || null,
+          allocated_amount: budgetForm.allocated_amount,
+          spent_amount: budgetForm.spent_amount,
+        })
+        .eq("id", editingBudget.id);
+
+      if (error) throw error;
+
+      setBudgetItems(
+        budgetItems.map((b) =>
+          b.id === editingBudget.id
+            ? {
+                ...b,
+                category: budgetForm.category,
+                description: budgetForm.description || null,
+                allocated_amount: budgetForm.allocated_amount,
+                spent_amount: budgetForm.spent_amount,
+              }
+            : b
+        )
+      );
+      setEditingBudget(null);
+      resetBudgetForm();
+      toast.success("Budget item updated");
+    } catch (error) {
+      console.error("Error updating budget item:", error);
+      toast.error("Failed to update budget item");
+    }
+  };
+
+  const handleDeleteBudget = async (budgetId: string) => {
+    try {
+      const { error } = await supabase.from("budget_items").delete().eq("id", budgetId);
+
+      if (error) throw error;
+
+      setBudgetItems(budgetItems.filter((b) => b.id !== budgetId));
+      toast.success("Budget item deleted");
+    } catch (error) {
+      console.error("Error deleting budget item:", error);
+      toast.error("Failed to delete budget item");
+    }
+  };
+
+  const resetOrderForm = () => {
+    setOrderForm({
+      product_name: "",
+      quantity: 1,
+      unit_price: 0,
+      status: "pending",
+      supplier: "",
+      order_date: new Date().toISOString().split("T")[0],
+      expected_delivery: "",
+      notes: "",
+    });
+  };
+
+  const resetBudgetForm = () => {
+    setBudgetForm({
+      category: "",
+      description: "",
+      allocated_amount: 0,
+      spent_amount: 0,
+    });
+  };
+
+  const openEditOrder = (order: Order) => {
+    setOrderForm({
+      product_name: order.product_name,
+      quantity: order.quantity,
+      unit_price: order.unit_price,
+      status: order.status,
+      supplier: order.supplier || "",
+      order_date: order.order_date,
+      expected_delivery: order.expected_delivery || "",
+      notes: order.notes || "",
+    });
+    setEditingOrder(order);
+  };
+
+  const openEditBudget = (budget: BudgetItem) => {
+    setBudgetForm({
+      category: budget.category,
+      description: budget.description || "",
+      allocated_amount: budget.allocated_amount,
+      spent_amount: budget.spent_amount,
+    });
+    setEditingBudget(budget);
+  };
+
+  // Calculate totals
+  const totalOrderValue = orders.reduce((sum, o) => sum + Number(o.total_price), 0);
+  const pendingOrders = orders.filter((o) => o.status === "pending" || o.status === "ordered").length;
+  const totalBudget = budgetItems.reduce((sum, b) => sum + Number(b.allocated_amount), 0);
+  const totalSpent = budgetItems.reduce((sum, b) => sum + Number(b.spent_amount), 0);
+  const budgetRemaining = totalBudget - totalSpent;
+
+  // Chart data
+  const budgetChartData = budgetItems.map((b) => ({
+    name: b.category,
+    allocated: Number(b.allocated_amount),
+    spent: Number(b.spent_amount),
+  }));
+
+  const orderStatusData = ORDER_STATUSES.map((status) => ({
+    name: status.charAt(0).toUpperCase() + status.slice(1),
+    value: orders.filter((o) => o.status === status).length,
+  })).filter((d) => d.value > 0);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-500/10 text-yellow-600";
+      case "ordered":
+        return "bg-blue-500/10 text-blue-600";
+      case "shipped":
+        return "bg-purple-500/10 text-purple-600";
+      case "delivered":
+        return "bg-green-500/10 text-green-600";
+      case "cancelled":
+        return "bg-red-500/10 text-red-600";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Clock className="w-4 h-4" />;
+      case "ordered":
+        return <Package className="w-4 h-4" />;
+      case "shipped":
+        return <Truck className="w-4 h-4" />;
+      case "delivered":
+        return <CheckCircle className="w-4 h-4" />;
+      case "cancelled":
+        return <AlertCircle className="w-4 h-4" />;
+      default:
+        return null;
+    }
+  };
+
+  if (!projectId) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Please select a project to view orders and budget.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-card rounded-lg p-4 shadow-soft">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gold/10 rounded-lg">
+              <Package className="w-5 h-5 text-gold" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Orders</p>
+              <p className="text-xl font-semibold text-foreground">{orders.length}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-card rounded-lg p-4 shadow-soft">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <Clock className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Pending/Ordered</p>
+              <p className="text-xl font-semibold text-foreground">{pendingOrders}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-card rounded-lg p-4 shadow-soft">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-500/10 rounded-lg">
+              <DollarSign className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Budget</p>
+              <p className="text-xl font-semibold text-foreground">${totalBudget.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-card rounded-lg p-4 shadow-soft">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-500/10 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Budget Remaining</p>
+              <p className={`text-xl font-semibold ${budgetRemaining >= 0 ? "text-green-600" : "text-red-600"}`}>
+                ${budgetRemaining.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs for Orders and Budget */}
+      <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
+        <div className="flex items-center justify-between mb-4">
+          <TabsList>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="budget">Budget</TabsTrigger>
+            <TabsTrigger value="charts">Charts</TabsTrigger>
+          </TabsList>
+          {isAdmin && activeSubTab === "orders" && (
+            <Button onClick={() => setShowAddOrderModal(true)} size="sm">
+              <Plus className="w-4 h-4 mr-1" />
+              Add Order
+            </Button>
+          )}
+          {isAdmin && activeSubTab === "budget" && (
+            <Button onClick={() => setShowAddBudgetModal(true)} size="sm">
+              <Plus className="w-4 h-4 mr-1" />
+              Add Budget Item
+            </Button>
+          )}
+        </div>
+
+        {/* Orders Tab */}
+        <TabsContent value="orders" className="mt-0">
+          <div className="bg-card rounded-lg shadow-soft overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead>Unit Price</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead>Order Date</TableHead>
+                  <TableHead>Expected</TableHead>
+                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoadingOrders ? (
+                  <TableRow>
+                    <TableCell colSpan={isAdmin ? 9 : 8} className="text-center py-8">
+                      Loading orders...
+                    </TableCell>
+                  </TableRow>
+                ) : orders.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={isAdmin ? 9 : 8} className="text-center py-8 text-muted-foreground">
+                      No orders yet
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.product_name}</TableCell>
+                      <TableCell>{order.quantity}</TableCell>
+                      <TableCell>${Number(order.unit_price).toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">${Number(order.total_price).toFixed(2)}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                          {getStatusIcon(order.status)}
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </span>
+                      </TableCell>
+                      <TableCell>{order.supplier || "-"}</TableCell>
+                      <TableCell>{new Date(order.order_date).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {order.expected_delivery ? new Date(order.expected_delivery).toLocaleDateString() : "-"}
+                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => openEditOrder(order)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteOrder(order.id)}>
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            {orders.length > 0 && (
+              <div className="border-t border-border p-4 bg-muted/30">
+                <div className="flex justify-end">
+                  <span className="font-medium text-foreground">
+                    Total Order Value: <span className="text-gold">${totalOrderValue.toLocaleString()}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Budget Tab */}
+        <TabsContent value="budget" className="mt-0">
+          <div className="bg-card rounded-lg shadow-soft overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Allocated</TableHead>
+                  <TableHead>Spent</TableHead>
+                  <TableHead>Remaining</TableHead>
+                  <TableHead>% Used</TableHead>
+                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoadingBudget ? (
+                  <TableRow>
+                    <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-8">
+                      Loading budget...
+                    </TableCell>
+                  </TableRow>
+                ) : budgetItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                      No budget items yet
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  budgetItems.map((item) => {
+                    const remaining = Number(item.allocated_amount) - Number(item.spent_amount);
+                    const percentUsed = item.allocated_amount > 0 
+                      ? Math.round((Number(item.spent_amount) / Number(item.allocated_amount)) * 100)
+                      : 0;
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.category}</TableCell>
+                        <TableCell>{item.description || "-"}</TableCell>
+                        <TableCell>${Number(item.allocated_amount).toLocaleString()}</TableCell>
+                        <TableCell>${Number(item.spent_amount).toLocaleString()}</TableCell>
+                        <TableCell className={remaining >= 0 ? "text-green-600" : "text-red-600"}>
+                          ${remaining.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full ${percentUsed > 100 ? "bg-red-500" : percentUsed > 80 ? "bg-yellow-500" : "bg-green-500"}`}
+                                style={{ width: `${Math.min(percentUsed, 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-muted-foreground">{percentUsed}%</span>
+                          </div>
+                        </TableCell>
+                        {isAdmin && (
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => openEditBudget(item)}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleDeleteBudget(item.id)}>
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+            {budgetItems.length > 0 && (
+              <div className="border-t border-border p-4 bg-muted/30">
+                <div className="flex justify-between">
+                  <span className="font-medium text-foreground">
+                    Total Budget: <span className="text-gold">${totalBudget.toLocaleString()}</span>
+                  </span>
+                  <span className="font-medium text-foreground">
+                    Total Spent: <span className="text-gold">${totalSpent.toLocaleString()}</span>
+                  </span>
+                  <span className="font-medium text-foreground">
+                    Remaining: <span className={budgetRemaining >= 0 ? "text-green-600" : "text-red-600"}>
+                      ${budgetRemaining.toLocaleString()}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Charts Tab */}
+        <TabsContent value="charts" className="mt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Budget Bar Chart */}
+            <div className="bg-card rounded-lg p-6 shadow-soft">
+              <h3 className="font-display text-lg font-semibold text-foreground mb-4">Budget Overview</h3>
+              {budgetItems.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={budgetChartData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="name" className="text-muted-foreground" tick={{ fontSize: 12 }} />
+                    <YAxis className="text-muted-foreground" tick={{ fontSize: 12 }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "hsl(var(--card))", 
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px"
+                      }}
+                      formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                    />
+                    <Legend />
+                    <Bar dataKey="allocated" name="Allocated" fill="hsl(var(--gold))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="spent" name="Spent" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  No budget data to display
+                </div>
+              )}
+            </div>
+
+            {/* Order Status Pie Chart */}
+            <div className="bg-card rounded-lg p-6 shadow-soft">
+              <h3 className="font-display text-lg font-semibold text-foreground mb-4">Order Status</h3>
+              {orderStatusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={orderStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {orderStatusData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={BUDGET_COLORS[index % BUDGET_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "hsl(var(--card))", 
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px"
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  No order data to display
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Add/Edit Order Modal */}
+      <Dialog open={showAddOrderModal || !!editingOrder} onOpenChange={(open) => {
+        if (!open) {
+          setShowAddOrderModal(false);
+          setEditingOrder(null);
+          resetOrderForm();
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingOrder ? "Edit Order" : "Add Order"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="product_name">Product Name *</Label>
+              <Input
+                id="product_name"
+                value={orderForm.product_name}
+                onChange={(e) => setOrderForm({ ...orderForm, product_name: e.target.value })}
+                placeholder="Enter product name"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="quantity">Quantity</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  value={orderForm.quantity}
+                  onChange={(e) => setOrderForm({ ...orderForm, quantity: parseInt(e.target.value) || 1 })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="unit_price">Unit Price ($)</Label>
+                <Input
+                  id="unit_price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={orderForm.unit_price}
+                  onChange={(e) => setOrderForm({ ...orderForm, unit_price: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="supplier">Supplier</Label>
+              <Input
+                id="supplier"
+                value={orderForm.supplier}
+                onChange={(e) => setOrderForm({ ...orderForm, supplier: e.target.value })}
+                placeholder="Enter supplier name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select value={orderForm.status} onValueChange={(val) => setOrderForm({ ...orderForm, status: val })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ORDER_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="order_date">Order Date</Label>
+                <Input
+                  id="order_date"
+                  type="date"
+                  value={orderForm.order_date}
+                  onChange={(e) => setOrderForm({ ...orderForm, order_date: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="expected_delivery">Expected Delivery</Label>
+                <Input
+                  id="expected_delivery"
+                  type="date"
+                  value={orderForm.expected_delivery}
+                  onChange={(e) => setOrderForm({ ...orderForm, expected_delivery: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Input
+                id="notes"
+                value={orderForm.notes}
+                onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })}
+                placeholder="Optional notes"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowAddOrderModal(false);
+              setEditingOrder(null);
+              resetOrderForm();
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={editingOrder ? handleUpdateOrder : handleAddOrder}>
+              {editingOrder ? "Update" : "Add"} Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add/Edit Budget Modal */}
+      <Dialog open={showAddBudgetModal || !!editingBudget} onOpenChange={(open) => {
+        if (!open) {
+          setShowAddBudgetModal(false);
+          setEditingBudget(null);
+          resetBudgetForm();
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingBudget ? "Edit Budget Item" : "Add Budget Item"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="category">Category *</Label>
+              <Input
+                id="category"
+                value={budgetForm.category}
+                onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })}
+                placeholder="e.g., Furniture, Lighting, Decor"
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={budgetForm.description}
+                onChange={(e) => setBudgetForm({ ...budgetForm, description: e.target.value })}
+                placeholder="Optional description"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="allocated_amount">Allocated ($)</Label>
+                <Input
+                  id="allocated_amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={budgetForm.allocated_amount}
+                  onChange={(e) => setBudgetForm({ ...budgetForm, allocated_amount: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="spent_amount">Spent ($)</Label>
+                <Input
+                  id="spent_amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={budgetForm.spent_amount}
+                  onChange={(e) => setBudgetForm({ ...budgetForm, spent_amount: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowAddBudgetModal(false);
+              setEditingBudget(null);
+              resetBudgetForm();
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={editingBudget ? handleUpdateBudget : handleAddBudget}>
+              {editingBudget ? "Update" : "Add"} Budget Item
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};

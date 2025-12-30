@@ -54,6 +54,7 @@ import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "
 import { ImageUpload } from "@/components/ImageUpload";
 import { FileUpload } from "@/components/FileUpload";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
+import { OrderBudgetTab } from "@/components/OrderBudgetTab";
 import { supabase } from "@/integrations/supabase/client";
 import { sendNotification, markNotificationsAsRead } from "@/hooks/useNotifications";
 
@@ -754,6 +755,7 @@ const AdminClientDetail = () => {
   const tabs = [
     { id: "overview", label: "Overview", icon: FileText },
     { id: "documents", label: "Documents", icon: FileText },
+    { id: "orders", label: "Orders & Budget", icon: Package },
     { id: "inspiration", label: "Inspiration Boards", icon: Palette },
     { id: "renderings", label: "Renderings", icon: Image },
     { id: "chat", label: "Chat", icon: MessageSquare },
@@ -1268,6 +1270,21 @@ const AdminClientDetail = () => {
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {/* Orders & Budget Tab */}
+        {activeTab === "orders" && (
+          <div className="space-y-6 animate-fade-in">
+            <div>
+              <h2 className="font-display text-2xl font-semibold text-foreground">
+                Orders & Budget
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Track product orders and manage project budget
+              </p>
+            </div>
+            <OrderBudgetTab projectId={selectedProjectId} isAdmin={true} />
           </div>
         )}
 
