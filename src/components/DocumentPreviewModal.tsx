@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,14 +28,14 @@ interface DocumentPreviewModalProps {
   isAdmin?: boolean;
 }
 
-export const DocumentPreviewModal = ({
+export const DocumentPreviewModal = forwardRef<HTMLDivElement, DocumentPreviewModalProps>(({
   open,
   onOpenChange,
   document,
   onDownload,
   onSend,
   isAdmin = false,
-}: DocumentPreviewModalProps) => {
+}, ref) => {
   if (!document) return null;
 
   const handleDownload = () => {
@@ -149,4 +150,6 @@ export const DocumentPreviewModal = ({
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+DocumentPreviewModal.displayName = "DocumentPreviewModal";

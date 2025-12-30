@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,7 +94,7 @@ const BUDGET_COLORS = [
 
 const ORDER_STATUSES = ["pending", "ordered", "shipped", "delivered", "cancelled"];
 
-export const OrderBudgetTab = ({ projectId, isAdmin }: OrderBudgetTabProps) => {
+export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({ projectId, isAdmin }, ref) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
@@ -965,4 +965,6 @@ export const OrderBudgetTab = ({ projectId, isAdmin }: OrderBudgetTabProps) => {
       </Dialog>
     </div>
   );
-};
+});
+
+OrderBudgetTab.displayName = "OrderBudgetTab";
