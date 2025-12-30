@@ -53,6 +53,47 @@ export type Database = {
           },
         ]
       }
+      budget_items: {
+        Row: {
+          allocated_amount: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          project_id: string
+          spent_amount: number
+          updated_at: string
+        }
+        Insert: {
+          allocated_amount?: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          project_id: string
+          spent_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          allocated_amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          project_id?: string
+          spent_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_board_images: {
         Row: {
           created_at: string
@@ -380,6 +421,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      orders: {
+        Row: {
+          actual_delivery: string | null
+          created_at: string
+          expected_delivery: string | null
+          id: string
+          notes: string | null
+          order_date: string
+          product_name: string
+          project_id: string
+          quantity: number
+          status: string
+          supplier: string | null
+          total_price: number | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          actual_delivery?: string | null
+          created_at?: string
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          product_name: string
+          project_id: string
+          quantity?: number
+          status?: string
+          supplier?: string | null
+          total_price?: number | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          actual_delivery?: string | null
+          created_at?: string
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          product_name?: string
+          project_id?: string
+          quantity?: number
+          status?: string
+          supplier?: string | null
+          total_price?: number | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_favorites: {
         Row: {

@@ -35,6 +35,7 @@ import {
   Package,
   User,
   Save,
+  Receipt,
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSharedInspirations, useSharedRenderings, useSharedDocuments } from "@/hooks/useSharedDesignState";
 import { ClientProductsTab } from "@/components/client/ClientProductsTab";
 import { InspirationBoardsTab } from "@/components/client/InspirationBoardsTab";
+import { OrderBudgetTab } from "@/components/OrderBudgetTab";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -474,6 +476,7 @@ const ClientDashboard = () => {
     { id: "profile", label: "Profile", icon: User },
     { id: "documents", label: "Documents", icon: FileText },
     { id: "products", label: "Products", icon: Package },
+    { id: "orders", label: "Orders & Budget", icon: Receipt },
     { id: "inspiration", label: "Inspiration", icon: Palette },
     { id: "renderings", label: "Renderings", icon: Image },
     { id: "timeline", label: "Timeline", icon: Calendar },
@@ -915,6 +918,20 @@ const ClientDashboard = () => {
           )}
 
           {activeTab === "products" && <ClientProductsTab />}
+
+          {activeTab === "orders" && (
+            <div className="space-y-6 animate-fade-in">
+              <div>
+                <h1 className="font-display text-3xl font-semibold text-foreground">
+                  Orders & Budget
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  Track orders and project budget
+                </p>
+              </div>
+              <OrderBudgetTab projectId={selectedProjectId} isAdmin={false} />
+            </div>
+          )}
 
           {activeTab === "inspiration" && (
             <InspirationBoardsTab
