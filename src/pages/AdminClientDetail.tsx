@@ -55,6 +55,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { FileUpload } from "@/components/FileUpload";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { OrderBudgetTab } from "@/components/OrderBudgetTab";
+import { OrderBudgetSummary } from "@/components/OrderBudgetSummary";
 import { supabase } from "@/integrations/supabase/client";
 import { sendNotification, markNotificationsAsRead } from "@/hooks/useNotifications";
 
@@ -1152,7 +1153,15 @@ const AdminClientDetail = () => {
                 </div>
               </div>
             </div>
+
+          {/* Orders & Budget Summary - Full Width */}
+          <div className="lg:col-span-3">
+            <OrderBudgetSummary 
+              projectId={selectedProjectId} 
+              onViewAll={() => setActiveTab("orders")} 
+            />
           </div>
+        </div>
         )}
 
         {/* Documents Tab */}
