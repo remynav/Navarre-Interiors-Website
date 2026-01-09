@@ -527,6 +527,26 @@ const AdminDashboard = () => {
                 ))}
               </div>
 
+              {/* Quick Actions */}
+              <div className="flex flex-wrap gap-4">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={() => setActiveTab("inventory")}
+                >
+                  <Package className="w-4 h-4" />
+                  Product Inventory
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={() => setChatSectionOpen(true)}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Messages
+                </Button>
+              </div>
+
               {/* Recent Clients */}
               <div className="bg-card rounded-lg shadow-soft">
                 <div className="p-6 border-b border-border flex items-center justify-between">
