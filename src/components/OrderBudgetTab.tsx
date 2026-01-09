@@ -39,6 +39,11 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Upload,
+  FileText,
+  Download,
+  Eye,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +75,7 @@ interface Order {
   actual_delivery: string | null;
   notes: string | null;
   budget_category: string | null;
+  receipt_url: string | null;
 }
 
 interface BudgetItem {
@@ -134,6 +140,11 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
   const [productInputMode, setProductInputMode] = useState<ProductInputMode>("manual");
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [newProductCategory, setNewProductCategory] = useState("");
+  
+  // Receipt upload state
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+  const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
 
   // Form states
   const [orderForm, setOrderForm] = useState({
@@ -235,6 +246,29 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       }));
     }
   };
+
+  // Upload receipt to storage
+  const uploadReceipt = async (file: File, orderId: string): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${orderId}-${Date.now()}.${fileExt}`;
+    const filePath = `${projectId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('order-receipts')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Error uploading receipt:', uploadError);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('order-receipts')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
   const handleAddOrder = async () => {
     if (!projectId || !orderForm.product_name.trim()) {
       toast.error("Please fill in product name");
@@ -248,6 +282,8 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
     }
 
     try {
+      setIsUploadingReceipt(!!receiptFile);
+
       // If mode is "new", add to inventory first
       if (productInputMode === "new") {
         const { data: newProduct, error: inventoryError } = await supabase
@@ -287,13 +323,27 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
 
       if (error) throw error;
 
-      setOrders([data, ...orders]);
+      // Upload receipt if provided
+      let receiptUrl: string | null = null;
+      if (receiptFile && data) {
+        receiptUrl = await uploadReceipt(receiptFile, data.id);
+        if (receiptUrl) {
+          await supabase
+            .from("orders")
+            .update({ receipt_url: receiptUrl })
+            .eq("id", data.id);
+        }
+      }
+
+      setOrders([{ ...data, receipt_url: receiptUrl }, ...orders]);
       setShowAddOrderModal(false);
       resetOrderForm();
       toast.success("Order added successfully");
     } catch (error) {
       console.error("Error adding order:", error);
       toast.error("Failed to add order");
+    } finally {
+      setIsUploadingReceipt(false);
     }
   };
 
@@ -301,6 +351,14 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
     if (!editingOrder) return;
 
     try {
+      setIsUploadingReceipt(!!receiptFile);
+
+      // Upload new receipt if provided
+      let receiptUrl = editingOrder.receipt_url;
+      if (receiptFile) {
+        receiptUrl = await uploadReceipt(receiptFile, editingOrder.id);
+      }
+
       const { error } = await supabase
         .from("orders")
         .update({
@@ -313,6 +371,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
           actual_delivery: orderForm.status === "delivered" ? new Date().toISOString().split("T")[0] : null,
           notes: orderForm.notes || null,
           budget_category: orderForm.budget_category || null,
+          receipt_url: receiptUrl,
         })
         .eq("id", editingOrder.id);
 
@@ -333,6 +392,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                 actual_delivery: orderForm.status === "delivered" ? new Date().toISOString().split("T")[0] : null,
                 notes: orderForm.notes || null,
                 budget_category: orderForm.budget_category || null,
+                receipt_url: receiptUrl,
               }
             : o
         )
@@ -343,6 +403,8 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
     } catch (error) {
       console.error("Error updating order:", error);
       toast.error("Failed to update order");
+    } finally {
+      setIsUploadingReceipt(false);
     }
   };
 
@@ -457,6 +519,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
     setProductInputMode("manual");
     setSelectedProductId("");
     setNewProductCategory("");
+    setReceiptFile(null);
   };
 
   const resetBudgetForm = () => {
@@ -776,19 +839,20 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                       {getSortIcon("order_date")}
                     </div>
                   </TableHead>
+                  <TableHead>Receipt</TableHead>
                   {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoadingOrders ? (
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 9 : 8} className="text-center py-8">
+                    <TableCell colSpan={isAdmin ? 10 : 9} className="text-center py-8">
                       Loading orders...
                     </TableCell>
                   </TableRow>
                 ) : orders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 9 : 8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={isAdmin ? 10 : 9} className="text-center py-8 text-muted-foreground">
                       No orders yet
                     </TableCell>
                   </TableRow>
@@ -814,6 +878,33 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                       </TableCell>
                       <TableCell>{order.supplier || "-"}</TableCell>
                       <TableCell>{new Date(order.order_date).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {order.receipt_url ? (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setPreviewReceiptUrl(order.receipt_url)}
+                              title="Preview receipt"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <a
+                              href={order.receipt_url}
+                              download
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted"
+                              title="Download receipt"
+                            >
+                              <Download className="w-4 h-4" />
+                            </a>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
+                      </TableCell>
                       {isAdmin && (
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
@@ -1206,6 +1297,59 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                 placeholder="Optional notes"
               />
             </div>
+            {isAdmin && (
+              <div>
+                <Label htmlFor="receipt">Receipt</Label>
+                <div className="mt-1">
+                  {receiptFile ? (
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm flex-1 truncate">{receiptFile.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => setReceiptFile(null)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : editingOrder?.receipt_url ? (
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm flex-1 truncate">Current receipt attached</span>
+                      <a
+                        href={editingOrder.receipt_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary text-sm hover:underline"
+                      >
+                        View
+                      </a>
+                    </div>
+                  ) : null}
+                  <label
+                    htmlFor="receipt-upload"
+                    className="mt-2 flex items-center justify-center gap-2 p-3 border-2 border-dashed border-border rounded-md cursor-pointer hover:border-primary/50 transition-colors"
+                  >
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      {receiptFile || editingOrder?.receipt_url ? "Replace receipt" : "Upload receipt (PDF, image)"}
+                    </span>
+                  </label>
+                  <input
+                    id="receipt-upload"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setReceiptFile(file);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
@@ -1215,10 +1359,47 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
             }}>
               Cancel
             </Button>
-            <Button onClick={editingOrder ? handleUpdateOrder : handleAddOrder}>
-              {editingOrder ? "Update" : "Add"} Order
+            <Button 
+              onClick={editingOrder ? handleUpdateOrder : handleAddOrder}
+              disabled={isUploadingReceipt}
+            >
+              {isUploadingReceipt ? "Uploading..." : (editingOrder ? "Update" : "Add")} Order
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Receipt Preview Modal */}
+      <Dialog open={!!previewReceiptUrl} onOpenChange={(open) => !open && setPreviewReceiptUrl(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Receipt Preview</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4">
+            {previewReceiptUrl?.endsWith('.pdf') ? (
+              <iframe
+                src={previewReceiptUrl}
+                className="w-full h-[70vh] border rounded-md"
+                title="Receipt PDF"
+              />
+            ) : (
+              <img
+                src={previewReceiptUrl || ''}
+                alt="Receipt"
+                className="max-w-full max-h-[70vh] object-contain rounded-md"
+              />
+            )}
+            <a
+              href={previewReceiptUrl || ''}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              <Download className="w-4 h-4" />
+              Download Receipt
+            </a>
+          </div>
         </DialogContent>
       </Dialog>
 
