@@ -104,7 +104,7 @@ interface OrderBudgetTabProps {
 type SortField = "product_name" | "budget_category" | "status" | "supplier" | "order_date";
 type SortDirection = "asc" | "desc";
 
-type ProductInputMode = "manual" | "inventory" | "new";
+type ProductInputMode = "manual" | "inventory";
 
 const BUDGET_COLORS = [
   "hsl(var(--gold))",
@@ -275,33 +275,32 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       return;
     }
 
-    // If adding a new product, validate category and add to inventory first
-    if (productInputMode === "new" && !newProductCategory.trim()) {
-      toast.error("Please enter a category for the new product");
-      return;
-    }
-
     try {
       setIsUploadingReceipt(!!receiptFile);
 
-      // If mode is "new", add to inventory first
-      if (productInputMode === "new") {
+      // Check if product already exists in inventory (case-insensitive)
+      const productExists = inventoryProducts.some(
+        (p) => p.name.toLowerCase() === orderForm.product_name.trim().toLowerCase()
+      );
+
+      // If product doesn't exist and we're in manual mode, add it to inventory
+      if (!productExists && productInputMode === "manual") {
         const { data: newProduct, error: inventoryError } = await supabase
           .from("product_inventory")
           .insert({
-            name: orderForm.product_name,
-            category: newProductCategory,
+            name: orderForm.product_name.trim(),
+            category: orderForm.budget_category || "Uncategorized",
             supplier: orderForm.supplier || null,
             project_id: projectId,
           })
           .select()
           .single();
 
-        if (inventoryError) throw inventoryError;
-        
-        // Add to local state
-        setInventoryProducts(prev => [...prev, newProduct]);
-        toast.success("Product added to inventory");
+        if (inventoryError) {
+          console.error("Error adding to inventory:", inventoryError);
+        } else if (newProduct) {
+          setInventoryProducts(prev => [...prev, newProduct]);
+        }
       }
 
       const { data, error } = await supabase
@@ -1138,19 +1137,12 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                   >
                     From Inventory
                   </Button>
-                  <Button
-                    type="button"
-                    variant={productInputMode === "new" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setProductInputMode("new");
-                      setSelectedProductId("");
-                      setOrderForm(prev => ({ ...prev, product_name: "", supplier: "" }));
-                    }}
-                  >
-                    New Product
-                  </Button>
                 </div>
+                {productInputMode === "manual" && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    New products will be automatically added to inventory
+                  </p>
+                )}
               </div>
             )}
 
@@ -1177,8 +1169,8 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
               </div>
             )}
 
-            {/* Product Name - Manual or New Mode */}
-            {(productInputMode === "manual" || productInputMode === "new" || editingOrder) && (
+            {/* Product Name - Manual Mode */}
+            {(productInputMode === "manual" || editingOrder) && (
               <div>
                 <Label htmlFor="product_name">Product Name *</Label>
                 <Input
@@ -1187,22 +1179,6 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                   onChange={(e) => setOrderForm({ ...orderForm, product_name: e.target.value })}
                   placeholder="Enter product name"
                 />
-              </div>
-            )}
-
-            {/* Category - Only for New Product Mode */}
-            {productInputMode === "new" && !editingOrder && (
-              <div>
-                <Label htmlFor="new_category">Product Category *</Label>
-                <Input
-                  id="new_category"
-                  value={newProductCategory}
-                  onChange={(e) => setNewProductCategory(e.target.value)}
-                  placeholder="e.g., Furniture, Lighting, Decor"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  This product will be added to your inventory
-                </p>
               </div>
             )}
             <div className="grid grid-cols-2 gap-4">
