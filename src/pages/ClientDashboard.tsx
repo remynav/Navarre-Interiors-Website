@@ -480,7 +480,6 @@ const ClientDashboard = () => {
     { id: "orders", label: "Orders & Budget", icon: Receipt },
     { id: "inspiration", label: "Inspiration", icon: Palette },
     { id: "renderings", label: "Renderings", icon: Image },
-    { id: "timeline", label: "Timeline", icon: Calendar },
     { id: "messages", label: "Messages", icon: MessageSquare },
   ];
 
@@ -875,73 +874,6 @@ const ClientDashboard = () => {
             </div>
           )}
 
-          {activeTab === "timeline" && (
-            <div className="space-y-6 animate-fade-in">
-              <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
-                  Project Timeline
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  Track your project milestones
-                </p>
-              </div>
-              <div className="bg-card rounded-lg p-6 shadow-soft">
-                <div className="space-y-6">
-                  {milestones.map((milestone, index) => (
-                    <div key={milestone.id} className="flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            milestone.status === "completed"
-                              ? "bg-green-500/10 text-green-500"
-                              : milestone.status === "in-progress"
-                              ? "bg-gold/10 text-gold"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {milestone.status === "completed" ? (
-                            <CheckCircle className="w-5 h-5" />
-                          ) : milestone.status === "in-progress" ? (
-                            <Clock className="w-5 h-5" />
-                          ) : (
-                            <AlertCircle className="w-5 h-5" />
-                          )}
-                        </div>
-                        {index < milestones.length - 1 && (
-                          <div
-                            className={`w-0.5 flex-1 my-2 ${
-                              milestone.status === "completed" ? "bg-green-500/30" : "bg-border"
-                            }`}
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 pb-6">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-foreground">{milestone.title}</h3>
-                          <span className="text-sm text-muted-foreground">{milestone.date}</span>
-                        </div>
-                        <span
-                          className={`inline-block mt-1 text-xs px-2 py-1 rounded-full ${
-                            milestone.status === "completed"
-                              ? "bg-green-500/10 text-green-500"
-                              : milestone.status === "in-progress"
-                              ? "bg-gold/10 text-gold"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {milestone.status === "completed"
-                            ? "Completed"
-                            : milestone.status === "in-progress"
-                            ? "In Progress"
-                            : "Upcoming"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
 
           {activeTab === "messages" && (
             <div className="max-w-3xl mx-auto animate-fade-in">
