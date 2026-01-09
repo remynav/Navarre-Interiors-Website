@@ -262,9 +262,11 @@ const AdminClientDetail = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [docTab, setDocTab] = useState<"sent" | "draft" | "archived">("sent");
 
-  // Fetch messages and set up realtime subscription
+  // Fetch messages for ALL projects of this client (single chat per client)
   useEffect(() => {
-    if (!selectedProjectId) return;
+    if (!client || client.projects.length === 0) return;
+
+    const projectIds = client.projects.map(p => p.id);
 
     const fetchMessages = async () => {
       setIsLoadingMessages(true);
@@ -272,7 +274,7 @@ const AdminClientDetail = () => {
         const { data, error } = await supabase
           .from("messages")
           .select("*")
-          .eq("project_id", selectedProjectId)
+          .in("project_id", projectIds)
           .order("created_at", { ascending: true });
 
         if (error) throw error;
@@ -286,19 +288,22 @@ const AdminClientDetail = () => {
 
     fetchMessages();
 
-    // Set up realtime subscription
+    // Set up realtime subscription for all client projects
     const channel = supabase
-      .channel(`messages-${selectedProjectId}`)
+      .channel(`messages-client-${clientId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `project_id=eq.${selectedProjectId}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as any]);
+          const newMsg = payload.new as any;
+          // Only add if it's for one of this client's projects
+          if (projectIds.includes(newMsg.project_id)) {
+            setMessages((prev) => [...prev, newMsg]);
+          }
         }
       )
       .subscribe();
@@ -306,7 +311,7 @@ const AdminClientDetail = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedProjectId]);
+  }, [client, clientId]);
   
   // Modal states
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
@@ -786,7 +791,10 @@ const AdminClientDetail = () => {
   ];
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedProjectId || !clientId) return;
+    if (!newMessage.trim() || !clientId || !client || client.projects.length === 0) return;
+    
+    // Use selected project or first project for the message
+    const projectIdForMessage = selectedProjectId || client.projects[0].id;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -796,7 +804,7 @@ const AdminClientDetail = () => {
       }
 
       const { error } = await supabase.from("messages").insert({
-        project_id: selectedProjectId,
+        project_id: projectIdForMessage,
         sender_id: user.id,
         text: newMessage.trim(),
       });

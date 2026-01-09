@@ -255,9 +255,11 @@ const ClientDashboard = () => {
     sessionStorage.setItem('client_selected_project', projectId);
   };
 
-  // Fetch messages and set up realtime subscription
+  // Fetch messages for ALL projects of this client (single chat per client)
   useEffect(() => {
-    if (!selectedProjectId) return;
+    if (projects.length === 0) return;
+
+    const projectIds = projects.map(p => p.id);
 
     const fetchMessages = async () => {
       setIsLoadingMessages(true);
@@ -265,7 +267,7 @@ const ClientDashboard = () => {
         const { data, error } = await supabase
           .from("messages")
           .select("*")
-          .eq("project_id", selectedProjectId)
+          .in("project_id", projectIds)
           .order("created_at", { ascending: true });
 
         if (error) throw error;
@@ -279,19 +281,22 @@ const ClientDashboard = () => {
 
     fetchMessages();
 
-    // Set up realtime subscription
+    // Set up realtime subscription for all client projects
     const channel = supabase
-      .channel(`client-messages-${selectedProjectId}`)
+      .channel(`client-messages-${user?.id}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `project_id=eq.${selectedProjectId}`,
         },
         (payload) => {
-          setAllMessages((prev) => [...prev, payload.new as any]);
+          const newMsg = payload.new as any;
+          // Only add if it's for one of this client's projects
+          if (projectIds.includes(newMsg.project_id)) {
+            setAllMessages((prev) => [...prev, newMsg]);
+          }
         }
       )
       .subscribe();
@@ -299,7 +304,7 @@ const ClientDashboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedProjectId]);
+  }, [projects, user?.id]);
 
   // Document handlers
   const clientDocuments = documents.filter(d => d.status === "sent" || d.status === "archived");
@@ -332,11 +337,14 @@ const ClientDashboard = () => {
 
   const handleSendMessage = async (customText?: string) => {
     const messageText = customText || newMessage;
-    if (!messageText.trim() || !selectedProjectId || !user) return;
+    if (!messageText.trim() || !user || projects.length === 0) return;
+    
+    // Use selected project or first project for the message
+    const projectIdForMessage = selectedProjectId || projects[0].id;
 
     try {
       const messageData: any = {
-        project_id: selectedProjectId,
+        project_id: projectIdForMessage,
         sender_id: user.id,
         text: messageText.trim(),
       };
@@ -358,7 +366,7 @@ const ClientDashboard = () => {
         'message',
         `New message from ${profile?.full_name || 'Client'}`,
         messageText.slice(0, 100) + (messageText.length > 100 ? '...' : ''),
-        selectedProjectId,
+        projectIdForMessage,
         'project'
       );
       
