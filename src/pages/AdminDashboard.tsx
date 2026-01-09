@@ -269,8 +269,14 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleClientClick = (clientId: string) => {
-    navigate(`/admin/client/${clientId}`);
+  const handleClientClick = (clientId: string, projectId?: string) => {
+    if (projectId) {
+      // Store selected project in sessionStorage for persistence
+      sessionStorage.setItem(`admin_selected_project_${clientId}`, projectId);
+      navigate(`/admin/client/${clientId}?project=${projectId}`);
+    } else {
+      navigate(`/admin/client/${clientId}`);
+    }
   };
 
   const handleAddClient = async () => {
@@ -735,7 +741,7 @@ const AdminDashboard = () => {
                                   <div 
                                     key={project.id}
                                     className="flex items-center justify-between px-4 py-3 pl-16 hover:bg-muted/30 transition-colors cursor-pointer border-b border-border last:border-0"
-                                    onClick={() => handleClientClick(client.id)}
+                                    onClick={() => handleClientClick(client.id, project.id)}
                                   >
                                     <div className="flex items-center gap-3">
                                       <FolderOpen className="w-4 h-4 text-muted-foreground" />
@@ -792,7 +798,7 @@ const AdminDashboard = () => {
                     <div 
                       key={project.id} 
                       className="bg-card rounded-lg p-6 shadow-soft hover:shadow-medium transition-all cursor-pointer"
-                      onClick={() => handleClientClick(client.id)}
+                      onClick={() => handleClientClick(client.id, project.id)}
                     >
                       <div className="flex items-center justify-between mb-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>

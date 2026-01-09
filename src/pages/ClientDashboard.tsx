@@ -192,8 +192,20 @@ const ClientDashboard = () => {
       if (projectsError) throw projectsError;
 
       setProjects(projectsData || []);
-      if (projectsData && projectsData.length > 0) {
-        setSelectedProjectId(projectsData[0].id);
+      
+      // Determine initial project from session or default to first
+      const storedProjectId = sessionStorage.getItem('client_selected_project');
+      let initialProjectId: string | null = null;
+      
+      if (storedProjectId && projectsData?.some(p => p.id === storedProjectId)) {
+        initialProjectId = storedProjectId;
+      } else if (projectsData && projectsData.length > 0) {
+        initialProjectId = projectsData[0].id;
+      }
+
+      if (initialProjectId) {
+        setSelectedProjectId(initialProjectId);
+        sessionStorage.setItem('client_selected_project', initialProjectId);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -236,6 +248,12 @@ const ClientDashboard = () => {
   };
 
   const getSelectedProject = () => projects.find(p => p.id === selectedProjectId);
+
+  // Handle project selection change with persistence
+  const handleProjectChange = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    sessionStorage.setItem('client_selected_project', projectId);
+  };
 
   // Fetch messages and set up realtime subscription
   useEffect(() => {
@@ -586,7 +604,7 @@ const ClientDashboard = () => {
                   {projects.map((project) => (
                     <DropdownMenuItem
                       key={project.id}
-                      onClick={() => setSelectedProjectId(project.id)}
+                      onClick={() => handleProjectChange(project.id)}
                       className={selectedProjectId === project.id ? "bg-muted" : ""}
                     >
                       <div className="flex flex-col">
