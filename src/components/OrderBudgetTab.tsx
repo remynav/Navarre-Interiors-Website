@@ -1092,14 +1092,20 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       </Tabs>
 
       {/* Add/Edit Order Modal */}
-      <Dialog open={showAddOrderModal || !!editingOrder} onOpenChange={(open) => {
-        if (!open) {
-          setShowAddOrderModal(false);
-          setEditingOrder(null);
-          resetOrderForm();
-        }
-      }}>
-        <DialogContent className="max-w-md">
+      <Dialog 
+        open={showAddOrderModal || !!editingOrder} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowAddOrderModal(false);
+            setEditingOrder(null);
+            resetOrderForm();
+          }
+        }}
+      >
+        <DialogContent 
+          className="max-w-md max-h-[90vh] overflow-y-auto"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>{editingOrder ? "Edit Order" : "Add Order"}</DialogTitle>
           </DialogHeader>
@@ -1371,7 +1377,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
 
       {/* Receipt Preview Modal */}
       <Dialog open={!!previewReceiptUrl} onOpenChange={(open) => !open && setPreviewReceiptUrl(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh]" onCloseAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Receipt Preview</DialogTitle>
           </DialogHeader>
@@ -1404,14 +1410,17 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       </Dialog>
 
       {/* Add/Edit Budget Modal */}
-      <Dialog open={showAddBudgetModal || !!editingBudget} onOpenChange={(open) => {
-        if (!open) {
-          setShowAddBudgetModal(false);
-          setEditingBudget(null);
-          resetBudgetForm();
-        }
-      }}>
-        <DialogContent className="max-w-md">
+      <Dialog 
+        open={showAddBudgetModal || !!editingBudget} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowAddBudgetModal(false);
+            setEditingBudget(null);
+            resetBudgetForm();
+          }
+        }}
+      >
+        <DialogContent className="max-w-md" onCloseAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{editingBudget ? "Edit Budget Item" : "Add Budget Item"}</DialogTitle>
           </DialogHeader>
