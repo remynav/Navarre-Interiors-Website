@@ -259,22 +259,22 @@ export const ProductInventoryTab = () => {
                   </span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full table-fixed">
                     <thead>
                       <tr className="border-b border-border bg-muted/30">
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground w-16">
+                        <th className="text-left p-4 text-sm font-medium text-muted-foreground w-20">
                           Image
                         </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                        <th className="text-left p-4 text-sm font-medium text-muted-foreground w-[40%]">
                           Product Name
                         </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                        <th className="text-left p-4 text-sm font-medium text-muted-foreground w-28">
                           Price
                         </th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                        <th className="text-left p-4 text-sm font-medium text-muted-foreground w-[25%]">
                           Supplier
                         </th>
-                        <th className="text-right p-4 text-sm font-medium text-muted-foreground">
+                        <th className="text-right p-4 text-sm font-medium text-muted-foreground w-20">
                           Actions
                         </th>
                       </tr>
