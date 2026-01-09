@@ -425,6 +425,7 @@ export type Database = {
       orders: {
         Row: {
           actual_delivery: string | null
+          budget_category: string | null
           created_at: string
           expected_delivery: string | null
           id: string
@@ -441,6 +442,7 @@ export type Database = {
         }
         Insert: {
           actual_delivery?: string | null
+          budget_category?: string | null
           created_at?: string
           expected_delivery?: string | null
           id?: string
@@ -457,6 +459,7 @@ export type Database = {
         }
         Update: {
           actual_delivery?: string | null
+          budget_category?: string | null
           created_at?: string
           expected_delivery?: string | null
           id?: string
