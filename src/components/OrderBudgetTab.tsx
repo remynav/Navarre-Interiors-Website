@@ -66,6 +66,7 @@ interface Order {
   expected_delivery: string | null;
   actual_delivery: string | null;
   notes: string | null;
+  budget_category: string | null;
 }
 
 interface BudgetItem {
@@ -134,13 +135,13 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
     order_date: new Date().toISOString().split("T")[0],
     expected_delivery: "",
     notes: "",
+    budget_category: "",
   });
 
   const [budgetForm, setBudgetForm] = useState({
     category: "",
     description: "",
     allocated_amount: 0,
-    spent_amount: 0,
   });
 
   // Fetch orders
@@ -269,6 +270,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
           order_date: orderForm.order_date,
           expected_delivery: orderForm.expected_delivery || null,
           notes: orderForm.notes || null,
+          budget_category: orderForm.budget_category || null,
         })
         .select()
         .single();
@@ -300,6 +302,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
           expected_delivery: orderForm.expected_delivery || null,
           actual_delivery: orderForm.status === "delivered" ? new Date().toISOString().split("T")[0] : null,
           notes: orderForm.notes || null,
+          budget_category: orderForm.budget_category || null,
         })
         .eq("id", editingOrder.id);
 
@@ -319,6 +322,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                 expected_delivery: orderForm.expected_delivery || null,
                 actual_delivery: orderForm.status === "delivered" ? new Date().toISOString().split("T")[0] : null,
                 notes: orderForm.notes || null,
+                budget_category: orderForm.budget_category || null,
               }
             : o
         )
@@ -361,7 +365,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
           category: budgetForm.category,
           description: budgetForm.description || null,
           allocated_amount: budgetForm.allocated_amount,
-          spent_amount: budgetForm.spent_amount,
+          spent_amount: 0, // Spent amount is calculated from orders
         })
         .select()
         .single();
@@ -388,7 +392,6 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
           category: budgetForm.category,
           description: budgetForm.description || null,
           allocated_amount: budgetForm.allocated_amount,
-          spent_amount: budgetForm.spent_amount,
         })
         .eq("id", editingBudget.id);
 
@@ -402,7 +405,6 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                 category: budgetForm.category,
                 description: budgetForm.description || null,
                 allocated_amount: budgetForm.allocated_amount,
-                spent_amount: budgetForm.spent_amount,
               }
             : b
         )
@@ -440,6 +442,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       order_date: new Date().toISOString().split("T")[0],
       expected_delivery: "",
       notes: "",
+      budget_category: "",
     });
     setProductInputMode("manual");
     setSelectedProductId("");
@@ -451,7 +454,6 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       category: "",
       description: "",
       allocated_amount: 0,
-      spent_amount: 0,
     });
   };
 
@@ -465,6 +467,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       order_date: order.order_date,
       expected_delivery: order.expected_delivery || "",
       notes: order.notes || "",
+      budget_category: order.budget_category || "",
     });
     setEditingOrder(order);
   };
@@ -474,23 +477,32 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       category: budget.category,
       description: budget.description || "",
       allocated_amount: budget.allocated_amount,
-      spent_amount: budget.spent_amount,
     });
     setEditingBudget(budget);
   };
 
-  // Calculate totals
+  // Calculate totals - spent amounts come from orders
   const totalOrderValue = orders.reduce((sum, o) => sum + Number(o.total_price), 0);
   const pendingOrders = orders.filter((o) => o.status === "pending" || o.status === "ordered").length;
   const totalBudget = budgetItems.reduce((sum, b) => sum + Number(b.allocated_amount), 0);
-  const totalSpent = budgetItems.reduce((sum, b) => sum + Number(b.spent_amount), 0);
+  
+  // Calculate spent per category from orders
+  const spentByCategory = orders.reduce((acc, order) => {
+    const category = order.budget_category || "Uncategorized";
+    acc[category] = (acc[category] || 0) + Number(order.total_price);
+    return acc;
+  }, {} as Record<string, number>);
+  
+  // Total spent is the sum of all order totals
+  const totalSpent = totalOrderValue;
   const budgetRemaining = totalBudget - totalSpent;
 
   // Chart data
+  // Chart data - use spent from orders by category
   const budgetChartData = budgetItems.map((b) => ({
     name: b.category,
     allocated: Number(b.allocated_amount),
-    spent: Number(b.spent_amount),
+    spent: spentByCategory[b.category] || 0,
   }));
 
   const orderStatusData = ORDER_STATUSES.map((status) => ({
@@ -652,13 +664,13 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
+                  <TableHead>Category</TableHead>
                   <TableHead>Qty</TableHead>
                   <TableHead>Unit Price</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Supplier</TableHead>
                   <TableHead>Order Date</TableHead>
-                  <TableHead>Expected</TableHead>
                   {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -679,6 +691,13 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                   orders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.product_name}</TableCell>
+                      <TableCell>
+                        {order.budget_category ? (
+                          <span className="px-2 py-1 bg-muted rounded text-xs">{order.budget_category}</span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
+                      </TableCell>
                       <TableCell>{order.quantity}</TableCell>
                       <TableCell>${Number(order.unit_price).toFixed(2)}</TableCell>
                       <TableCell className="font-medium">${Number(order.total_price).toFixed(2)}</TableCell>
@@ -690,9 +709,6 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                       </TableCell>
                       <TableCell>{order.supplier || "-"}</TableCell>
                       <TableCell>{new Date(order.order_date).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        {order.expected_delivery ? new Date(order.expected_delivery).toLocaleDateString() : "-"}
-                      </TableCell>
                       {isAdmin && (
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
@@ -752,16 +768,17 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                   </TableRow>
                 ) : (
                   budgetItems.map((item) => {
-                    const remaining = Number(item.allocated_amount) - Number(item.spent_amount);
+                    const spent = spentByCategory[item.category] || 0;
+                    const remaining = Number(item.allocated_amount) - spent;
                     const percentUsed = item.allocated_amount > 0 
-                      ? Math.round((Number(item.spent_amount) / Number(item.allocated_amount)) * 100)
+                      ? Math.round((spent / Number(item.allocated_amount)) * 100)
                       : 0;
                     return (
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.category}</TableCell>
                         <TableCell>{item.description || "-"}</TableCell>
                         <TableCell>${Number(item.allocated_amount).toLocaleString()}</TableCell>
-                        <TableCell>${Number(item.spent_amount).toLocaleString()}</TableCell>
+                        <TableCell>${spent.toLocaleString()}</TableCell>
                         <TableCell className={remaining >= 0 ? "text-green-600" : "text-red-600"}>
                           ${remaining.toLocaleString()}
                         </TableCell>
@@ -1054,6 +1071,28 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
               </div>
             </div>
             <div>
+              <Label htmlFor="budget_category">Budget Category</Label>
+              <Select 
+                value={orderForm.budget_category} 
+                onValueChange={(val) => setOrderForm({ ...orderForm, budget_category: val })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select budget category..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No Category</SelectItem>
+                  {budgetItems.map((item) => (
+                    <SelectItem key={item.id} value={item.category}>
+                      {item.category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Assign to a budget category to track spending
+              </p>
+            </div>
+            <div>
               <Label htmlFor="notes">Notes</Label>
               <Input
                 id="notes"
@@ -1121,17 +1160,9 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                   onChange={(e) => setBudgetForm({ ...budgetForm, allocated_amount: parseFloat(e.target.value) || 0 })}
                 />
               </div>
-              <div>
-                <Label htmlFor="spent_amount">Spent ($)</Label>
-                <Input
-                  id="spent_amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={budgetForm.spent_amount}
-                  onChange={(e) => setBudgetForm({ ...budgetForm, spent_amount: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Note: Spent amount is automatically calculated from orders assigned to this category.
+              </p>
             </div>
           </div>
           <DialogFooter>
