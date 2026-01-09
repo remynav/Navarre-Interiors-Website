@@ -36,6 +36,9 @@ import {
   CheckCircle,
   AlertCircle,
   Truck,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,6 +95,9 @@ interface OrderBudgetTabProps {
   isAdmin: boolean;
 }
 
+type SortField = "product_name" | "budget_category" | "status" | "supplier" | "order_date";
+type SortDirection = "asc" | "desc";
+
 type ProductInputMode = "manual" | "inventory" | "new";
 
 const BUDGET_COLORS = [
@@ -113,6 +119,10 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [isLoadingBudget, setIsLoadingBudget] = useState(true);
   const [activeSubTab, setActiveSubTab] = useState("orders");
+  
+  // Sorting state
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   // Modal states
   const [showAddOrderModal, setShowAddOrderModal] = useState(false);
@@ -497,6 +507,61 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
   const totalSpent = totalOrderValue;
   const budgetRemaining = totalBudget - totalSpent;
 
+  // Sorting logic
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-4 h-4 ml-1 opacity-50" />;
+    }
+    return sortDirection === "asc" 
+      ? <ArrowUp className="w-4 h-4 ml-1" /> 
+      : <ArrowDown className="w-4 h-4 ml-1" />;
+  };
+
+  const sortedOrders = [...orders].sort((a, b) => {
+    if (!sortField) return 0;
+    
+    let aVal: string | number | null;
+    let bVal: string | number | null;
+    
+    switch (sortField) {
+      case "product_name":
+        aVal = a.product_name.toLowerCase();
+        bVal = b.product_name.toLowerCase();
+        break;
+      case "budget_category":
+        aVal = (a.budget_category || "").toLowerCase();
+        bVal = (b.budget_category || "").toLowerCase();
+        break;
+      case "status":
+        aVal = a.status.toLowerCase();
+        bVal = b.status.toLowerCase();
+        break;
+      case "supplier":
+        aVal = (a.supplier || "").toLowerCase();
+        bVal = (b.supplier || "").toLowerCase();
+        break;
+      case "order_date":
+        aVal = a.order_date;
+        bVal = b.order_date;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
   // Chart data
   // Chart data - use spent from orders by category
   const budgetChartData = budgetItems.map((b) => ({
@@ -663,14 +728,54 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort("product_name")}
+                  >
+                    <div className="flex items-center">
+                      Product
+                      {getSortIcon("product_name")}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort("budget_category")}
+                  >
+                    <div className="flex items-center">
+                      Category
+                      {getSortIcon("budget_category")}
+                    </div>
+                  </TableHead>
                   <TableHead>Qty</TableHead>
                   <TableHead>Unit Price</TableHead>
                   <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Order Date</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort("status")}
+                  >
+                    <div className="flex items-center">
+                      Status
+                      {getSortIcon("status")}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort("supplier")}
+                  >
+                    <div className="flex items-center">
+                      Supplier
+                      {getSortIcon("supplier")}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort("order_date")}
+                  >
+                    <div className="flex items-center">
+                      Order Date
+                      {getSortIcon("order_date")}
+                    </div>
+                  </TableHead>
                   {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -688,7 +793,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => (
+                  sortedOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.product_name}</TableCell>
                       <TableCell>
