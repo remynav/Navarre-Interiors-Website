@@ -198,8 +198,6 @@ const AdminDashboard = () => {
   const stats = [
     { label: "Total Clients", value: clients.length.toString(), change: "Active clients" },
     { label: "Active Projects", value: clients.filter(c => c.status === "In Progress").length.toString(), change: "Currently in progress" },
-    { label: "Completed", value: clients.filter(c => c.status === "Completed").length.toString(), change: "Finished projects" },
-    { label: "Planning", value: clients.filter(c => c.status === "Planning").length.toString(), change: "Upcoming projects" },
   ];
 
   const handleLogout = async () => {
@@ -465,7 +463,7 @@ const AdminDashboard = () => {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {stats.map((stat) => (
                   <div key={stat.label} className="bg-card rounded-lg p-6 shadow-soft">
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
