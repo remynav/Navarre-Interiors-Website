@@ -150,8 +150,8 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
   // Form states
   const [orderForm, setOrderForm] = useState({
     product_name: "",
-    quantity: 1,
-    unit_price: 0,
+    quantity: "1",
+    unit_price: "",
     status: "pending",
     supplier: "",
     order_date: new Date().toISOString().split("T")[0],
@@ -304,13 +304,16 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
         }
       }
 
+      const quantity = parseInt(orderForm.quantity) || 1;
+      const unitPrice = parseFloat(orderForm.unit_price.replace(/,/g, '')) || 0;
+
       const { data, error } = await supabase
         .from("orders")
         .insert({
           project_id: projectId,
           product_name: orderForm.product_name,
-          quantity: orderForm.quantity,
-          unit_price: orderForm.unit_price,
+          quantity: quantity,
+          unit_price: unitPrice,
           status: orderForm.status,
           supplier: orderForm.supplier || null,
           order_date: orderForm.order_date,
@@ -359,12 +362,15 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
         receiptUrl = await uploadReceipt(receiptFile, editingOrder.id);
       }
 
+      const quantity = parseInt(orderForm.quantity) || 1;
+      const unitPrice = parseFloat(orderForm.unit_price.replace(/,/g, '')) || 0;
+
       const { error } = await supabase
         .from("orders")
         .update({
           product_name: orderForm.product_name,
-          quantity: orderForm.quantity,
-          unit_price: orderForm.unit_price,
+          quantity: quantity,
+          unit_price: unitPrice,
           status: orderForm.status,
           supplier: orderForm.supplier || null,
           expected_delivery: orderForm.expected_delivery || null,
@@ -383,9 +389,9 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
             ? {
                 ...o,
                 product_name: orderForm.product_name,
-                quantity: orderForm.quantity,
-                unit_price: orderForm.unit_price,
-                total_price: orderForm.quantity * orderForm.unit_price,
+                quantity: quantity,
+                unit_price: unitPrice,
+                total_price: quantity * unitPrice,
                 status: orderForm.status,
                 supplier: orderForm.supplier || null,
                 expected_delivery: orderForm.expected_delivery || null,
@@ -530,8 +536,8 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
   const resetOrderForm = () => {
     setOrderForm({
       product_name: "",
-      quantity: 1,
-      unit_price: 0,
+      quantity: "1",
+      unit_price: "",
       status: "pending",
       supplier: "",
       order_date: new Date().toISOString().split("T")[0],
@@ -556,8 +562,8 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
   const openEditOrder = (order: Order) => {
     setOrderForm({
       product_name: order.product_name,
-      quantity: order.quantity,
-      unit_price: order.unit_price,
+      quantity: order.quantity.toString(),
+      unit_price: order.unit_price.toString(),
       status: order.status,
       supplier: order.supplier || "",
       order_date: order.order_date,
@@ -1210,21 +1216,20 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                 <Label htmlFor="quantity">Quantity</Label>
                 <Input
                   id="quantity"
-                  type="number"
-                  min="1"
+                  type="text"
+                  inputMode="numeric"
                   value={orderForm.quantity}
-                  onChange={(e) => setOrderForm({ ...orderForm, quantity: parseInt(e.target.value) || 1 })}
+                  onChange={(e) => setOrderForm({ ...orderForm, quantity: e.target.value.replace(/[^0-9]/g, '') })}
                 />
               </div>
               <div>
                 <Label htmlFor="unit_price">Unit Price ($)</Label>
                 <Input
                   id="unit_price"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={orderForm.unit_price}
-                  onChange={(e) => setOrderForm({ ...orderForm, unit_price: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setOrderForm({ ...orderForm, unit_price: e.target.value.replace(/[^0-9.,]/g, '') })}
                 />
               </div>
             </div>
