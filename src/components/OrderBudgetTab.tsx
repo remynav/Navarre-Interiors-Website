@@ -543,33 +543,11 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-card rounded-lg p-4 shadow-soft">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gold/10 rounded-lg">
-              <Package className="w-5 h-5 text-gold" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Orders</p>
-              <p className="text-xl font-semibold text-foreground">{orders.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-card rounded-lg p-4 shadow-soft">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 rounded-lg">
-              <Clock className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Pending/Ordered</p>
-              <p className="text-xl font-semibold text-foreground">{pendingOrders}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-card rounded-lg p-4 shadow-soft">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <DollarSign className="w-5 h-5 text-gold" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Budget</p>
@@ -579,11 +557,22 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
         </div>
         <div className="bg-card rounded-lg p-4 shadow-soft">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/10 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Budget Remaining</p>
+              <p className="text-sm text-muted-foreground">Spent to Date</p>
+              <p className="text-xl font-semibold text-foreground">${totalSpent.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-card rounded-lg p-4 shadow-soft">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-500/10 rounded-lg">
+              <DollarSign className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Remaining Budget</p>
               <p className={`text-xl font-semibold ${budgetRemaining >= 0 ? "text-green-600" : "text-red-600"}`}>
                 ${budgetRemaining.toLocaleString()}
               </p>
