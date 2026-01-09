@@ -28,14 +28,13 @@ interface Product {
   supplier: string | null;
   link: string | null;
   image_url: string | null;
-  project_id: string | null;
+  price: number | null;
 }
 
 interface ProductModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProductSaved: () => void;
-  projects: { id: string; name: string }[];
   product?: Product | null; // If provided, we're editing
 }
 
@@ -51,7 +50,6 @@ export const ProductModal = ({
   open,
   onOpenChange,
   onProductSaved,
-  projects,
   product,
 }: ProductModalProps) => {
   const isEditing = !!product;
@@ -63,7 +61,7 @@ export const ProductModal = ({
     category: "",
     supplier: "",
     link: "",
-    project_id: "",
+    price: "",
   });
 
   // Reset form when modal opens or product changes
@@ -75,7 +73,7 @@ export const ProductModal = ({
           category: product.category,
           supplier: product.supplier || "",
           link: product.link || "",
-          project_id: product.project_id || "",
+          price: product.price?.toString() || "",
         });
         setImagePreview(product.image_url || "");
       } else {
@@ -84,7 +82,7 @@ export const ProductModal = ({
           category: "",
           supplier: "",
           link: "",
-          project_id: "",
+          price: "",
         });
         setImagePreview("");
       }
@@ -145,7 +143,7 @@ export const ProductModal = ({
         category: formData.category,
         supplier: formData.supplier || null,
         link: formData.link || null,
-        project_id: formData.project_id || null,
+        price: formData.price ? parseFloat(formData.price) : null,
         image_url: imageUrl,
       };
 
@@ -250,23 +248,16 @@ export const ProductModal = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="product-project">Project (Optional)</Label>
-            <Select
-              value={formData.project_id || "none"}
-              onValueChange={(value) => setFormData({ ...formData, project_id: value === "none" ? "" : value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select project" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No project</SelectItem>
-                {projects.map((proj) => (
-                  <SelectItem key={proj.id} value={proj.id}>
-                    {proj.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="product-price">Price</Label>
+            <Input
+              id="product-price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              placeholder="0.00"
+            />
           </div>
 
           <div className="space-y-2">
