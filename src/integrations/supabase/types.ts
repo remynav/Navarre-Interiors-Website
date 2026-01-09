@@ -434,6 +434,7 @@ export type Database = {
           product_name: string
           project_id: string
           quantity: number
+          receipt_url: string | null
           status: string
           supplier: string | null
           total_price: number | null
@@ -451,6 +452,7 @@ export type Database = {
           product_name: string
           project_id: string
           quantity?: number
+          receipt_url?: string | null
           status?: string
           supplier?: string | null
           total_price?: number | null
@@ -468,6 +470,7 @@ export type Database = {
           product_name?: string
           project_id?: string
           quantity?: number
+          receipt_url?: string | null
           status?: string
           supplier?: string | null
           total_price?: number | null
