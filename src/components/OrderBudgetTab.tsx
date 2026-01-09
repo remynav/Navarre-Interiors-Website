@@ -545,38 +545,80 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-card rounded-lg p-4 shadow-soft">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gold/10 rounded-lg">
-              <DollarSign className="w-5 h-5 text-gold" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gold/10 rounded-lg">
+                <DollarSign className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Budget</p>
+                <p className="text-xl font-semibold text-foreground">${totalBudget.toLocaleString()}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Budget</p>
-              <p className="text-xl font-semibold text-foreground">${totalBudget.toLocaleString()}</p>
-            </div>
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setActiveSubTab("budget");
+                  setShowAddBudgetModal(true);
+                }}
+                className="h-8 w-8"
+                title="Add budget item"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
         <div className="bg-card rounded-lg p-4 shadow-soft">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Spent to Date</p>
+                <p className="text-xl font-semibold text-foreground">${totalSpent.toLocaleString()}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Spent to Date</p>
-              <p className="text-xl font-semibold text-foreground">${totalSpent.toLocaleString()}</p>
-            </div>
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setActiveSubTab("budget")}
+                className="h-8 w-8"
+                title="View budget breakdown"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
         <div className="bg-card rounded-lg p-4 shadow-soft">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <DollarSign className="w-5 h-5 text-green-600" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-500/10 rounded-lg">
+                <DollarSign className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Remaining Budget</p>
+                <p className={`text-xl font-semibold ${budgetRemaining >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  ${budgetRemaining.toLocaleString()}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Remaining Budget</p>
-              <p className={`text-xl font-semibold ${budgetRemaining >= 0 ? "text-green-600" : "text-red-600"}`}>
-                ${budgetRemaining.toLocaleString()}
-              </p>
-            </div>
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setActiveSubTab("budget")}
+                className="h-8 w-8"
+                title="View budget breakdown"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
