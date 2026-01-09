@@ -1073,14 +1073,14 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
             <div>
               <Label htmlFor="budget_category">Budget Category</Label>
               <Select 
-                value={orderForm.budget_category} 
-                onValueChange={(val) => setOrderForm({ ...orderForm, budget_category: val })}
+                value={orderForm.budget_category || "none"} 
+                onValueChange={(val) => setOrderForm({ ...orderForm, budget_category: val === "none" ? "" : val })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select budget category..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Category</SelectItem>
+                  <SelectItem value="none">No Category</SelectItem>
                   {budgetItems.map((item) => (
                     <SelectItem key={item.id} value={item.category}>
                       {item.category}
