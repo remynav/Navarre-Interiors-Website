@@ -897,8 +897,8 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                         )}
                       </TableCell>
                       <TableCell>{order.quantity}</TableCell>
-                      <TableCell>${Number(order.unit_price).toFixed(2)}</TableCell>
-                      <TableCell className="font-medium">${Number(order.total_price).toFixed(2)}</TableCell>
+                      <TableCell>${Number(order.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                      <TableCell className="font-medium">${Number(order.total_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                           {getStatusIcon(order.status)}
