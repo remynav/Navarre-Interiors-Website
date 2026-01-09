@@ -10,16 +10,23 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { ImageUpload } from "@/components/ImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, ChevronsUpDown, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -38,7 +45,7 @@ interface ProductModalProps {
   product?: Product | null; // If provided, we're editing
 }
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   "Fixtures",
   "Paint Colors",
   "Furniture",
@@ -56,6 +63,9 @@ export const ProductModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -63,6 +73,25 @@ export const ProductModal = ({
     link: "",
     price: "",
   });
+
+  // Fetch existing categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from("product_inventory")
+        .select("category");
+      
+      if (!error && data) {
+        const dbCategories = [...new Set(data.map(p => p.category))];
+        const allCategories = [...new Set([...DEFAULT_CATEGORIES, ...dbCategories])].sort();
+        setCategories(allCategories);
+      }
+    };
+    
+    if (open) {
+      fetchCategories();
+    }
+  }, [open]);
 
   // Reset form when modal opens or product changes
   useEffect(() => {
@@ -209,21 +238,67 @@ export const ProductModal = ({
 
           <div className="space-y-2">
             <Label htmlFor="product-category">Category *</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) => setFormData({ ...formData, category: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={categoryOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  {formData.category || "Select or add category..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search or add category..." 
+                    value={categorySearch}
+                    onValueChange={setCategorySearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty className="p-2">
+                      {categorySearch && (
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            setFormData({ ...formData, category: categorySearch });
+                            setCategories(prev => [...new Set([...prev, categorySearch])].sort());
+                            setCategorySearch("");
+                            setCategoryOpen(false);
+                          }}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add "{categorySearch}"
+                        </Button>
+                      )}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {categories.map((cat) => (
+                        <CommandItem
+                          key={cat}
+                          value={cat}
+                          onSelect={() => {
+                            setFormData({ ...formData, category: cat });
+                            setCategoryOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.category === cat ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {cat}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
