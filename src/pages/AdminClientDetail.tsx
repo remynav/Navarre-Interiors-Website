@@ -1117,8 +1117,12 @@ const AdminClientDetail = () => {
                     <p className="font-medium text-foreground">{client.phone}</p>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="text-sm text-muted-foreground">Address</p>
-                    <p className="font-medium text-foreground">{client.address}</p>
+                    <p className="text-sm text-muted-foreground">Project Addresses</p>
+                    <div className="space-y-1">
+                      {client.projects.map((project) => (
+                        <p key={project.id} className="font-medium text-foreground">{project.name}</p>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
