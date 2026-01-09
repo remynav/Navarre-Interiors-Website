@@ -61,6 +61,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, isAdmin, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [clientsSubTab, setClientsSubTab] = useState<"active" | "completed">("active");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
@@ -195,9 +196,12 @@ const AdminDashboard = () => {
   }, [user, isAdmin, clients]);
 
   // Calculate stats from real data
+  const activeClients = clients.filter(c => c.status !== "Completed");
+  const completedClients = clients.filter(c => c.status === "Completed");
+  
   const stats = [
-    { label: "Total Clients", value: clients.length.toString(), change: "Active clients" },
-    { label: "Active Projects", value: clients.filter(c => c.status === "In Progress").length.toString(), change: "Currently in progress" },
+    { label: "Current Clients", value: activeClients.length.toString(), change: "Active clients", onClick: () => { setActiveTab("clients"); setClientsSubTab("active"); } },
+    { label: "Completed Projects", value: completedClients.length.toString(), change: "Finished projects", onClick: () => { setActiveTab("clients"); setClientsSubTab("completed"); } },
   ];
 
   const handleLogout = async () => {
@@ -465,7 +469,11 @@ const AdminDashboard = () => {
               {/* Stats */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {stats.map((stat) => (
-                  <div key={stat.label} className="bg-card rounded-lg p-6 shadow-soft">
+                  <div 
+                    key={stat.label} 
+                    className="bg-card rounded-lg p-6 shadow-soft cursor-pointer hover:shadow-medium transition-all"
+                    onClick={stat.onClick}
+                  >
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
                     <p className="font-display text-3xl font-semibold text-foreground mt-1">
                       {stat.value}
@@ -558,6 +566,24 @@ const AdminDashboard = () => {
                 </Button>
               </div>
 
+              {/* Sub-tabs for Active/Completed */}
+              <div className="flex gap-2">
+                <Button
+                  variant={clientsSubTab === "active" ? "default" : "outline"}
+                  onClick={() => setClientsSubTab("active")}
+                  size="sm"
+                >
+                  Active ({activeClients.length})
+                </Button>
+                <Button
+                  variant={clientsSubTab === "completed" ? "default" : "outline"}
+                  onClick={() => setClientsSubTab("completed")}
+                  size="sm"
+                >
+                  Completed ({completedClients.length})
+                </Button>
+              </div>
+
               {/* Search */}
               <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -575,91 +601,104 @@ const AdminDashboard = () => {
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
                   </div>
-                ) : filteredClients.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
-                      {searchQuery ? "No clients match your search" : "No clients yet. Add your first client to get started."}
-                    </p>
-                  </div>
-                ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/30">
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">Client</th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">Project</th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">Progress</th>
-                        <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredClients.map((client) => (
-                        <tr 
-                          key={client.id} 
-                          className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
-                          onClick={() => handleClientClick(client.id)}
-                        >
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
-                                <span className="text-gold text-sm font-medium">
-                                  {client.name.split(" ").map(n => n[0]).join("")}
+                ) : (() => {
+                  const displayClients = (clientsSubTab === "active" ? activeClients : completedClients)
+                    .filter(client => 
+                      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      client.project.toLowerCase().includes(searchQuery.toLowerCase())
+                    );
+                  
+                  return displayClients.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">
+                        {searchQuery 
+                          ? "No clients match your search" 
+                          : clientsSubTab === "active" 
+                            ? "No active clients yet." 
+                            : "No completed projects yet."}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-border bg-muted/30">
+                            <th className="text-left p-4 text-sm font-medium text-muted-foreground">Client</th>
+                            <th className="text-left p-4 text-sm font-medium text-muted-foreground">Project</th>
+                            <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
+                            <th className="text-left p-4 text-sm font-medium text-muted-foreground">Progress</th>
+                            <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {displayClients.map((client) => (
+                            <tr 
+                              key={client.id} 
+                              className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                              onClick={() => handleClientClick(client.id)}
+                            >
+                              <td className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
+                                    <span className="text-gold text-sm font-medium">
+                                      {client.name.split(" ").map(n => n[0]).join("")}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-foreground">{client.name}</p>
+                                    <p className="text-sm text-muted-foreground">{client.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="p-4 text-foreground">{client.project}</td>
+                              <td className="p-4">
+                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
+                                  {client.status}
                                 </span>
-                              </div>
-                              <div>
-                                <p className="font-medium text-foreground">{client.name}</p>
-                                <p className="text-sm text-muted-foreground">{client.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4 text-foreground">{client.project}</td>
-                          <td className="p-4">
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
-                              {client.status}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gold rounded-full"
-                                  style={{ width: `${client.progress}%` }}
-                                />
-                              </div>
-                              <span className="text-sm text-muted-foreground">{client.progress}%</span>
-                            </div>
-                          </td>
-                          <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleClientClick(client.id)}>
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Client
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                )}
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-gold rounded-full"
+                                      style={{ width: `${client.progress}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">{client.progress}%</span>
+                                </div>
+                              </td>
+                              <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <MoreHorizontal className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleClientClick(client.id)}>
+                                      <Eye className="w-4 h-4 mr-2" />
+                                      View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                      <Edit className="w-4 h-4 mr-2" />
+                                      Edit Client
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-destructive">
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
