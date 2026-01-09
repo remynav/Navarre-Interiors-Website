@@ -599,176 +599,30 @@ const ClientDashboard = () => {
                   Welcome back, {profile?.full_name?.split(" ")[0] || "there"}
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  Here's an overview of your project
+                  {getSelectedProject()?.name || "Your client portal"}
                 </p>
               </div>
 
-              {/* Project Card */}
-              <div className="bg-card rounded-lg p-6 shadow-soft">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                  <div>
-                    <p className="text-sm text-gold font-medium uppercase tracking-wide">
-                      Current Project
-                    </p>
-                    <h2 className="font-display text-2xl font-semibold text-foreground">
-                      {getSelectedProject()?.name || "No project assigned"}
-                    </h2>
-                  </div>
-                  <span className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-2 rounded-full text-sm font-medium">
-                    <Clock className="w-4 h-4" />
-                    {getSelectedProject()?.status || "New"}
-                  </span>
-                </div>
-
-                {projects.length > 1 && (
-                  <div className="mb-4">
-                    <p className="text-sm text-muted-foreground mb-2">Select Project</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {projects.map(project => (
-                        <Button
-                          key={project.id}
-                          variant={selectedProjectId === project.id ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setSelectedProjectId(project.id)}
-                        >
-                          {project.name}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Start Date</p>
-                    <p className="font-medium text-foreground">
-                      {getSelectedProject()?.start_date 
-                        ? new Date(getSelectedProject()!.start_date!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-                        : "TBD"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Est. Completion</p>
-                    <p className="font-medium text-foreground">
-                      {getSelectedProject()?.estimated_completion 
-                        ? new Date(getSelectedProject()!.estimated_completion!).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-                        : "TBD"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Lead Designer</p>
-                    <p className="font-medium text-foreground">{getSelectedProject()?.designer || "TBD"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Progress</p>
-                    <p className="font-medium text-gold">{getSelectedProject()?.progress || 0}%</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Access Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <button
-                  onClick={() => setActiveTab("documents")}
-                  className="bg-card p-6 rounded-lg shadow-soft hover:shadow-medium transition-all text-left group"
-                >
-                  <FileText className="w-8 h-8 text-gold mb-3" />
-                  <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-gold transition-colors">Documents</h3>
-                  <p className="text-sm text-muted-foreground">{documents.length} files</p>
-                </button>
-                <button
-                  onClick={() => setActiveTab("inspiration")}
-                  className="bg-card p-6 rounded-lg shadow-soft hover:shadow-medium transition-all text-left group"
-                >
-                  <Palette className="w-8 h-8 text-gold mb-3" />
-                  <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-gold transition-colors">Inspiration</h3>
-                  <p className="text-sm text-muted-foreground">{inspirations.length} boards</p>
-                </button>
-                <button
-                  onClick={() => setActiveTab("renderings")}
-                  className="bg-card p-6 rounded-lg shadow-soft hover:shadow-medium transition-all text-left group relative"
-                >
-                  <Image className="w-8 h-8 text-gold mb-3" />
-                  <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-gold transition-colors">Renderings</h3>
-                  <p className="text-sm text-muted-foreground">{renderings.filter(r => r.status === "pending").length} pending approval</p>
-                  {renderings.filter(r => r.status === "pending").length > 0 && (
-                    <span className="absolute top-4 right-4 w-3 h-3 bg-orange-500 rounded-full" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab("messages")}
-                  className="bg-card p-6 rounded-lg shadow-soft hover:shadow-medium transition-all text-left group relative"
-                >
-                  <MessageSquare className="w-8 h-8 text-gold mb-3" />
-                  <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-gold transition-colors">Messages</h3>
-                  <p className="text-sm text-muted-foreground">Chat with your team</p>
-                  <span className="absolute top-4 right-4 w-3 h-3 bg-gold rounded-full" />
-                </button>
-              </div>
-
-              {/* Orders & Budget Summary */}
-              <OrderBudgetSummary 
-                projectId={selectedProjectId} 
-                onViewAll={() => setActiveTab("orders")} 
-              />
-
-              {/* Recent Updates */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Documents */}
-                <div className="bg-card rounded-lg p-6 shadow-soft">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-display text-lg font-semibold text-foreground">
-                      Recent Documents
+              {/* Module Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {navItems.filter(item => item.id !== "overview").map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className="bg-card p-6 rounded-lg shadow-soft hover:shadow-medium transition-all text-left group relative"
+                  >
+                    <item.icon className="w-8 h-8 text-gold mb-3" />
+                    <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-gold transition-colors">
+                      {item.label}
                     </h3>
-                    <Button variant="ghost" size="sm" onClick={() => setActiveTab("documents")}>
-                      View All
-                    </Button>
-                  </div>
-                  <div className="space-y-3">
-                    {documents.slice(0, 3).map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-5 h-5 text-gold" />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{doc.name}</p>
-                            <p className="text-xs text-muted-foreground">{doc.type} • {doc.date}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Recent Messages */}
-                <div className="bg-card rounded-lg p-6 shadow-soft">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-display text-lg font-semibold text-foreground">
-                      Recent Messages
-                    </h3>
-                    <Button variant="ghost" size="sm" onClick={() => setActiveTab("messages")}>
-                      View All
-                    </Button>
-                  </div>
-                  <div className="space-y-3">
-                    {allMessages.slice(0, 2).map((msg) => (
-                      <div
-                        key={msg.id}
-                        className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-medium text-foreground">
-                            {msg.sender === "designer" ? msg.name : "You"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{msg.time}</p>
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-1">{msg.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                    {item.id === "messages" && (
+                      <span className="absolute top-4 right-4 w-3 h-3 bg-gold rounded-full" />
+                    )}
+                    {item.id === "renderings" && renderings.filter(r => r.status === "pending").length > 0 && (
+                      <span className="absolute top-4 right-4 w-3 h-3 bg-orange-500 rounded-full" />
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
           )}
