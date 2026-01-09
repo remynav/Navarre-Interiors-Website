@@ -172,9 +172,24 @@ const AdminClientDetail = () => {
           projects: projects || [],
         });
 
-        // Set first project as selected
-        if (projects && projects.length > 0) {
-          setSelectedProjectId(projects[0].id);
+        // Determine initial project selection
+        const urlProjectId = searchParams.get('project');
+        const storedProjectId = sessionStorage.getItem(`admin_selected_project_${clientId}`);
+        
+        // Priority: URL param > stored in session > first project
+        let initialProjectId: string | null = null;
+        
+        if (urlProjectId && projects?.some(p => p.id === urlProjectId)) {
+          initialProjectId = urlProjectId;
+        } else if (storedProjectId && projects?.some(p => p.id === storedProjectId)) {
+          initialProjectId = storedProjectId;
+        } else if (projects && projects.length > 0) {
+          initialProjectId = projects[0].id;
+        }
+
+        if (initialProjectId) {
+          setSelectedProjectId(initialProjectId);
+          sessionStorage.setItem(`admin_selected_project_${clientId}`, initialProjectId);
         }
       } catch (error) {
         console.error("Error fetching client:", error);
@@ -209,6 +224,14 @@ const AdminClientDetail = () => {
     fetchUserAndMarkRead();
   }, [activeTab]);
 
+  // Handle project selection change with persistence
+  const handleProjectChange = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    if (clientId) {
+      sessionStorage.setItem(`admin_selected_project_${clientId}`, projectId);
+    }
+  };
+
   // Handle adding a new project
   const handleAddProject = async () => {
     if (!client || !newProjectName.trim()) {
@@ -225,7 +248,7 @@ const AdminClientDetail = () => {
         projects: [newProject, ...prev.projects],
       } : null);
       
-      setSelectedProjectId(newProject.id);
+      handleProjectChange(newProject.id);
       setNewProjectName("");
       setShowAddProjectModal(false);
       toast.success(`Created project: ${newProject.name}`);
@@ -1008,7 +1031,7 @@ const AdminClientDetail = () => {
           </div>
           <div className="flex items-center gap-2">
             {client.projects.length > 0 && (
-              <Select value={selectedProjectId || ""} onValueChange={setSelectedProjectId}>
+              <Select value={selectedProjectId || ""} onValueChange={handleProjectChange}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
