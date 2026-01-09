@@ -94,6 +94,7 @@ interface InventoryProduct {
   supplier: string | null;
   link: string | null;
   image_url: string | null;
+  price: number | null;
 }
 
 interface OrderBudgetTabProps {
@@ -221,7 +222,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       try {
         const { data, error } = await supabase
           .from("product_inventory")
-          .select("id, name, category, supplier, link, image_url")
+          .select("id, name, category, supplier, link, image_url, price")
           .order("name");
 
         if (error) throw error;

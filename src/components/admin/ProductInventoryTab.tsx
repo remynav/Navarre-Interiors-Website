@@ -34,13 +34,7 @@ interface Product {
   supplier: string | null;
   link: string | null;
   image_url: string | null;
-  project_id: string | null;
-  project_name?: string;
-}
-
-interface Project {
-  id: string;
-  name: string;
+  price: number | null;
 }
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -53,7 +47,6 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
 
 export const ProductInventoryTab = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -70,22 +63,7 @@ export const ProductInventoryTab = () => {
 
       if (productsError) throw productsError;
 
-      // Fetch projects to get names
-      const { data: projectsData, error: projectsError } = await supabase
-        .from("projects")
-        .select("id, name");
-
-      if (projectsError) throw projectsError;
-
-      setProjects(projectsData || []);
-
-      // Map project names to products
-      const productsWithProjects = (productsData || []).map((product) => ({
-        ...product,
-        project_name: projectsData?.find((p) => p.id === product.project_id)?.name || null,
-      }));
-
-      setProducts(productsWithProjects);
+      setProducts(productsData || []);
     } catch (error) {
       console.error("Error fetching products:", error);
       toast.error("Failed to load products");
@@ -141,8 +119,7 @@ export const ProductInventoryTab = () => {
       (product) =>
         product.name.toLowerCase().includes(query) ||
         product.category.toLowerCase().includes(query) ||
-        (product.supplier && product.supplier.toLowerCase().includes(query)) ||
-        (product.project_name && product.project_name.toLowerCase().includes(query))
+        (product.supplier && product.supplier.toLowerCase().includes(query))
     );
   }, [products, searchQuery]);
 
@@ -292,7 +269,7 @@ export const ProductInventoryTab = () => {
                           Product Name
                         </th>
                         <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                          Project
+                          Price
                         </th>
                         <th className="text-left p-4 text-sm font-medium text-muted-foreground">
                           Supplier
@@ -341,7 +318,7 @@ export const ProductInventoryTab = () => {
                             )}
                           </td>
                           <td className="p-4 text-muted-foreground">
-                            {product.project_name || "—"}
+                            {product.price ? `$${product.price.toLocaleString()}` : "—"}
                           </td>
                           <td className="p-4 text-muted-foreground">
                             {product.supplier || "—"}
@@ -399,7 +376,6 @@ export const ProductInventoryTab = () => {
         open={showModal}
         onOpenChange={handleModalClose}
         onProductSaved={fetchProducts}
-        projects={projects}
         product={editingProduct}
       />
 

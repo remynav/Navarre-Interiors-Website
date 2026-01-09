@@ -524,7 +524,7 @@ export type Database = {
           image_url: string | null
           link: string | null
           name: string
-          project_id: string | null
+          price: number | null
           supplier: string | null
         }
         Insert: {
@@ -534,7 +534,7 @@ export type Database = {
           image_url?: string | null
           link?: string | null
           name: string
-          project_id?: string | null
+          price?: number | null
           supplier?: string | null
         }
         Update: {
@@ -544,18 +544,10 @@ export type Database = {
           image_url?: string | null
           link?: string | null
           name?: string
-          project_id?: string | null
+          price?: number | null
           supplier?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "product_inventory_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
