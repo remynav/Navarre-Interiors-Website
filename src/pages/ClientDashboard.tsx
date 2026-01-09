@@ -11,6 +11,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Home,
   FileText,
   Calendar,
@@ -36,7 +42,9 @@ import {
   User,
   Save,
   Receipt,
+  ChevronDown,
   ExternalLink,
+  FolderOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -492,6 +500,8 @@ const ClientDashboard = () => {
     }
   };
 
+  const selectedProject = getSelectedProject();
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
@@ -553,13 +563,42 @@ const ClientDashboard = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between lg:justify-end">
-          <button
-            className="lg:hidden p-2"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X /> : <Menu />}
-          </button>
+        <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              className="lg:hidden p-2"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              {sidebarOpen ? <X /> : <Menu />}
+            </button>
+            
+            {/* Project Selector - only show if multiple projects */}
+            {projects.length > 1 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4" />
+                    <span className="max-w-[200px] truncate">{selectedProject?.name || "Select Project"}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[250px]">
+                  {projects.map((project) => (
+                    <DropdownMenuItem
+                      key={project.id}
+                      onClick={() => setSelectedProjectId(project.id)}
+                      className={selectedProjectId === project.id ? "bg-muted" : ""}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{project.name}</span>
+                        <span className="text-xs text-muted-foreground">{project.status}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
           <div className="flex items-center gap-4">
             {user && <NotificationBell userId={user.id} />}
             <div className="text-right">

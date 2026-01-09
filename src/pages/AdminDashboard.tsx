@@ -47,13 +47,18 @@ import {
 } from "@/components/ui/select";
 import { ProductInventoryTab } from "@/components/admin/ProductInventoryTab";
 
+interface Project {
+  id: string;
+  name: string;
+  status: string;
+  progress: number;
+}
+
 interface Client {
   id: string;
   name: string;
   email: string;
-  project: string;
-  status: string;
-  progress: number;
+  projects: Project[];
 }
 
 
@@ -65,6 +70,7 @@ const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [chatSectionOpen, setChatSectionOpen] = useState(true);
@@ -118,17 +124,20 @@ const AdminDashboard = () => {
 
         if (error) throw error;
 
-        // Create client entries for all client profiles
+        // Create client entries for all client profiles with all their projects
         const clientsData: Client[] = (profiles || []).map((profile) => {
-          // Find project for this client (if any)
-          const project = projects?.find((p) => p.client_id === profile.id);
+          // Find ALL projects for this client
+          const clientProjects = projects?.filter((p) => p.client_id === profile.id) || [];
           return {
-            id: profile.id, // Use profile id as the client id
+            id: profile.id,
             name: profile.full_name || profile.email,
             email: profile.email,
-            project: project?.name || "No project assigned",
-            status: project?.status || "New",
-            progress: project?.progress || 0,
+            projects: clientProjects.map(p => ({
+              id: p.id,
+              name: p.name,
+              status: p.status,
+              progress: p.progress,
+            })),
           };
         });
 
@@ -195,13 +204,22 @@ const AdminDashboard = () => {
     fetchClientChats();
   }, [user, isAdmin, clients]);
 
-  // Calculate stats from real data
-  const activeClients = clients.filter(c => c.status !== "Completed");
-  const completedClients = clients.filter(c => c.status === "Completed");
+  // Calculate stats from real data - clients with at least one non-completed project
+  const activeClients = clients.filter(c => 
+    c.projects.length === 0 || c.projects.some(p => p.status !== "Completed")
+  );
+  const completedClients = clients.filter(c => 
+    c.projects.length > 0 && c.projects.every(p => p.status === "Completed")
+  );
+  
+  // Count total completed projects
+  const totalCompletedProjects = clients.reduce((acc, c) => 
+    acc + c.projects.filter(p => p.status === "Completed").length, 0
+  );
   
   const stats = [
     { label: "Current Clients", value: activeClients.length.toString(), change: "Active clients", onClick: () => { setActiveTab("clients"); setClientsSubTab("active"); } },
-    { label: "Completed Projects", value: completedClients.length.toString(), change: "Finished projects", onClick: () => { setActiveTab("clients"); setClientsSubTab("completed"); } },
+    { label: "Completed Projects", value: totalCompletedProjects.toString(), change: "Finished projects", onClick: () => { setActiveTab("clients"); setClientsSubTab("completed"); } },
   ];
 
   const handleLogout = async () => {
@@ -221,8 +239,20 @@ const AdminDashboard = () => {
     (client) =>
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.project.toLowerCase().includes(searchQuery.toLowerCase())
+      client.projects.some(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+  
+  const toggleClientExpanded = (clientId: string) => {
+    setExpandedClients(prev => {
+      const next = new Set(prev);
+      if (next.has(clientId)) {
+        next.delete(clientId);
+      } else {
+        next.add(clientId);
+      }
+      return next;
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -274,9 +304,12 @@ const AdminDashboard = () => {
         id: crypto.randomUUID(),
         name: newClient.name,
         email: newClient.email,
-        project: newClient.project,
-        status: newClient.status,
-        progress: newClient.status === "Planning" ? 5 : 0,
+        projects: [{
+          id: crypto.randomUUID(),
+          name: newClient.project,
+          status: newClient.status,
+          progress: newClient.status === "Planning" ? 5 : 0,
+        }],
       };
       
       setClients([tempClient, ...clients]);
@@ -309,14 +342,17 @@ const AdminDashboard = () => {
       if (error) throw error;
 
       const clientsData: Client[] = (profiles || []).map((profile) => {
-        const project = projects?.find((p) => p.client_id === profile.id);
+        const clientProjects = projects?.filter((p) => p.client_id === profile.id) || [];
         return {
           id: profile.id,
           name: profile.full_name || profile.email,
           email: profile.email,
-          project: project?.name || "No project assigned",
-          status: project?.status || "New",
-          progress: project?.progress || 0,
+          projects: clientProjects.map(p => ({
+            id: p.id,
+            name: p.name,
+            status: p.status,
+            progress: p.progress,
+          })),
         };
       });
 
@@ -500,50 +536,47 @@ const AdminDashboard = () => {
                     <thead>
                       <tr className="border-b border-border">
                         <th className="text-left p-4 text-sm font-medium text-muted-foreground">Client</th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">Project</th>
+                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">Projects</th>
                         <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                        <th className="text-left p-4 text-sm font-medium text-muted-foreground">Progress</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {clients.slice(0, 5).map((client) => (
-                        <tr 
-                          key={client.id} 
-                          className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
-                          onClick={() => handleClientClick(client.id)}
-                        >
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
-                                <span className="text-gold text-sm font-medium">
-                                  {client.name.split(" ").map(n => n[0]).join("")}
+                      {clients.slice(0, 5).map((client) => {
+                        const primaryProject = client.projects[0];
+                        return (
+                          <tr 
+                            key={client.id} 
+                            className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                            onClick={() => handleClientClick(client.id)}
+                          >
+                            <td className="p-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
+                                  <span className="text-gold text-sm font-medium">
+                                    {client.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-foreground">{client.name}</p>
+                                  <p className="text-sm text-muted-foreground">{client.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-foreground">{client.projects.length} project{client.projects.length !== 1 ? 's' : ''}</span>
+                            </td>
+                            <td className="p-4">
+                              {primaryProject ? (
+                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(primaryProject.status)}`}>
+                                  {primaryProject.status}
                                 </span>
-                              </div>
-                              <div>
-                                <p className="font-medium text-foreground">{client.name}</p>
-                                <p className="text-sm text-muted-foreground">{client.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4 text-foreground">{client.project}</td>
-                          <td className="p-4">
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
-                              {client.status}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gold rounded-full"
-                                  style={{ width: `${client.progress}%` }}
-                                />
-                              </div>
-                              <span className="text-sm text-muted-foreground">{client.progress}%</span>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                              ) : (
+                                <span className="text-muted-foreground text-sm">No projects</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -608,7 +641,7 @@ const AdminDashboard = () => {
                     .filter(client => 
                       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                       client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      client.project.toLowerCase().includes(searchQuery.toLowerCase())
+                      client.projects.some(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
                     );
                   
                   return displayClients.length === 0 ? (
@@ -623,57 +656,56 @@ const AdminDashboard = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-border bg-muted/30">
-                            <th className="text-left p-4 text-sm font-medium text-muted-foreground">Client</th>
-                            <th className="text-left p-4 text-sm font-medium text-muted-foreground">Project</th>
-                            <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                            <th className="text-left p-4 text-sm font-medium text-muted-foreground">Progress</th>
-                            <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {displayClients.map((client) => (
-                            <tr 
-                              key={client.id} 
-                              className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
-                              onClick={() => handleClientClick(client.id)}
+                    <div className="divide-y divide-border">
+                      {displayClients.map((client) => {
+                        const isExpanded = expandedClients.has(client.id);
+                        const hasMultipleProjects = client.projects.length > 1;
+                        
+                        return (
+                          <div key={client.id}>
+                            {/* Client Row */}
+                            <div 
+                              className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                              onClick={() => hasMultipleProjects ? toggleClientExpanded(client.id) : handleClientClick(client.id)}
                             >
-                              <td className="p-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
-                                    <span className="text-gold text-sm font-medium">
-                                      {client.name.split(" ").map(n => n[0]).join("")}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-foreground">{client.name}</p>
-                                    <p className="text-sm text-muted-foreground">{client.email}</p>
-                                  </div>
+                              <div className="flex items-center gap-3">
+                                {hasMultipleProjects && (
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); toggleClientExpanded(client.id); }}
+                                    className="p-1 hover:bg-muted rounded"
+                                  >
+                                    {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                  </button>
+                                )}
+                                <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
+                                  <span className="text-gold text-sm font-medium">
+                                    {client.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                  </span>
                                 </div>
-                              </td>
-                              <td className="p-4 text-foreground">{client.project}</td>
-                              <td className="p-4">
-                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
-                                  {client.status}
-                                </span>
-                              </td>
-                              <td className="p-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-gold rounded-full"
-                                      style={{ width: `${client.progress}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">{client.progress}%</span>
+                                <div>
+                                  <p className="font-medium text-foreground">{client.name}</p>
+                                  <p className="text-sm text-muted-foreground">{client.email}</p>
                                 </div>
-                              </td>
-                              <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                              </div>
+                              
+                              <div className="flex items-center gap-6">
+                                <div className="text-right">
+                                  <p className="text-sm font-medium text-foreground">
+                                    {client.projects.length} project{client.projects.length !== 1 ? 's' : ''}
+                                  </p>
+                                  {client.projects.length === 1 && client.projects[0] && (
+                                    <p className="text-xs text-muted-foreground">{client.projects[0].name}</p>
+                                  )}
+                                </div>
+                                
+                                {client.projects.length === 1 && client.projects[0] && (
+                                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(client.projects[0].status)}`}>
+                                    {client.projects[0].status}
+                                  </span>
+                                )}
+                                
                                 <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
+                                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                     <Button variant="ghost" size="icon">
                                       <MoreHorizontal className="w-4 h-4" />
                                     </Button>
@@ -681,7 +713,7 @@ const AdminDashboard = () => {
                                   <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => handleClientClick(client.id)}>
                                       <Eye className="w-4 h-4 mr-2" />
-                                      View Details
+                                      View Client
                                     </DropdownMenuItem>
                                     <DropdownMenuItem>
                                       <Edit className="w-4 h-4 mr-2" />
@@ -693,11 +725,43 @@ const AdminDashboard = () => {
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                              </div>
+                            </div>
+                            
+                            {/* Expanded Projects */}
+                            {isExpanded && client.projects.length > 0 && (
+                              <div className="bg-muted/20 border-t border-border">
+                                {client.projects.map((project) => (
+                                  <div 
+                                    key={project.id}
+                                    className="flex items-center justify-between px-4 py-3 pl-16 hover:bg-muted/30 transition-colors cursor-pointer border-b border-border last:border-0"
+                                    onClick={() => handleClientClick(client.id)}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <FolderOpen className="w-4 h-4 text-muted-foreground" />
+                                      <span className="font-medium text-foreground">{project.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                                        {project.status}
+                                      </span>
+                                      <div className="flex items-center gap-2 w-32">
+                                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                          <div
+                                            className="h-full bg-gold rounded-full"
+                                            style={{ width: `${project.progress}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-xs text-muted-foreground w-8">{project.progress}%</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })()}
@@ -723,54 +787,56 @@ const AdminDashboard = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {clients.map((client) => (
-                  <div 
-                    key={client.id} 
-                    className="bg-card rounded-lg p-6 shadow-soft hover:shadow-medium transition-all cursor-pointer"
-                    onClick={() => handleClientClick(client.id)}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
-                        {client.status}
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleClientClick(client.id)}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Project
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Project
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <h3 className="font-display text-lg font-semibold text-foreground mb-2">
-                      {client.project}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Client: {client.name}
-                    </p>
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium text-foreground">{client.progress}%</span>
+                {clients.flatMap((client) => 
+                  client.projects.map((project) => (
+                    <div 
+                      key={project.id} 
+                      className="bg-card rounded-lg p-6 shadow-soft hover:shadow-medium transition-all cursor-pointer"
+                      onClick={() => handleClientClick(client.id)}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                          {project.status}
+                        </span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleClientClick(client.id)}>
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Project
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit Project
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gold rounded-full transition-all duration-500"
-                          style={{ width: `${client.progress}%` }}
-                        />
+                      <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                        {project.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Client: {client.name}
+                      </p>
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-muted-foreground">Progress</span>
+                          <span className="font-medium text-foreground">{project.progress}%</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gold rounded-full transition-all duration-500"
+                            style={{ width: `${project.progress}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}
