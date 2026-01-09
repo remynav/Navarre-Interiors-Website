@@ -796,17 +796,9 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
             </Table>
             {budgetItems.length > 0 && (
               <div className="border-t border-border p-4 bg-muted/30">
-                <div className="flex justify-between">
+                <div className="flex justify-end">
                   <span className="font-medium text-foreground">
                     Total Budget: <span className="text-gold">${totalBudget.toLocaleString()}</span>
-                  </span>
-                  <span className="font-medium text-foreground">
-                    Total Spent: <span className="text-gold">${totalSpent.toLocaleString()}</span>
-                  </span>
-                  <span className="font-medium text-foreground">
-                    Remaining: <span className={budgetRemaining >= 0 ? "text-green-600" : "text-red-600"}>
-                      ${budgetRemaining.toLocaleString()}
-                    </span>
                   </span>
                 </div>
               </div>
