@@ -457,11 +457,14 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
   const handleUpdateBudget = async () => {
     if (!editingBudget) return;
 
+    const oldCategory = editingBudget.category;
+    const newCategory = budgetForm.category;
+
     try {
       const { error } = await supabase
         .from("budget_items")
         .update({
-          category: budgetForm.category,
+          category: newCategory,
           description: budgetForm.description || null,
           allocated_amount: budgetForm.allocated_amount,
         })
@@ -469,12 +472,32 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
 
       if (error) throw error;
 
+      // If category name changed, update all orders with the old category name
+      if (oldCategory !== newCategory && projectId) {
+        const { error: ordersError } = await supabase
+          .from("orders")
+          .update({ budget_category: newCategory })
+          .eq("project_id", projectId)
+          .eq("budget_category", oldCategory);
+
+        if (ordersError) {
+          console.error("Error updating orders category:", ordersError);
+        } else {
+          // Update local orders state
+          setOrders(orders.map(o => 
+            o.budget_category === oldCategory 
+              ? { ...o, budget_category: newCategory } 
+              : o
+          ));
+        }
+      }
+
       setBudgetItems(
         budgetItems.map((b) =>
           b.id === editingBudget.id
             ? {
                 ...b,
-                category: budgetForm.category,
+                category: newCategory,
                 description: budgetForm.description || null,
                 allocated_amount: budgetForm.allocated_amount,
               }
