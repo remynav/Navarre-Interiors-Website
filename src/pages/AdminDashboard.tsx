@@ -444,11 +444,13 @@ const AdminDashboard = () => {
           <div className="flex items-center gap-4">
             {user && <NotificationBell userId={user.id} />}
             <div className="text-right">
-              <p className="text-sm font-medium text-foreground">Admin User</p>
-              <p className="text-xs text-muted-foreground">admin@navarre.com</p>
+              <p className="text-sm font-medium text-foreground">{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin'}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
             <div className="w-10 h-10 bg-gold rounded-full flex items-center justify-center">
-              <span className="text-primary font-medium">A</span>
+              <span className="text-primary font-medium">
+                {(user?.user_metadata?.full_name || user?.email || 'A').charAt(0).toUpperCase()}
+              </span>
             </div>
           </div>
         </header>
