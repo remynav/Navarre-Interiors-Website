@@ -4,7 +4,7 @@ const HeroSection = () => {
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
-        <img src={heroImage} alt="Luxurious modern living room interior" className="w-full h-full object-cover object-left-center" style={{ objectPosition: '20% center' }} />
+        <img src={heroImage} alt="Luxurious modern living room interior" className="w-full h-full object-cover object-left-center" style={{ objectPosition: '10% center' }} />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
       </div>
 
