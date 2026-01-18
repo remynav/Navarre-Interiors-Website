@@ -5,7 +5,7 @@ const HeroSection = () => {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img src={heroImage} alt="Luxurious modern living room interior" className="w-full h-full object-cover object-left-center" style={{ objectPosition: '10% center' }} />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-background/20 to-transparent" />
       </div>
 
       {/* Content */}
