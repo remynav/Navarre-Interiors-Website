@@ -1,28 +1,18 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-interior.jpg";
-
 const HeroSection = () => {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+  return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
-        <img
-          src={heroImage}
-          alt="Luxurious modern living room interior"
-          className="w-full h-full object-cover"
-        />
+        <img src={heroImage} alt="Luxurious modern living room interior" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
       </div>
 
       {/* Content */}
       <div className="relative container mx-auto px-6 py-32">
         <div className="max-w-2xl animate-slide-up">
-          <p className="text-gold font-medium tracking-widest uppercase text-sm mb-4">
-            Interior Design Studio
-          </p>
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-semibold text-foreground leading-tight mb-6">
-            Crafting Spaces That Tell Your Story
-          </h1>
+          
+          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-semibold text-foreground leading-tight mb-6">Your Local Palisades Design Studio</h1>
           <p className="text-lg text-muted-foreground mb-8 max-w-lg">
             We create bespoke interiors that blend timeless elegance with modern sophistication. Your vision, our expertise.
           </p>
@@ -47,8 +37,6 @@ const HeroSection = () => {
           <div className="w-1 h-3 bg-muted-foreground/50 rounded-full mt-2" />
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default HeroSection;
