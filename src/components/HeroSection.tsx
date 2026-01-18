@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-interior.jpg";
+import heroLogo from "@/assets/navarre-hero-logo.png";
+
 const HeroSection = () => {
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -12,9 +14,9 @@ const HeroSection = () => {
       <div className="relative container mx-auto px-6 py-32">
         <div className="max-w-2xl animate-slide-up">
           
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-semibold text-foreground leading-tight mb-6">Your Local Palisades Design Studio</h1>
+          <img src={heroLogo} alt="Navarre Interiors Design Studio" className="h-32 md:h-40 lg:h-48 w-auto mb-6" />
           <p className="text-lg text-muted-foreground mb-8 max-w-lg">
-            We create bespoke interiors that blend timeless elegance with modern sophistication. Your vision, our expertise.
+            Your Local Palisades Design Studio
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <a href="#contact">
