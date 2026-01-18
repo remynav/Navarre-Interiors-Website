@@ -14,7 +14,7 @@ const HeroSection = () => {
       <div className="relative container mx-auto px-6 py-32">
         <div className="max-w-2xl mx-auto text-center animate-slide-up">
           
-          <img src={heroLogo} alt="Navarre Interiors Design Studio" className="h-40 md:h-52 lg:h-64 w-auto mb-6 mx-auto" />
+          <img src={heroLogo} alt="Navarre Interiors Design Studio" className="h-56 md:h-72 lg:h-96 w-auto mb-6 mx-auto" />
           <p className="text-lg text-muted-foreground mb-8">
             Your Local Palisades Design Studio
           </p>
