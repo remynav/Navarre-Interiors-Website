@@ -12,10 +12,10 @@ const HeroSection = () => {
 
       {/* Content */}
       <div className="relative container mx-auto px-6 py-32">
-        <div className="max-w-2xl animate-slide-up">
+        <div className="max-w-2xl mx-auto text-center animate-slide-up">
           
-          <img src={heroLogo} alt="Navarre Interiors Design Studio" className="h-32 md:h-40 lg:h-48 w-auto mb-6" />
-          <p className="text-lg text-muted-foreground mb-8 max-w-lg">
+          <img src={heroLogo} alt="Navarre Interiors Design Studio" className="h-40 md:h-52 lg:h-64 w-auto mb-6 mx-auto" />
+          <p className="text-lg text-muted-foreground mb-8">
             Your Local Palisades Design Studio
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
