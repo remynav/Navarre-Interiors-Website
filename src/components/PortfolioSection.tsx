@@ -1,29 +1,5 @@
-import bedroomImage from "@/assets/portfolio-bedroom.jpg";
-import kitchenImage from "@/assets/portfolio-kitchen.jpg";
-import amalfiImage from "@/assets/portfolio-amalfi.jpeg";
-
-const projects = [
-  {
-    image: amalfiImage,
-    title: "Amalfi",
-    category: "Residential",
-    location: "Pacific Palisades",
-    link: "https://example.com/amalfi",
-    objectPosition: "15% center",
-  },
-  {
-    image: bedroomImage,
-    title: "Serene Retreat",
-    category: "Bedroom",
-    location: "Brooklyn, NY",
-  },
-  {
-    image: kitchenImage,
-    title: "Chef's Kitchen",
-    category: "Kitchen",
-    location: "The Hamptons",
-  },
-];
+import { Link } from "react-router-dom";
+import { projects } from "@/lib/projectsData";
 
 const PortfolioSection = () => {
   return (
@@ -37,38 +13,33 @@ const PortfolioSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.map((project, index) => {
-            const CardWrapper = project.link ? "a" : "div";
-            const cardProps = project.link ? { href: project.link, target: "_blank", rel: "noopener noreferrer" } : {};
-
-            return (
-              <CardWrapper
-                key={project.title}
-                className="group cursor-pointer block"
-                style={{ animationDelay: `${index * 150}ms` }}
-                {...cardProps}
-              >
-                <div className="relative overflow-hidden rounded-lg aspect-[4/5] mb-4">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    style={{ objectPosition: project.objectPosition || "center" }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute bottom-6 left-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <p className="text-gold text-sm font-medium">{project.category}</p>
-                    <h3 className="font-display text-2xl font-semibold text-primary-foreground">{project.title}</h3>
-                  </div>
-                </div>
-                <div className="opacity-100 group-hover:opacity-0 transition-opacity">
+          {projects.map((project, index) => (
+            <Link
+              key={project.id}
+              to={`/project/${project.id}`}
+              className="group cursor-pointer block"
+              style={{ animationDelay: `${index * 150}ms` }}
+            >
+              <div className="relative overflow-hidden rounded-lg aspect-[4/5] mb-4">
+                <img
+                  src={project.image}
+                  alt={project.title}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  style={{ objectPosition: project.objectPosition || "center" }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute bottom-6 left-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                   <p className="text-gold text-sm font-medium">{project.category}</p>
-                  <h3 className="font-display text-xl font-semibold text-foreground">{project.title}</h3>
-                  <p className="text-muted-foreground text-sm">{project.location}</p>
+                  <h3 className="font-display text-2xl font-semibold text-primary-foreground">{project.title}</h3>
                 </div>
-              </CardWrapper>
-            );
-          })}
+              </div>
+              <div className="opacity-100 group-hover:opacity-0 transition-opacity">
+                <p className="text-gold text-sm font-medium">{project.category}</p>
+                <h3 className="font-display text-xl font-semibold text-foreground">{project.title}</h3>
+                <p className="text-muted-foreground text-sm">{project.location}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </section>

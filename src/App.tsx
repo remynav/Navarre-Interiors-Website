@@ -10,6 +10,7 @@ import AdminAuth from "./pages/AdminAuth";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminClientDetail from "./pages/AdminClientDetail";
+import ProjectDetail from "./pages/ProjectDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/project/:projectId" element={<ProjectDetail />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/admin-login" element={<AdminAuth />} />
