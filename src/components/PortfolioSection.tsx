@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+
 import bedroomImage from "@/assets/portfolio-bedroom.jpg";
 import kitchenImage from "@/assets/portfolio-kitchen.jpg";
 import livingImage from "@/assets/portfolio-living.jpg";
@@ -37,9 +37,6 @@ const PortfolioSection = () => {
               Featured Projects
             </h2>
           </div>
-          <Button variant="gold-outline">
-            View All Projects
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
