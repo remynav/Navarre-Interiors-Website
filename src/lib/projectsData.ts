@@ -27,6 +27,8 @@ import lacumbreCover from "@/assets/lacumbre-cover.jpg";
 import lacumbre2 from "@/assets/lacumbre-2.jpg";
 import lacumbre3 from "@/assets/lacumbre-3.jpg";
 import lacumbre4 from "@/assets/lacumbre-4.jpg";
+import lacumbre5 from "@/assets/lacumbre-5.png";
+import lacumbre6 from "@/assets/lacumbre-6.png";
 
 export interface Project {
   id: string;
@@ -83,7 +85,7 @@ export const projects: Project[] = [
     title: "La Cumbre",
     category: "Residential",
     location: "Pacific Palisades",
-    photos: [lacumbreCover, lacumbre2, lacumbre3, lacumbre4],
+    photos: [lacumbreCover, lacumbre2, lacumbre3, lacumbre4, lacumbre5, lacumbre6],
     description: "A charming Pacific Palisades home featuring a beautifully renovated kitchen and classic California style.",
   },
 ];
