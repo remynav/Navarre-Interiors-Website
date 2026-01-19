@@ -8,7 +8,9 @@ import amalfi6 from "@/assets/amalfi-6.jpeg";
 import amalfi8 from "@/assets/amalfi-8.jpeg";
 import amalfi9 from "@/assets/amalfi-9.webp";
 import amalfi10 from "@/assets/amalfi-10.webp";
-import bedroomImage from "@/assets/portfolio-bedroom.jpg";
+import bristol1 from "@/assets/bristol-1.jpg";
+import bristol2 from "@/assets/bristol-2.jpg";
+import bristol3 from "@/assets/bristol-3.jpg";
 import kitchenImage from "@/assets/portfolio-kitchen.jpg";
 
 export interface Project {
@@ -34,13 +36,13 @@ export const projects: Project[] = [
     description: "Completed in 2021, this 8,500 sqft project kickstarted Navarre Interiors. With 6 bedrooms and 9 bathrooms...",
   },
   {
-    id: "serene-retreat",
-    image: bedroomImage,
-    title: "Serene Retreat",
-    category: "Bedroom",
-    location: "Brooklyn, NY",
-    photos: [bedroomImage],
-    description: "A tranquil bedroom sanctuary designed to promote rest and relaxation. This project emphasizes soft textures, calming color palettes, and thoughtful lighting to create the ultimate retreat.",
+    id: "bristol",
+    image: bristol1,
+    title: "Bristol",
+    category: "Residential",
+    location: "Brentwood",
+    photos: [bristol1, bristol2, bristol3],
+    description: "A beautifully renovated residence in Brentwood featuring timeless design elements and modern comforts.",
   },
   {
     id: "chefs-kitchen",
