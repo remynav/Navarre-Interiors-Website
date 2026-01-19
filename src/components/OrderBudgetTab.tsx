@@ -248,7 +248,7 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
     }
   };
 
-  // Upload receipt to storage
+  // Upload receipt to storage (returns file path for signed URL generation)
   const uploadReceipt = async (file: File, orderId: string): Promise<string | null> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${orderId}-${Date.now()}.${fileExt}`;
@@ -263,11 +263,22 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
       return null;
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('order-receipts')
-      .getPublicUrl(filePath);
+    // Return the file path for storage - signed URLs will be generated on demand
+    return filePath;
+  };
 
-    return publicUrl;
+  // Generate a signed URL for a receipt (valid for 1 hour)
+  const getReceiptSignedUrl = async (filePath: string): Promise<string | null> => {
+    const { data, error } = await supabase.storage
+      .from('order-receipts')
+      .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+    if (error) {
+      console.error('Error creating signed URL:', error);
+      return null;
+    }
+
+    return data.signedUrl;
   };
 
   const handleAddOrder = async () => {
@@ -914,21 +925,36 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => setPreviewReceiptUrl(order.receipt_url)}
+                              onClick={async () => {
+                                // Check if it's a file path (new format) or full URL (legacy)
+                                const isFilePath = !order.receipt_url?.startsWith('http');
+                                if (isFilePath && order.receipt_url) {
+                                  const signedUrl = await getReceiptSignedUrl(order.receipt_url);
+                                  if (signedUrl) setPreviewReceiptUrl(signedUrl);
+                                } else {
+                                  setPreviewReceiptUrl(order.receipt_url);
+                                }
+                              }}
                               title="Preview receipt"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <a
-                              href={order.receipt_url}
-                              download
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted"
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={async () => {
+                                const isFilePath = !order.receipt_url?.startsWith('http');
+                                let url = order.receipt_url;
+                                if (isFilePath && order.receipt_url) {
+                                  url = await getReceiptSignedUrl(order.receipt_url);
+                                }
+                                if (url) window.open(url, '_blank');
+                              }}
                               title="Download receipt"
                             >
                               <Download className="w-4 h-4" />
-                            </a>
+                            </Button>
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-xs">-</span>
@@ -1329,14 +1355,21 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
                     <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                       <FileText className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm flex-1 truncate">Current receipt attached</span>
-                      <a
-                        href={editingOrder.receipt_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary text-sm hover:underline"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary text-sm hover:underline p-0 h-auto"
+                        onClick={async () => {
+                          const isFilePath = !editingOrder.receipt_url?.startsWith('http');
+                          let url = editingOrder.receipt_url;
+                          if (isFilePath && editingOrder.receipt_url) {
+                            url = await getReceiptSignedUrl(editingOrder.receipt_url);
+                          }
+                          if (url) window.open(url, '_blank');
+                        }}
                       >
                         View
-                      </a>
+                      </Button>
                     </div>
                   ) : null}
                   <label

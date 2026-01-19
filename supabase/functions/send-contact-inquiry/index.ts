@@ -14,6 +14,7 @@ interface ContactInquiryRequest {
   email: string;
   phone: string;
   message: string;
+  website?: string; // Honeypot field - should be empty for legitimate submissions
 }
 
 // Sanitize input to prevent header injection (remove newlines and carriage returns)
@@ -55,7 +56,17 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const body = await req.json();
-    const { name, email, phone, message } = body as ContactInquiryRequest;
+    const { name, email, phone, message, website } = body as ContactInquiryRequest;
+
+    // Honeypot check - if filled, it's likely a bot
+    if (website && website.trim() !== '') {
+      console.log("Bot submission detected - honeypot field filled");
+      // Return success to not alert the bot, but don't send email
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
     // Validate required fields
     if (!name || !email || !message) {
