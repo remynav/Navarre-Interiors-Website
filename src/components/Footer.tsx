@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
             <Link to="/">
-              <img src={footerLogo} alt="Navarre Interiors Design Studio" className="h-28 w-auto" />
+              <img src={footerLogo} alt="Navarre Interiors Design Studio" className="h-7 w-auto" />
             </Link>
             <p className="mt-4 text-primary-foreground/70 max-w-md">
               Creating timeless interiors that reflect your unique story. From concept to completion, we transform
