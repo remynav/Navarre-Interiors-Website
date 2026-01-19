@@ -47,15 +47,6 @@ export const projects: Project[] = [
     description: "Completed in 2021, this 8,500 sqft project kickstarted Navarre Interiors. With 6 bedrooms and 9 bathrooms...",
   },
   {
-    id: "bristol",
-    image: bristol1,
-    title: "Bristol",
-    category: "Residential",
-    location: "Brentwood",
-    photos: [bristol1, bristol2, bristol3],
-    description: "A beautifully renovated residence in Brentwood featuring timeless design elements and modern comforts.",
-  },
-  {
     id: "sorrento",
     image: sorrentoCover,
     title: "Sorrento",
@@ -72,6 +63,15 @@ export const projects: Project[] = [
     location: "Malibu",
     photos: [sealevelCover, sealevel2, sealevel3],
     description: "A beautiful Malibu residence with stunning ocean views and contemporary coastal design.",
+  },
+  {
+    id: "bristol",
+    image: bristol1,
+    title: "Bristol",
+    category: "Residential",
+    location: "Brentwood",
+    photos: [bristol1, bristol2, bristol3],
+    description: "A beautifully renovated residence in Brentwood featuring timeless design elements and modern comforts.",
   },
 ];
 export const getProjectById = (id: string): Project | undefined => {
