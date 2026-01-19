@@ -4,6 +4,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
 const ContactSection = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -11,15 +13,36 @@ const ContactSection = () => {
     phone: "",
     message: ""
   });
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Thank you for your message! We'll be in touch soon.");
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      message: ""
-    });
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-contact-inquiry', {
+        body: formData
+      });
+
+      if (error) {
+        console.error("Error sending inquiry:", error);
+        toast.error("Failed to send message. Please try again or email us directly.");
+        return;
+      }
+
+      toast.success("Thank you for your message! We'll be in touch soon.");
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        message: ""
+      });
+    } catch (error) {
+      console.error("Error sending inquiry:", error);
+      toast.error("Failed to send message. Please try again or email us directly.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   return <section id="contact" className="py-24 bg-background">
       <div className="container mx-auto px-6">
@@ -106,8 +129,8 @@ const ContactSection = () => {
                 message: e.target.value
               })} placeholder="Describe your vision, timeline, and any specific requirements..." rows={5} required className="bg-background resize-none" />
               </div>
-              <Button type="submit" variant="gold" size="lg" className="w-full">
-                Send Message
+              <Button type="submit" variant="gold" size="lg" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Sending..." : "Send Message"}
               </Button>
             </form>
           </div>
