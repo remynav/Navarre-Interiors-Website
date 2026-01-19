@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import footerLogo from "@/assets/footer-logo.png";
 
 const Footer = () => {
   return (
@@ -6,8 +7,8 @@ const Footer = () => {
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
-            <Link to="/" className="font-display text-2xl font-semibold tracking-tight">
-              Navarre<span className="text-gold"> Interiors</span>
+            <Link to="/">
+              <img src={footerLogo} alt="Navarre Interiors Design Studio" className="h-24 w-auto" />
             </Link>
             <p className="mt-4 text-primary-foreground/70 max-w-md">
               Creating timeless interiors that reflect your unique story. From concept to completion, we transform spaces into sanctuaries.
