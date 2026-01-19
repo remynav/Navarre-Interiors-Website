@@ -33,20 +33,6 @@ const AboutSection = () => {
             </div>
           </div>
 
-          <div className="relative">
-            <div className="aspect-[4/5] rounded-lg overflow-hidden bg-muted">
-              <div className="w-full h-full bg-gradient-to-br from-gold/20 to-primary/10 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <p className="font-display text-3xl text-foreground italic">
-                    "Design is not just what it looks like. Design is how it works."
-                  </p>
-                  <p className="text-gold mt-4 font-medium">— Steve Jobs</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -bottom-8 -left-8 w-48 h-48 bg-gold/10 rounded-lg -z-10" />
-            <div className="absolute -top-8 -right-8 w-32 h-32 border-2 border-gold/30 rounded-lg -z-10" />
-          </div>
         </div>
       </div>
     </section>
