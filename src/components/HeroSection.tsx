@@ -18,7 +18,7 @@ const HeroSection = () => {
           <p className="text-lg text-muted-foreground mb-8">
             Your Local Palisades Design Studio
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="#contact">
               <Button variant="hero" size="xl">
                 Start Your Project
