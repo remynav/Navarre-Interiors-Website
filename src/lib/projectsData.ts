@@ -29,7 +29,7 @@ export const projects: Project[] = [
     location: "Pacific Palisades",
     objectPosition: "15% center",
     photos: [amalfi1, amalfi2, amalfi3, amalfi4, amalfi5, amalfi6, amalfi8, amalfiImage],
-    description: "A stunning residential project in Pacific Palisades, featuring Mediterranean-inspired design elements with modern amenities. This home showcases our signature approach to blending timeless elegance with contemporary comfort.",
+    description: "Completed in 2021, this 8,500 sqft project kickstarted Navarre Interiors. With 6 bedrooms and 9 bathrooms...",
   },
   {
     id: "serene-retreat",
