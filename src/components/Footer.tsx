@@ -43,7 +43,7 @@ const Footer = () => {
           <div>
             <h4 className="font-display text-lg font-medium mb-4">Contact</h4>
             <ul className="space-y-2 text-primary-foreground/70">
-              <li>hello@navarreinteriors.com</li>
+              <li>info@navarreinteriors.com</li>
               <li>+1 (555) 123-4567</li>
               <li>123 Design Avenue</li>
               <li>New York, NY 10001</li>
