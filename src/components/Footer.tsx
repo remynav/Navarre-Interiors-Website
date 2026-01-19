@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
 import footerLogo from "@/assets/footer-logo.png";
-
 const Footer = () => {
-  return (
-    <footer className="bg-primary text-primary-foreground py-16">
+  return <footer className="bg-primary text-primary-foreground py-16">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
@@ -11,8 +9,7 @@ const Footer = () => {
               <img src={footerLogo} alt="Navarre Interiors Design Studio" className="h-28 w-auto" />
             </Link>
             <p className="mt-4 text-primary-foreground/70 max-w-md">
-              Creating timeless interiors that reflect your unique story. From concept to completion, we transform
-              spaces into sanctuaries.
+              ​
             </p>
           </div>
 
@@ -65,8 +62,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
