@@ -16,7 +16,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
             <a href="#services" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Services
             </a>
