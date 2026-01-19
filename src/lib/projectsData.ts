@@ -23,6 +23,10 @@ import sorrento9 from "@/assets/sorrento-9.jpg";
 import sealevelCover from "@/assets/sealevel-cover.jpg";
 import sealevel2 from "@/assets/sealevel-2.jpg";
 import sealevel3 from "@/assets/sealevel-3.jpg";
+import lacumbreCover from "@/assets/lacumbre-cover.jpg";
+import lacumbre2 from "@/assets/lacumbre-2.jpg";
+import lacumbre3 from "@/assets/lacumbre-3.jpg";
+import lacumbre4 from "@/assets/lacumbre-4.jpg";
 
 export interface Project {
   id: string;
@@ -72,6 +76,15 @@ export const projects: Project[] = [
     location: "Brentwood",
     photos: [bristol1, bristol2, bristol3],
     description: "A beautifully renovated residence in Brentwood featuring timeless design elements and modern comforts.",
+  },
+  {
+    id: "la-cumbre",
+    image: lacumbreCover,
+    title: "La Cumbre",
+    category: "Residential",
+    location: "Pacific Palisades",
+    photos: [lacumbreCover, lacumbre2, lacumbre3, lacumbre4],
+    description: "A charming Pacific Palisades home featuring a beautifully renovated kitchen and classic California style.",
   },
 ];
 export const getProjectById = (id: string): Project | undefined => {
