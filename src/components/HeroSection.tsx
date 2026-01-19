@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-living-room.jpg";
 import heroLogo from "@/assets/navarre-hero-logo.png";
-
 const HeroSection = () => {
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
-        <img src={heroImage} alt="Luxurious modern living room interior" className="w-full h-full object-cover" style={{ objectPosition: '10% 80%' }} />
+        <img src={heroImage} alt="Luxurious modern living room interior" className="w-full h-full object-cover" style={{
+        objectPosition: '10% 80%'
+      }} />
         <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-background/40 to-transparent" />
       </div>
 
@@ -15,9 +16,7 @@ const HeroSection = () => {
         <div className="max-w-2xl mx-auto text-center animate-slide-up">
           
           <img src={heroLogo} alt="Navarre Interiors Design Studio" className="h-56 md:h-72 lg:h-96 w-auto mb-6 mx-auto" />
-          <p className="text-lg text-muted-foreground mb-8">
-            Your Local Palisades Design Studio
-          </p>
+          
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="#contact">
               <Button variant="hero" size="xl">
