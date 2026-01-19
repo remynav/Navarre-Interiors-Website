@@ -6,6 +6,8 @@ import amalfi4 from "@/assets/amalfi-4.jpeg";
 import amalfi5 from "@/assets/amalfi-5.jpeg";
 import amalfi6 from "@/assets/amalfi-6.jpeg";
 import amalfi8 from "@/assets/amalfi-8.jpeg";
+import amalfi9 from "@/assets/amalfi-9.webp";
+import amalfi10 from "@/assets/amalfi-10.webp";
 import bedroomImage from "@/assets/portfolio-bedroom.jpg";
 import kitchenImage from "@/assets/portfolio-kitchen.jpg";
 
@@ -28,7 +30,7 @@ export const projects: Project[] = [
     category: "Residential",
     location: "Pacific Palisades",
     objectPosition: "15% center",
-    photos: [amalfi1, amalfi2, amalfi3, amalfi4, amalfi5, amalfi6, amalfi8, amalfiImage],
+    photos: [amalfi1, amalfi2, amalfi3, amalfi4, amalfi5, amalfi6, amalfi8, amalfi9, amalfi10, amalfiImage],
     description: "Completed in 2021, this 8,500 sqft project kickstarted Navarre Interiors. With 6 bedrooms and 9 bathrooms...",
   },
   {
