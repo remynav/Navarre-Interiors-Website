@@ -11,7 +11,15 @@ import amalfi10 from "@/assets/amalfi-10.webp";
 import bristol1 from "@/assets/bristol-1.jpg";
 import bristol2 from "@/assets/bristol-2.jpg";
 import bristol3 from "@/assets/bristol-3.jpg";
-import kitchenImage from "@/assets/portfolio-kitchen.jpg";
+import sorrentoCover from "@/assets/sorrento-cover.jpg";
+import sorrento2 from "@/assets/sorrento-2.jpg";
+import sorrento3 from "@/assets/sorrento-3.jpg";
+import sorrento4 from "@/assets/sorrento-4.jpg";
+import sorrento5 from "@/assets/sorrento-5.jpg";
+import sorrento6 from "@/assets/sorrento-6.jpg";
+import sorrento7 from "@/assets/sorrento-7.jpg";
+import sorrento8 from "@/assets/sorrento-8.jpg";
+import sorrento9 from "@/assets/sorrento-9.jpg";
 
 export interface Project {
   id: string;
@@ -45,13 +53,13 @@ export const projects: Project[] = [
     description: "A beautifully renovated residence in Brentwood featuring timeless design elements and modern comforts.",
   },
   {
-    id: "chefs-kitchen",
-    image: kitchenImage,
-    title: "Chef's Kitchen",
-    category: "Kitchen",
-    location: "The Hamptons",
-    photos: [kitchenImage],
-    description: "A professional-grade kitchen designed for the home chef. This space combines high-end appliances with elegant finishes, creating a culinary workspace that's as beautiful as it is functional.",
+    id: "sorrento",
+    image: sorrentoCover,
+    title: "Sorrento",
+    category: "Residential",
+    location: "Pacific Palisades",
+    photos: [sorrentoCover, sorrento2, sorrento3, sorrento4, sorrento5, sorrento6, sorrento7, sorrento8, sorrento9],
+    description: "A stunning Pacific Palisades residence featuring bold design choices and seamless indoor-outdoor living.",
   },
 ];
 
