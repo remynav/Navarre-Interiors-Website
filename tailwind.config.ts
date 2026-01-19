@@ -13,21 +13,15 @@ export default {
   		}
   	},
   	extend: {
-  		fontFamily: {
-  			display: [
-  				'Playfair Display',
-  				'serif'
-  			],
-  			sans: [
-  				'DM Sans',
-  				'ui-sans-serif',
-  				'system-ui',
-  				'sans-serif',
-  				'Apple Color Emoji',
-  				'Segoe UI Emoji',
-  				'Segoe UI Symbol',
-  				'Noto Color Emoji'
-  			],
+		fontFamily: {
+			display: [
+				'Playfair Display',
+				'serif'
+			],
+			sans: [
+				'Cormorant Garamond',
+				'serif'
+			],
   			serif: [
   				'ui-serif',
   				'Georgia',
