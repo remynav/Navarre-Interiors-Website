@@ -30,7 +30,7 @@ export const projects: Project[] = [
     category: "Residential",
     location: "Pacific Palisades",
     objectPosition: "15% center",
-    photos: [amalfi1, amalfi2, amalfi3, amalfi4, amalfi5, amalfi6, amalfi8, amalfi9, amalfi10, amalfiImage],
+    photos: [amalfi1, amalfi2, amalfi3, amalfi4, amalfi5, amalfi6, amalfi8, amalfiImage, amalfi9, amalfi10],
     description: "Completed in 2021, this 8,500 sqft project kickstarted Navarre Interiors. With 6 bedrooms and 9 bathrooms...",
   },
   {
