@@ -11,7 +11,8 @@ const ContactSection = () => {
     name: "",
     email: "",
     phone: "",
-    message: ""
+    message: "",
+    website: "" // Honeypot field - should remain empty
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,7 +22,13 @@ const ContactSection = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('send-contact-inquiry', {
-        body: formData
+        body: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.message,
+          website: formData.website // Send honeypot field
+        }
       });
 
       if (error) {
@@ -35,7 +42,8 @@ const ContactSection = () => {
         name: "",
         email: "",
         phone: "",
-        message: ""
+        message: "",
+        website: ""
       });
     } catch (error) {
       console.error("Error sending inquiry:", error);
@@ -124,10 +132,23 @@ const ContactSection = () => {
                 <label className="text-sm font-medium text-foreground mb-2 block">
                   Tell us about your project
                 </label>
-                <Textarea value={formData.message} onChange={e => setFormData({
+              <Textarea value={formData.message} onChange={e => setFormData({
                 ...formData,
                 message: e.target.value
               })} placeholder="Describe your vision, timeline, and any specific requirements..." rows={5} required className="bg-background resize-none" />
+              </div>
+              {/* Honeypot field - hidden from users, catches bots */}
+              <div className="absolute left-[-9999px]" aria-hidden="true">
+                <label htmlFor="website">Website</label>
+                <input
+                  type="text"
+                  id="website"
+                  name="website"
+                  value={formData.website}
+                  onChange={e => setFormData({ ...formData, website: e.target.value })}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
               </div>
               <Button type="submit" variant="gold" size="lg" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? "Sending..." : "Send Message"}
