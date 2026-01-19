@@ -1,16 +1,15 @@
 import { Link } from "react-router-dom";
 import footerLogo from "@/assets/footer-logo.png";
 const Footer = () => {
-  return <footer className="bg-primary text-primary-foreground py-16">
+  return (
+    <footer className="bg-primary text-primary-foreground py-16">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
             <Link to="/">
               <img src={footerLogo} alt="Navarre Interiors Design Studio" className="h-28 w-auto" />
             </Link>
-            <p className="mt-4 text-primary-foreground/70 max-w-md">
-              ​
-            </p>
+            <p className="mt-4 text-primary-foreground/70 max-w-md">​</p>
           </div>
 
           <div>
@@ -42,10 +41,9 @@ const Footer = () => {
           <div>
             <h4 className="font-display text-lg font-medium mb-4">Contact</h4>
             <ul className="space-y-2 text-primary-foreground/70">
-              <li>info@navarreinteriors.com</li>
-              <li>+1 (555) 123-4567</li>
-              <li>123 Design Avenue</li>
-              <li>New York, NY 10001</li>
+              <li>brandy@navarreinteriors.com</li>
+              <li>+1 (310) 562-7213</li>
+              <li>Pacific Palisades, 90272</li>
             </ul>
           </div>
         </div>
@@ -62,6 +60,7 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 };
 export default Footer;
