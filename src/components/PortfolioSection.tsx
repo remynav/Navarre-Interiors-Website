@@ -7,7 +7,7 @@ const projects = [
     image: amalfiImage,
     title: "Amalfi",
     category: "Residential",
-    location: "Manhattan, NY",
+    location: "Pacific Palisades",
     link: "https://example.com/amalfi",
     objectPosition: "15% center",
   },
