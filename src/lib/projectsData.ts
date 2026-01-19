@@ -58,7 +58,7 @@ export const projects: Project[] = [
     title: "Sorrento",
     category: "Residential",
     location: "Pacific Palisades",
-    photos: [sorrentoCover, sorrento2, sorrento3, sorrento4, sorrento5, sorrento6, sorrento7, sorrento8, sorrento9],
+    photos: [sorrentoCover, sorrento2, sorrento3, sorrento4, sorrento6, sorrento7, sorrento8, sorrento5, sorrento9],
     description: "A stunning Pacific Palisades residence featuring bold design choices and seamless indoor-outdoor living.",
   },
 ];
