@@ -20,6 +20,9 @@ import sorrento6 from "@/assets/sorrento-6.jpg";
 import sorrento7 from "@/assets/sorrento-7.jpg";
 import sorrento8 from "@/assets/sorrento-8.jpg";
 import sorrento9 from "@/assets/sorrento-9.jpg";
+import sealevelCover from "@/assets/sealevel-cover.jpg";
+import sealevel2 from "@/assets/sealevel-2.jpg";
+import sealevel3 from "@/assets/sealevel-3.jpg";
 
 export interface Project {
   id: string;
@@ -61,8 +64,16 @@ export const projects: Project[] = [
     photos: [sorrentoCover, sorrento2, sorrento3, sorrento4, sorrento6, sorrento7, sorrento8, sorrento5, sorrento9],
     description: "A stunning Pacific Palisades residence featuring bold design choices and seamless indoor-outdoor living.",
   },
+  {
+    id: "sea-level",
+    image: sealevelCover,
+    title: "Sea Level",
+    category: "Residential",
+    location: "Malibu",
+    photos: [sealevelCover, sealevel2, sealevel3],
+    description: "A beautiful Malibu residence with stunning ocean views and contemporary coastal design.",
+  },
 ];
-
 export const getProjectById = (id: string): Project | undefined => {
   return projects.find((project) => project.id === id);
 };
