@@ -19,8 +19,8 @@ export default {
 				'serif'
 			],
 			sans: [
-				'Cormorant Garamond',
-				'serif'
+				'DM Sans',
+				'sans-serif'
 			],
   			serif: [
   				'ui-serif',
