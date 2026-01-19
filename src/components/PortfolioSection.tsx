@@ -1,7 +1,7 @@
 
 import bedroomImage from "@/assets/portfolio-bedroom.jpg";
 import kitchenImage from "@/assets/portfolio-kitchen.jpg";
-import amalfiImage from "@/assets/portfolio-amalfi.webp";
+import amalfiImage from "@/assets/portfolio-amalfi.jpeg";
 
 const projects = [
   {
@@ -10,6 +10,7 @@ const projects = [
     category: "Residential",
     location: "Manhattan, NY",
     link: "https://example.com/amalfi",
+    objectPosition: "left center",
   },
   {
     image: bedroomImage,
@@ -57,6 +58,7 @@ const PortfolioSection = () => {
                     src={project.image}
                     alt={project.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    style={{ objectPosition: project.objectPosition || 'center' }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute bottom-6 left-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
