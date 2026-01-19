@@ -1,4 +1,11 @@
 import amalfiImage from "@/assets/portfolio-amalfi.jpeg";
+import amalfi1 from "@/assets/amalfi-1.webp";
+import amalfi2 from "@/assets/amalfi-2.jpeg";
+import amalfi3 from "@/assets/amalfi-3.jpeg";
+import amalfi4 from "@/assets/amalfi-4.jpeg";
+import amalfi5 from "@/assets/amalfi-5.jpeg";
+import amalfi6 from "@/assets/amalfi-6.jpeg";
+import amalfi8 from "@/assets/amalfi-8.jpeg";
 import bedroomImage from "@/assets/portfolio-bedroom.jpg";
 import kitchenImage from "@/assets/portfolio-kitchen.jpg";
 
@@ -21,7 +28,7 @@ export const projects: Project[] = [
     category: "Residential",
     location: "Pacific Palisades",
     objectPosition: "15% center",
-    photos: [amalfiImage],
+    photos: [amalfi1, amalfi2, amalfi3, amalfi4, amalfi5, amalfi6, amalfi8, amalfiImage],
     description: "A stunning residential project in Pacific Palisades, featuring Mediterranean-inspired design elements with modern amenities. This home showcases our signature approach to blending timeless elegance with contemporary comfort.",
   },
   {
