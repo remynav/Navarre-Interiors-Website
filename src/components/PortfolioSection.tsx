@@ -27,11 +27,6 @@ const PortfolioSection = () => {
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   style={{ objectPosition: project.objectPosition || "center" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="absolute bottom-6 left-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                  <p className="text-gold text-sm font-medium">{project.category}</p>
-                  <h3 className="font-display text-2xl font-semibold text-primary-foreground">{project.title}</h3>
-                </div>
               </div>
               <div>
                 <p className="text-gold text-sm font-medium">{project.category}</p>
