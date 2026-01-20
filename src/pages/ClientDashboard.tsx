@@ -129,6 +129,9 @@ const ClientDashboard = () => {
     address: "",
   });
 
+  // Unread notification counts by type
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+
   // Check if logged in and fetch profile
   useEffect(() => {
     if (!authLoading && !user) {
@@ -140,6 +143,50 @@ const ClientDashboard = () => {
       fetchProfileAndProjects();
     }
   }, [user, authLoading, navigate]);
+
+  // Fetch unread notification counts
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUnreadCounts = async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('type')
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+
+      if (!error && data) {
+        const counts: Record<string, number> = {};
+        data.forEach(n => {
+          counts[n.type] = (counts[n.type] || 0) + 1;
+        });
+        setUnreadCounts(counts);
+      }
+    };
+
+    fetchUnreadCounts();
+
+    // Subscribe to notification changes
+    const channel = supabase
+      .channel(`client-notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchUnreadCounts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   // Mark notifications as read when switching tabs
   useEffect(() => {
@@ -156,6 +203,8 @@ const ClientDashboard = () => {
     const notificationType = typeMap[activeTab];
     if (notificationType) {
       markNotificationsAsRead(user.id, notificationType);
+      // Update local counts immediately
+      setUnreadCounts(prev => ({ ...prev, [notificationType]: 0 }));
     }
   }, [activeTab, user]);
 
@@ -560,14 +609,24 @@ const ClientDashboard = () => {
               >
                 <item.icon className="w-5 h-5" />
                 {item.label}
-                {item.id === "messages" && (
+                {item.id === "messages" && unreadCounts['message'] > 0 && (
                   <span className="ml-auto bg-gold text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                    2
+                    {unreadCounts['message']}
                   </span>
                 )}
-                {item.id === "renderings" && (
+                {item.id === "renderings" && unreadCounts['rendering'] > 0 && (
                   <span className="ml-auto bg-orange-500 text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                    1
+                    {unreadCounts['rendering']}
+                  </span>
+                )}
+                {item.id === "documents" && unreadCounts['document'] > 0 && (
+                  <span className="ml-auto bg-blue-500 text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                    {unreadCounts['document']}
+                  </span>
+                )}
+                {item.id === "inspiration" && unreadCounts['inspiration'] > 0 && (
+                  <span className="ml-auto bg-purple-500 text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                    {unreadCounts['inspiration']}
                   </span>
                 )}
               </button>
@@ -679,11 +738,17 @@ const ClientDashboard = () => {
                     <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-gold transition-colors">
                       {item.label}
                     </h3>
-                    {item.id === "messages" && (
+                    {item.id === "messages" && unreadCounts['message'] > 0 && (
                       <span className="absolute top-4 right-4 w-3 h-3 bg-gold rounded-full" />
                     )}
-                    {item.id === "renderings" && renderings.filter(r => r.status === "pending").length > 0 && (
+                    {item.id === "renderings" && unreadCounts['rendering'] > 0 && (
                       <span className="absolute top-4 right-4 w-3 h-3 bg-orange-500 rounded-full" />
+                    )}
+                    {item.id === "documents" && unreadCounts['document'] > 0 && (
+                      <span className="absolute top-4 right-4 w-3 h-3 bg-blue-500 rounded-full" />
+                    )}
+                    {item.id === "inspiration" && unreadCounts['inspiration'] > 0 && (
+                      <span className="absolute top-4 right-4 w-3 h-3 bg-purple-500 rounded-full" />
                     )}
                   </button>
                 ))}
