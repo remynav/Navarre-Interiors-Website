@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import navarreLogoFull from "@/assets/navarre-logo.png";
+import navarreMonogram from "@/assets/navarre-monogram-diamond.png";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -587,11 +587,11 @@ const ClientDashboard = () => {
         }`}
       >
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-border">
+          <div className="p-6 border-b border-border flex flex-col items-center">
             <Link to="/">
-              <img src={navarreLogoFull} alt="Navarre Interiors" className="h-8 w-auto" />
+              <img src={navarreMonogram} alt="Navarre Interiors" className="h-16 w-auto" />
             </Link>
-            <p className="text-sm text-muted-foreground mt-1">Client Portal</p>
+            <p className="text-sm text-muted-foreground mt-2">Client Portal</p>
           </div>
 
           <nav className="flex-1 p-4 space-y-2">

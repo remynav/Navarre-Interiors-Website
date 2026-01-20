@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import navarreLogoFull from "@/assets/navarre-logo.png";
+import navarreMonogram from "@/assets/navarre-monogram-diamond.png";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -378,11 +378,11 @@ const AdminDashboard = () => {
         }`}
       >
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-primary-foreground/10">
+          <div className="p-6 border-b border-primary-foreground/10 flex flex-col items-center">
             <Link to="/">
-              <img src={navarreLogoFull} alt="Navarre Interiors" className="h-8 w-auto brightness-0 invert" />
+              <img src={navarreMonogram} alt="Navarre Interiors" className="h-16 w-auto brightness-0 invert" />
             </Link>
-            <p className="text-sm text-primary-foreground/60 mt-1">Admin Portal</p>
+            <p className="text-sm text-primary-foreground/60 mt-2">Admin Portal</p>
           </div>
 
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
