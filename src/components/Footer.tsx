@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import footerLogo from "@/assets/footer-logo.png";
+
 const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground py-16">
@@ -16,24 +17,24 @@ const Footer = () => {
             <h4 className="font-display text-lg font-medium mb-4">Quick Links</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#pricing" className="text-primary-foreground/70 hover:text-gold transition-colors">
+                <Link to="/services" className="text-primary-foreground/70 hover:text-gold transition-colors">
                   Services
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#portfolio" className="text-primary-foreground/70 hover:text-gold transition-colors">
+                <Link to="/portfolio" className="text-primary-foreground/70 hover:text-gold transition-colors">
                   Portfolio
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#about" className="text-primary-foreground/70 hover:text-gold transition-colors">
+                <Link to="/about" className="text-primary-foreground/70 hover:text-gold transition-colors">
                   About
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#contact" className="text-primary-foreground/70 hover:text-gold transition-colors">
+                <Link to="/contact" className="text-primary-foreground/70 hover:text-gold transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -63,4 +64,5 @@ const Footer = () => {
     </footer>
   );
 };
+
 export default Footer;
