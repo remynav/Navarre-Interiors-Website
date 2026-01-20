@@ -17,7 +17,7 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-            <a href="#services" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Services
             </a>
             <a href="#portfolio" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -56,7 +56,7 @@ const Header = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <nav className="md:hidden mt-4 pb-4 flex flex-col gap-4 animate-fade-in">
-            <a href="#services" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Services
             </a>
             <a href="#portfolio" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
