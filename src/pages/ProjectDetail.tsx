@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { getProjectById } from "@/lib/projectsData";
 import Header from "@/components/Header";
@@ -7,6 +8,10 @@ import Footer from "@/components/Footer";
 const ProjectDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const project = projectId ? getProjectById(projectId) : undefined;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [projectId]);
 
   if (!project) {
     return (
