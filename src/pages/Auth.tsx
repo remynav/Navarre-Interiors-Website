@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
+import navarreFullLogoLight from "@/assets/navarre-full-logo-light.png";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -90,9 +91,9 @@ const Auth = () => {
           <div className="absolute bottom-40 right-20 w-96 h-96 border border-gold/20 rounded-full" />
           <div className="absolute top-1/2 left-1/3 w-48 h-48 border border-gold/40 rounded-full" />
         </div>
-        <div className="relative z-10 flex flex-col justify-center px-16">
-          <Link to="/" className="font-display text-3xl font-semibold text-primary-foreground tracking-tight mb-8">
-            Navarre<span className="text-gold"> Interiors</span>
+        <div className="relative z-10 flex flex-col justify-center items-center px-16">
+          <Link to="/" className="mb-8">
+            <img src={navarreFullLogoLight} alt="Navarre Interiors" className="h-32 w-auto" />
           </Link>
           <h2 className="font-display text-3xl text-primary-foreground mb-4">
             Welcome to Your Portal
