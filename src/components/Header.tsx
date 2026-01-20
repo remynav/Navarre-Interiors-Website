@@ -25,18 +25,18 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/services" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Services
-            </a>
-            <a href="#portfolio" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/portfolio" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Portfolio
-            </a>
-            <a href="#about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               About
-            </a>
-            <a href="#contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Contact
-            </a>
+            </Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
@@ -45,11 +45,11 @@ const Header = () => {
                 Client Portal
               </Button>
             </Link>
-            <a href="#contact">
+            <Link to="/contact">
               <Button variant="gold" size="sm">
                 Start a Project
               </Button>
-            </a>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -64,28 +64,28 @@ const Header = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <nav className="md:hidden mt-4 pb-4 flex flex-col gap-4 animate-fade-in">
-            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/services" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Services
-            </a>
-            <a href="#portfolio" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/portfolio" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Portfolio
-            </a>
-            <a href="#about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               About
-            </a>
-            <a href="#contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link to="/contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Contact
-            </a>
+            </Link>
             <Link to="/auth">
               <Button variant="ghost" size="sm" className="w-full justify-start">
                 Client Portal
               </Button>
             </Link>
-            <a href="#contact">
+            <Link to="/contact">
               <Button variant="gold" size="sm" className="w-full">
                 Start a Project
               </Button>
-            </a>
+            </Link>
           </nav>
         )}
       </div>
