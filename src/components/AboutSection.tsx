@@ -1,5 +1,13 @@
+import palisadesMap from "@/assets/palisades-map.jpg";
+
 const AboutSection = () => {
-  return <section id="about" className="py-24 bg-card">
+  return (
+    <section id="about" className="py-24 bg-card relative overflow-hidden">
+      {/* Background map image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-[0.08]"
+        style={{ backgroundImage: `url(${palisadesMap})` }}
+      />
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
@@ -24,6 +32,7 @@ const AboutSection = () => {
 
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
 export default AboutSection;
