@@ -17,7 +17,8 @@ const AboutSection = () => {
           </p>
             <p className="text-muted-foreground mb-6 leading-relaxed">To support this level of care, Navarre Interiors is built with clarity and structure at its core. Our three distinct service packages and advanced client portal technology are designed to create focus, transparency, and organization throughout every phase of a project. This approach allows our clients to feel informed, supported, and confident, while ensuring the creative process remains thoughtful and seamless.
           </p>
-            <p className="text-muted-foreground mb-8 leading-relaxed">At its heart, Navarre Interiors is about stewardship—of homes, of stories, and of the community we are proud to call home.
+            <p className="text-muted-foreground mb-8 leading-relaxed">At its heart, Navarre Interiors is about homes, the stories they carry, and a deep connection to the community we are proud to call home.
+
           </p>
           </div>
 
