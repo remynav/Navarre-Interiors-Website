@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import navarreFullLogoLight from "@/assets/navarre-full-logo-light.png";
 import navarreFullLogoDark from "@/assets/navarre-full-logo-dark.png";
+import navarreMonogramDiamond from "@/assets/navarre-monogram-diamond.png";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -109,7 +110,7 @@ const Auth = () => {
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 md:px-16 lg:px-24">
         <div className="max-w-md w-full mx-auto">
           <Link to="/" className="lg:hidden mb-8 flex justify-center">
-            <img src={navarreFullLogoDark} alt="Navarre Interiors" className="h-32 w-auto" />
+            <img src={navarreMonogramDiamond} alt="Navarre Interiors" className="h-32 w-auto" />
           </Link>
 
           <h1 className="font-display text-3xl font-semibold text-foreground mb-2">
