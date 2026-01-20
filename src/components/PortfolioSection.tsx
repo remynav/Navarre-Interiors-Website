@@ -33,7 +33,7 @@ const PortfolioSection = () => {
                   <h3 className="font-display text-2xl font-semibold text-primary-foreground">{project.title}</h3>
                 </div>
               </div>
-              <div className="opacity-100 group-hover:opacity-0 transition-opacity">
+              <div>
                 <p className="text-gold text-sm font-medium">{project.category}</p>
                 <h3 className="font-display text-xl font-semibold text-foreground">{project.title}</h3>
                 <p className="text-muted-foreground text-sm">{project.location}</p>
