@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import navarreLogoFull from "@/assets/navarre-logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -587,8 +588,8 @@ const ClientDashboard = () => {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 border-b border-border">
-            <Link to="/" className="font-display text-xl font-semibold text-foreground tracking-tight">
-              Navarre<span className="text-gold"> Interiors</span>
+            <Link to="/">
+              <img src={navarreLogoFull} alt="Navarre Interiors" className="h-8 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground mt-1">Client Portal</p>
           </div>
