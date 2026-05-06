@@ -385,17 +385,18 @@ const AdminDashboard = () => {
             <p className="text-sm text-primary-foreground/60 mt-2">Admin Portal</p>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <nav className="flex-1 space-y-2 overflow-y-auto p-4">
             {navItems.map((item) => (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => {
                   setActiveTab(item.id);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`relative flex w-full items-center gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm font-medium transition-all duration-300 ease-quiet before:absolute before:left-0 before:top-1/2 before:h-[50%] before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-gold before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 ${
                   activeTab === item.id
-                    ? "bg-gold text-primary"
+                    ? "bg-gold text-primary before:opacity-100"
                     : "text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
                 }`}
               >
@@ -461,10 +462,11 @@ const AdminDashboard = () => {
             </div>
           </nav>
 
-          <div className="p-4 border-t border-primary-foreground/10">
+          <div className="border-t border-primary-foreground/10 p-4">
             <button
+              type="button"
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-primary-foreground/70 transition-colors duration-300 ease-quiet hover:bg-primary-foreground/10 hover:text-primary-foreground"
             >
               <LogOut className="w-5 h-5" />
               Sign Out
@@ -490,7 +492,7 @@ const AdminDashboard = () => {
               <p className="text-sm font-medium text-foreground">{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin'}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
-            <div className="w-10 h-10 bg-gold rounded-full flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold ring-1 ring-primary-foreground/20">
               <span className="text-primary font-medium">
                 {(user?.user_metadata?.full_name || user?.email || 'A').charAt(0).toUpperCase()}
               </span>
@@ -503,7 +505,7 @@ const AdminDashboard = () => {
           {activeTab === "dashboard" && (
             <div className="space-y-8 animate-fade-in">
               <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
+                <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                   Dashboard
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -516,11 +518,11 @@ const AdminDashboard = () => {
                 {stats.map((stat) => (
                   <div 
                     key={stat.label} 
-                    className="bg-card rounded-lg p-6 shadow-soft cursor-pointer hover:shadow-medium transition-all"
+                    className="cursor-pointer rounded-lg bg-card p-6 shadow-elev1 transition-all duration-300 ease-quiet hover:-translate-y-0.5 hover:shadow-elev2"
                     onClick={stat.onClick}
                   >
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="font-display text-3xl font-semibold text-foreground mt-1">
+                    <p className="font-display mt-1 text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                       {stat.value}
                     </p>
                     <p className="text-xs text-gold mt-2">{stat.change}</p>
@@ -549,7 +551,7 @@ const AdminDashboard = () => {
               </div>
 
               {/* Recent Clients */}
-              <div className="bg-card rounded-lg shadow-soft">
+              <div className="rounded-lg bg-card shadow-elev1">
                 <div className="p-6 border-b border-border flex items-center justify-between">
                   <h2 className="font-display text-xl font-semibold text-foreground">
                     Recent Clients
@@ -615,7 +617,7 @@ const AdminDashboard = () => {
             <div className="space-y-6 animate-fade-in">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h1 className="font-display text-3xl font-semibold text-foreground">
+                  <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                     Clients
                   </h1>
                   <p className="text-muted-foreground mt-1">
@@ -658,7 +660,7 @@ const AdminDashboard = () => {
               </div>
 
               {/* Clients Table */}
-              <div className="bg-card rounded-lg shadow-soft overflow-hidden">
+              <div className="overflow-hidden rounded-lg bg-card shadow-elev1">
                 {isLoadingClients ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
@@ -800,7 +802,7 @@ const AdminDashboard = () => {
             <div className="space-y-6 animate-fade-in">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h1 className="font-display text-3xl font-semibold text-foreground">
+                  <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                     Projects
                   </h1>
                   <p className="text-muted-foreground mt-1">
@@ -818,7 +820,7 @@ const AdminDashboard = () => {
                   client.projects.map((project) => (
                     <div 
                       key={project.id} 
-                      className="bg-card rounded-lg p-6 shadow-soft hover:shadow-medium transition-all cursor-pointer"
+                      className="cursor-pointer rounded-lg bg-card p-6 shadow-elev1 transition-all duration-300 ease-quiet hover:-translate-y-0.5 hover:shadow-elev2"
                       onClick={() => handleClientClick(client.id, project.id)}
                     >
                       <div className="flex items-center justify-between mb-4">
@@ -873,14 +875,14 @@ const AdminDashboard = () => {
           {activeTab === "settings" && (
             <div className="space-y-6 animate-fade-in">
               <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
+                <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                   Settings
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   Manage admin settings
                 </p>
               </div>
-              <div className="bg-card rounded-lg p-6 shadow-soft">
+              <div className="rounded-lg bg-card p-6 shadow-elev1">
                 <p className="text-muted-foreground">Admin settings coming soon...</p>
               </div>
             </div>

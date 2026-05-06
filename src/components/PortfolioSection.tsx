@@ -1,39 +1,82 @@
 import { Link } from "react-router-dom";
 import { projects } from "@/lib/projectsData";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { cn } from "@/lib/utils";
+
+function PortfolioCard({
+  project,
+  index,
+}: {
+  project: (typeof projects)[number];
+  index: number;
+}) {
+  const { ref, inView } = useScrollReveal<HTMLAnchorElement>({ threshold: 0.08, rootMargin: "0px 0px -32px 0px" });
+
+  return (
+    <Link
+      ref={ref}
+      to={`/project/${project.id}`}
+      className={cn("group block cursor-pointer", "scroll-reveal", inView && "scroll-reveal-visible")}
+      style={{
+        transitionDelay: inView ? `${Math.min(index * 95, 450)}ms` : "0ms",
+      }}
+    >
+      <div className="hover-image-wrap mb-4 aspect-[4/5] rounded-lg">
+        <img
+          src={project.image}
+          alt={project.title}
+          className="h-full w-full object-cover"
+          style={{ objectPosition: project.objectPosition || "center" }}
+        />
+        <div className="hover-image-caption">
+          <div className="hover-image-caption-inner">
+            <p className="mb-1 text-xs font-medium uppercase tracking-[0.2em] text-gold-light">{project.category}</p>
+            <div className="flex items-end justify-between gap-3">
+              <span className="font-display text-xl font-semibold text-primary-foreground">{project.title}</span>
+              <span className="text-2xl font-light text-primary-foreground transition-transform duration-500 ease-elegant group-hover:translate-x-1">
+                →
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-primary-foreground/85">{project.location}</p>
+          </div>
+        </div>
+      </div>
+      <div className="transition-colors duration-300 group-hover:text-gold">
+        <p className="text-sm font-medium text-gold">{project.category}</p>
+        <h3 className="font-display text-xl font-semibold text-foreground transition-colors duration-300 group-hover:text-gold">
+          {project.title}
+        </h3>
+        <p className="text-sm text-muted-foreground">{project.location}</p>
+      </div>
+    </Link>
+  );
+}
 
 const PortfolioSection = () => {
+  const { ref: headerRef, inView: headerInView } = useScrollReveal({ threshold: 0.15 });
+
   return (
-    <section id="portfolio" className="py-24 bg-background">
+    <section id="portfolio" className="bg-background py-24">
       <div className="container mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16">
+        <div
+          ref={headerRef}
+          className={cn(
+            "mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end",
+            "scroll-reveal",
+            headerInView && "scroll-reveal-visible",
+          )}
+        >
           <div>
-            <p className="text-gold font-medium tracking-widest uppercase text-sm mb-4">Our Work</p>
-            <h2 className="font-display text-4xl md:text-5xl font-semibold text-foreground">Featured Projects</h2>
+            <p className="eyebrow mb-4">Our Work</p>
+            <h2 className="font-display text-display-lg md:text-display-xl font-semibold text-foreground text-balance tracking-tighter">
+              Featured Projects
+            </h2>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project, index) => (
-            <Link
-              key={project.id}
-              to={`/project/${project.id}`}
-              className="group cursor-pointer block"
-              style={{ animationDelay: `${index * 150}ms` }}
-            >
-              <div className="relative overflow-hidden rounded-lg aspect-[4/5] mb-4">
-                <img
-                  src={project.image}
-                  alt={project.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  style={{ objectPosition: project.objectPosition || "center" }}
-                />
-              </div>
-              <div>
-                <p className="text-gold text-sm font-medium">{project.category}</p>
-                <h3 className="font-display text-xl font-semibold text-foreground">{project.title}</h3>
-                <p className="text-muted-foreground text-sm">{project.location}</p>
-              </div>
-            </Link>
+            <PortfolioCard key={project.id} project={project} index={index} />
           ))}
         </div>
       </div>

@@ -13,6 +13,26 @@ export default {
   		}
   	},
   	extend: {
+  		fontSize: {
+  			eyebrow: ["0.8125rem", { lineHeight: "1.25rem", letterSpacing: "0.28em" }],
+  			"display-md": ["2.25rem", { lineHeight: "2.75rem", letterSpacing: "-0.02em" }],
+  			"display-lg": ["2.75rem", { lineHeight: "3.25rem", letterSpacing: "-0.025em" }],
+  			"display-xl": ["3.25rem", { lineHeight: "3.75rem", letterSpacing: "-0.03em" }],
+  		},
+  		letterSpacing: {
+  			display: "-0.02em",
+  			tighter: "-0.025em",
+  			eyebrow: "0.28em",
+  		},
+  		boxShadow: {
+  			elev1: "var(--shadow-elev-1)",
+  			elev2: "var(--shadow-elev-2)",
+  			goldSoft: "var(--shadow-gold-soft)",
+  		},
+  		transitionTimingFunction: {
+  			elegant: "var(--ease-elegant)",
+  			quiet: "var(--ease-quiet)",
+  		},
   		fontFamily: {
   			display: [
   				'Playfair Display',
@@ -144,13 +164,53 @@ export default {
   					opacity: '1',
   					transform: 'translateY(0)'
   				}
+  			},
+  			'reveal-up': {
+  				from: {
+  					opacity: '0',
+  					transform: 'translateY(24px)'
+  				},
+  				to: {
+  					opacity: '1',
+  					transform: 'translateY(0)'
+  				}
+  			},
+  			'reveal-fade': {
+  				from: {
+  					opacity: '0'
+  				},
+  				to: {
+  					opacity: '1'
+  				}
+  			},
+  			'marquee-arrow': {
+  				'0%': {
+  					transform: 'translateX(0)'
+  				},
+  				'100%': {
+  					transform: 'translateX(4px)'
+  				}
+  			},
+  			'scroll-cue': {
+  				'0%, 100%': {
+  					transform: 'translateY(0)',
+  					opacity: '0.35'
+  				},
+  				'50%': {
+  					transform: 'translateY(10px)',
+  					opacity: '1'
+  				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
   			'fade-in': 'fade-in 0.6s ease-out forwards',
-  			'slide-up': 'slide-up 0.6s ease-out forwards'
+  			'slide-up': 'slide-up 0.6s ease-out forwards',
+  			'reveal-up': 'reveal-up 0.85s var(--ease-elegant) forwards',
+  			'reveal-fade': 'reveal-fade 1.2s var(--ease-elegant) forwards',
+  			'marquee-arrow': 'marquee-arrow 1.2s var(--ease-elegant) infinite alternate',
+  			'scroll-cue': 'scroll-cue 2s var(--ease-elegant) infinite'
   		}
   	}
   },

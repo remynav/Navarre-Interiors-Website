@@ -5,6 +5,8 @@ import { Mail, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { cn } from "@/lib/utils";
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -12,23 +14,26 @@ const ContactSection = () => {
     email: "",
     phone: "",
     message: "",
-    website: "" // Honeypot field - should remain empty
+    website: "", // Honeypot field - should remain empty
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const leftReveal = useScrollReveal({ threshold: 0.12 });
+  const formReveal = useScrollReveal({ threshold: 0.1 });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-contact-inquiry', {
+      const { error } = await supabase.functions.invoke("send-contact-inquiry", {
         body: {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           message: formData.message,
-          website: formData.website // Send honeypot field
-        }
+          website: formData.website,
+        },
       });
 
       if (error) {
@@ -43,7 +48,7 @@ const ContactSection = () => {
         email: "",
         phone: "",
         message: "",
-        website: ""
+        website: "",
       });
     } catch (error) {
       console.error("Error sending inquiry:", error);
@@ -52,42 +57,46 @@ const ContactSection = () => {
       setIsSubmitting(false);
     }
   };
-  return <section id="contact" className="py-24 bg-background">
+
+  return (
+    <section id="contact" className="bg-background py-24">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          <div>
-            <p className="text-gold font-medium tracking-widest uppercase text-sm mb-4">
-              Get In Touch
-            </p>
-            <h2 className="font-display text-4xl md:text-5xl font-semibold text-foreground mb-6">
-              Let's Create Something Beautiful
+        <div className="grid grid-cols-1 gap-16 lg:grid-cols-2">
+          <div
+            ref={leftReveal.ref}
+            className={cn("scroll-reveal", leftReveal.inView && "scroll-reveal-visible")}
+          >
+            <p className="eyebrow mb-4">Get In Touch</p>
+            <h2 className="font-display mb-6 text-display-lg font-semibold text-foreground text-balance tracking-tighter md:text-display-xl">
+              Let&apos;s Create Something Beautiful
             </h2>
-            <p className="text-muted-foreground mb-8 leading-relaxed">
-              Ready to transform your space? We'd love to hear about your project. Reach out to schedule a consultation.
+            <p className="mb-8 leading-relaxed text-muted-foreground">
+              Ready to transform your space? We&apos;d love to hear about your project. Reach out to schedule a
+              consultation.
             </p>
 
             <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gold/10 rounded-lg flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-gold" />
+              <div className="flex items-center gap-4 transition-colors duration-300 hover:text-gold">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gold/10 transition-colors duration-300 hover:bg-gold/20">
+                  <Mail className="h-5 w-5 text-gold" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
                   <p className="font-medium text-foreground">info@navarreinteriors.com</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gold/10 rounded-lg flex items-center justify-center">
-                  <Phone className="w-5 h-5 text-gold" />
+              <div className="flex items-center gap-4 transition-colors duration-300 hover:text-gold">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gold/10 transition-colors duration-300 hover:bg-gold/20">
+                  <Phone className="h-5 w-5 text-gold" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Phone</p>
                   <p className="font-medium text-foreground">+1 (310) 562-7213</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gold/10 rounded-lg flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-gold" />
+              <div className="flex items-center gap-4 transition-colors duration-300 hover:text-gold">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gold/10 transition-colors duration-300 hover:bg-gold/20">
+                  <MapPin className="h-5 w-5 text-gold" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Based in</p>
@@ -97,45 +106,59 @@ const ContactSection = () => {
             </div>
           </div>
 
-          <div className="bg-card p-8 rounded-lg shadow-soft">
+          <div
+            ref={formReveal.ref}
+            className={cn(
+              "rounded-lg bg-card p-8 shadow-elev1 transition-all duration-300 ease-quiet hover:shadow-elev2",
+              "scroll-reveal",
+              formReveal.inView && "scroll-reveal-visible",
+            )}
+            style={{ transitionDelay: formReveal.inView ? "120ms" : "0ms" }}
+          >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Full Name
-                </label>
-                <Input value={formData.name} onChange={e => setFormData({
-                ...formData,
-                name: e.target.value
-              })} placeholder="John Smith" required className="bg-background" />
+                <label className="mb-2 block text-sm font-medium text-foreground">Full Name</label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="John Smith"
+                  required
+                  className="bg-background"
+                />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Email
-                  </label>
-                  <Input type="email" value={formData.email} onChange={e => setFormData({
-                  ...formData,
-                  email: e.target.value
-                })} placeholder="john@example.com" required className="bg-background" />
+                  <label className="mb-2 block text-sm font-medium text-foreground">Email</label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="john@example.com"
+                    required
+                    className="bg-background"
+                  />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Phone
-                  </label>
-                  <Input type="tel" value={formData.phone} onChange={e => setFormData({
-                  ...formData,
-                  phone: e.target.value
-                })} placeholder="+1 (555) 000-0000" className="bg-background" />
+                  <label className="mb-2 block text-sm font-medium text-foreground">Phone</label>
+                  <Input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+1 (555) 000-0000"
+                    className="bg-background"
+                  />
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Tell us about your project
-                </label>
-              <Textarea value={formData.message} onChange={e => setFormData({
-                ...formData,
-                message: e.target.value
-              })} placeholder="Describe your vision, timeline, and any specific requirements..." rows={5} required className="bg-background resize-none" />
+                <label className="mb-2 block text-sm font-medium text-foreground">Tell us about your project</label>
+                <Textarea
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  placeholder="Describe your vision, timeline, and any specific requirements..."
+                  rows={5}
+                  required
+                  className="resize-none bg-background"
+                />
               </div>
               {/* Honeypot field - hidden from users, catches bots */}
               <div className="absolute left-[-9999px]" aria-hidden="true">
@@ -145,18 +168,29 @@ const ContactSection = () => {
                   id="website"
                   name="website"
                   value={formData.website}
-                  onChange={e => setFormData({ ...formData, website: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                   tabIndex={-1}
                   autoComplete="off"
                 />
               </div>
-              <Button type="submit" variant="gold" size="lg" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Sending..." : "Send Message"}
+              <Button type="submit" variant="gold" size="lg" className="group w-full gap-2" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  "Sending..."
+                ) : (
+                  <>
+                    Send Message
+                    <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">
+                      →
+                    </span>
+                  </>
+                )}
               </Button>
             </form>
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default ContactSection;

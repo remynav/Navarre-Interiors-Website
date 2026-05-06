@@ -4,34 +4,34 @@ overview: Refine the visual design of the marketing site and sync the same token
 todos:
   - id: tokens
     content: Extend CSS variables (shadows, easings, transitions) and Tailwind config (type scale, keyframes/animations) in src/index.css and tailwind.config.ts
-    status: pending
+    status: completed
   - id: scroll-hook
     content: Add tiny useScrollReveal IntersectionObserver hook in src/hooks/
-    status: pending
+    status: completed
   - id: buttons
     content: Rewrite button variants in src/components/ui/button.tsx with layered hover (gold sheen, slow elegant easing, optional uppercase tracking, link-underline variant)
-    status: pending
+    status: completed
   - id: inputs
     content: Refine input.tsx and textarea.tsx focus states (gold border + ring, taller default height)
-    status: pending
+    status: completed
   - id: header-footer
     content: Add traveling-underline links + scroll-reactive backdrop in Header.tsx; apply same link style in Footer.tsx
-    status: pending
+    status: completed
   - id: hero
     content: Cascade reveal-fade/reveal-up on hero logo and CTAs in HeroSection.tsx; add Nainoa-style scroll cue
-    status: pending
+    status: completed
   - id: image-sections
     content: Replace image hover behavior in PortfolioSection.tsx and ProjectDetail.tsx with slow zoom + caption-reveal pattern
-    status: pending
+    status: completed
   - id: marketing-sections
     content: Apply new heading scale, eyebrow utility, scroll reveals, and refined card hovers across AboutSection, ServicesSection, PricingSection, ContactSection
-    status: pending
+    status: completed
   - id: portals-sync
     content: "Sync tokens into ClientDashboard.tsx and AdminDashboard.tsx: heading scale, sidebar nav hover (gold accent slide), dashboard tile hover, refined empty states (no layout changes)"
-    status: pending
+    status: completed
   - id: qa
     content: "Visual QA: run dev server, walk every page (incl. Auth, AdminAuth, ProjectDetail, both portals), verify consistency, fix any lint warnings"
-    status: pending
+    status: completed
 isProject: false
 ---
 

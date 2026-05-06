@@ -3,36 +3,47 @@ import footerLogo from "@/assets/footer-logo.png";
 
 const Footer = () => {
   return (
-    <footer className="bg-primary text-primary-foreground py-16">
+    <footer className="bg-primary py-16 text-primary-foreground">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
           <div className="md:col-span-2">
             <Link to="/">
               <img src={footerLogo} alt="Navarre Interiors Design Studio" className="h-28 w-auto" />
             </Link>
-            <p className="mt-4 text-primary-foreground/70 max-w-md">​</p>
           </div>
 
           <div>
-            <h4 className="font-display text-lg font-medium mb-4">Quick Links</h4>
-            <ul className="space-y-2">
+            <h4 className="font-display mb-5 text-lg font-medium tracking-display">Quick Links</h4>
+            <ul className="space-y-3">
               <li>
-                <Link to="/services" className="text-primary-foreground/70 hover:text-gold transition-colors">
+                <Link
+                  to="/services"
+                  className="link-underline text-sm text-primary-foreground/75 hover:text-gold-light"
+                >
                   Services
                 </Link>
               </li>
               <li>
-                <Link to="/portfolio" className="text-primary-foreground/70 hover:text-gold transition-colors">
+                <Link
+                  to="/portfolio"
+                  className="link-underline text-sm text-primary-foreground/75 hover:text-gold-light"
+                >
                   Portfolio
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-primary-foreground/70 hover:text-gold transition-colors">
+                <Link
+                  to="/about"
+                  className="link-underline text-sm text-primary-foreground/75 hover:text-gold-light"
+                >
                   About
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-primary-foreground/70 hover:text-gold transition-colors">
+                <Link
+                  to="/contact"
+                  className="link-underline text-sm text-primary-foreground/75 hover:text-gold-light"
+                >
                   Contact
                 </Link>
               </li>
@@ -40,7 +51,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-display text-lg font-medium mb-4">Contact</h4>
+            <h4 className="font-display mb-5 text-lg font-medium tracking-display">Contact</h4>
             <ul className="space-y-2 text-primary-foreground/70">
               <li>brandy@navarreinteriors.com</li>
               <li>+1 (310) 562-7213</li>
@@ -49,13 +60,19 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-primary-foreground/20 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-primary-foreground/50 text-sm">© 2024 Navarre Interiors. All rights reserved.</p>
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-primary-foreground/20 pt-8 md:flex-row">
+          <p className="text-sm text-primary-foreground/50">© 2024 Navarre Interiors. All rights reserved.</p>
           <div className="flex gap-6">
-            <a href="#" className="text-primary-foreground/50 hover:text-gold text-sm transition-colors">
+            <a
+              href="#"
+              className="link-underline text-sm text-primary-foreground/50 hover:text-gold-light"
+            >
               Privacy Policy
             </a>
-            <a href="#" className="text-primary-foreground/50 hover:text-gold text-sm transition-colors">
+            <a
+              href="#"
+              className="link-underline text-sm text-primary-foreground/50 hover:text-gold-light"
+            >
               Terms of Service
             </a>
           </div>

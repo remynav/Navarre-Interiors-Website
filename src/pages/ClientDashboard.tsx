@@ -594,18 +594,19 @@ const ClientDashboard = () => {
             <p className="text-sm text-muted-foreground mt-2">Client Portal</p>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 space-y-2 overflow-y-auto p-4">
             {navItems.map((item) => (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => {
                   setActiveTab(item.id);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`relative flex w-full items-center gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm font-medium transition-all duration-300 ease-quiet before:absolute before:left-0 before:top-1/2 before:h-[55%] before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-gold before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 ${
                   activeTab === item.id
-                    ? "bg-gold/10 text-gold"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-gold/10 text-gold before:opacity-100"
+                    : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -634,10 +635,11 @@ const ClientDashboard = () => {
             ))}
           </nav>
 
-          <div className="p-4 border-t border-border">
+          <div className="border-t border-border p-4">
             <button
+              type="button"
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors duration-300 ease-quiet hover:bg-muted hover:text-foreground"
             >
               <LogOut className="w-5 h-5" />
               Sign Out
@@ -693,7 +695,7 @@ const ClientDashboard = () => {
               </p>
               <p className="text-xs text-muted-foreground">{profile?.email}</p>
             </div>
-            <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/20 ring-1 ring-gold/25">
               <span className="text-gold font-medium">
                 {(profile?.full_name || profile?.email || "U").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
               </span>
@@ -719,7 +721,7 @@ const ClientDashboard = () => {
           {activeTab === "overview" && (
             <div className="space-y-8 animate-fade-in">
               <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
+                <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                   Welcome back, {profile?.full_name?.split(" ")[0] || "there"}
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -728,15 +730,18 @@ const ClientDashboard = () => {
               </div>
 
               {/* Module Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {navItems.filter(item => item.id !== "overview").map((item) => (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => setActiveTab(item.id)}
-                    className="bg-card p-6 rounded-lg shadow-soft hover:shadow-medium transition-all text-left group relative"
+                    className="group relative rounded-lg bg-card p-6 text-left shadow-elev1 transition-all duration-300 ease-quiet hover:-translate-y-0.5 hover:shadow-elev2"
                   >
-                    <item.icon className="w-8 h-8 text-gold mb-3" />
-                    <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-gold transition-colors">
+                    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-gold/10 transition-colors duration-300 ease-quiet group-hover:bg-gold/20">
+                      <item.icon className="h-8 w-8 text-gold transition-transform duration-300 group-hover:scale-105" />
+                    </div>
+                    <h3 className="font-display text-lg font-semibold tracking-display text-foreground transition-colors duration-300 group-hover:text-gold">
                       {item.label}
                     </h3>
                     {item.id === "messages" && unreadCounts['message'] > 0 && (
@@ -760,7 +765,7 @@ const ClientDashboard = () => {
           {activeTab === "profile" && (
             <div className="space-y-6 animate-fade-in">
               <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
+                <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                   Profile Settings
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -768,7 +773,7 @@ const ClientDashboard = () => {
                 </p>
               </div>
 
-              <div className="bg-card rounded-lg p-6 shadow-soft max-w-2xl">
+              <div className="max-w-2xl rounded-lg bg-card p-6 shadow-elev1 transition-shadow duration-300 hover:shadow-elev2">
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="full_name">Full Name</Label>
@@ -838,7 +843,7 @@ const ClientDashboard = () => {
           {activeTab === "documents" && (
             <div className="space-y-6 animate-fade-in">
               <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
+                <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                   Documents
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -867,10 +872,13 @@ const ClientDashboard = () => {
                 </button>
               </div>
 
-              <div className="bg-card rounded-lg p-6 shadow-soft">
+              <div className="rounded-lg bg-card p-6 shadow-elev1">
                 {filteredClientDocs.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <div className="py-10 text-center">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gold/10">
+                      <FileText className="h-7 w-7 text-gold/80" />
+                    </div>
+                    <p className="mb-1 text-xs font-medium uppercase tracking-[0.22em] text-gold">Documents</p>
                     <p className="text-muted-foreground">
                       {docTab === "sent" ? "No documents available yet" : "No archived documents"}
                     </p>
@@ -913,7 +921,7 @@ const ClientDashboard = () => {
           {activeTab === "orders" && (
             <div className="space-y-6 animate-fade-in">
               <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
+                <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                   Orders & Budget
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -935,7 +943,7 @@ const ClientDashboard = () => {
           {activeTab === "renderings" && (
             <div className="space-y-6 animate-fade-in">
               <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
+                <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                   Renderings for Approval
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -944,7 +952,7 @@ const ClientDashboard = () => {
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {renderings.filter(r => r.sent).map((rendering) => (
-                  <div key={rendering.id} className="bg-card rounded-lg overflow-hidden shadow-soft">
+                  <div key={rendering.id} className="overflow-hidden rounded-lg bg-card shadow-elev1 transition-shadow duration-300 hover:shadow-elev2">
                     <div className="aspect-video relative">
                       <img
                         src={rendering.image}
@@ -1009,14 +1017,14 @@ const ClientDashboard = () => {
           {activeTab === "messages" && (
             <div className="max-w-3xl mx-auto animate-fade-in">
               <div className="mb-6">
-                <h1 className="font-display text-3xl font-semibold text-foreground">
+                <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                   Messages
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   Chat with your design team
                 </p>
               </div>
-              <div className="bg-card rounded-lg shadow-soft overflow-hidden">
+              <div className="overflow-hidden rounded-lg bg-card shadow-elev1">
                 {/* Messages */}
                 <div className="h-[400px] overflow-y-auto p-4 space-y-4">
                   {isLoadingMessages ? (
@@ -1155,14 +1163,14 @@ const ClientDashboard = () => {
           {activeTab === "settings" && (
             <div className="space-y-6 animate-fade-in">
               <div>
-                <h1 className="font-display text-3xl font-semibold text-foreground">
+                <h1 className="font-display text-display-md font-semibold tracking-tighter text-foreground md:text-display-lg">
                   Settings
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   Manage your account preferences
                 </p>
               </div>
-              <div className="bg-card rounded-lg p-6 shadow-soft">
+              <div className="rounded-lg bg-card p-6 shadow-elev1">
                 <p className="text-muted-foreground">Account settings coming soon...</p>
               </div>
             </div>
