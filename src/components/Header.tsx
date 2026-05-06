@@ -169,11 +169,11 @@ const Header = () => {
           <>
             <div
               className={cn(
-                "relative flex min-h-[2.75rem] items-center",
+                "relative flex h-11 items-center",
                 homeMegaOpen &&
                   (overlayOnHero
-                    ? "border-foreground/10 pb-4 md:border-b md:pb-4"
-                    : "border-border/40 pb-4 md:border-b md:pb-4"),
+                    ? "border-foreground/10 md:border-b"
+                    : "border-border/40 md:border-b"),
               )}
             >
               <Link
