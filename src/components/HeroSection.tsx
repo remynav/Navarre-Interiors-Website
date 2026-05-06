@@ -1,7 +1,10 @@
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import heroImage from "@/assets/hero-living-room.jpg";
 import heroLogo from "@/assets/navarre-hero-logo.png";
+
+const linkClass =
+  "group link-underline inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-foreground/80 hover:text-gold animate-reveal-up [animation-fill-mode:both]";
 
 const HeroSection = () => {
   return (
@@ -25,39 +28,34 @@ const HeroSection = () => {
             alt="Navarre Interiors Design Studio"
             className="animate-reveal-fade mx-auto mb-6 h-56 w-auto md:h-72 lg:h-96"
           />
-
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <a href="#contact" className="inline-flex justify-center">
-              <Button variant="hero" size="xl" className="group min-w-[200px] animate-reveal-up gap-3">
-                <span>Start Your Project</span>
-                <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">
-                  →
-                </span>
-              </Button>
-            </a>
-            <a href="#portfolio" className="inline-flex justify-center">
-              <Button
-                variant="hero-outline"
-                size="xl"
-                className="group min-w-[200px] animate-reveal-up gap-3 [animation-delay:140ms] [animation-fill-mode:both]"
-              >
-                <span>View Portfolio</span>
-                <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">
-                  →
-                </span>
-              </Button>
-            </a>
-          </div>
         </div>
       </div>
 
-      {/* Scroll cue */}
-      <div
-        className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-muted-foreground"
-        aria-hidden
-      >
-        <div className="h-10 w-px bg-gradient-to-b from-transparent via-border to-gold/60" />
-        <ChevronDown className="h-5 w-5 animate-scroll-cue text-gold/80" strokeWidth={1.25} />
+      {/* Bottom row: CTAs + scroll cue — grid stacks on small screens */}
+      <div className="absolute inset-x-0 bottom-8 px-6 md:bottom-10 md:px-10">
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-2 grid-rows-[auto_auto] gap-x-8 gap-y-6 md:grid-cols-[1fr_auto_1fr] md:grid-rows-1 md:items-end md:gap-x-8 md:gap-y-0">
+          <Link
+            to="/contact"
+            className={`${linkClass} col-start-1 row-start-1 justify-self-start [animation-delay:300ms]`}
+          >
+            Start a project
+            <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">→</span>
+          </Link>
+          <Link
+            to="/portfolio"
+            className={`${linkClass} col-start-2 row-start-1 justify-self-end md:col-start-3 md:justify-self-end [animation-delay:400ms]`}
+          >
+            View portfolio
+            <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">→</span>
+          </Link>
+          <div
+            className="col-span-2 row-start-2 flex flex-col items-center gap-2 text-muted-foreground md:col-span-1 md:col-start-2 md:row-start-1"
+            aria-hidden
+          >
+            <div className="h-10 w-px bg-gradient-to-b from-transparent via-border to-gold/60" />
+            <ChevronDown className="h-5 w-5 animate-scroll-cue text-gold/80" strokeWidth={1.25} />
+          </div>
+        </div>
       </div>
     </section>
   );
