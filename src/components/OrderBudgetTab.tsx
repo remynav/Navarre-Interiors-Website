@@ -303,7 +303,6 @@ export const OrderBudgetTab = forwardRef<HTMLDivElement, OrderBudgetTabProps>(({
             name: orderForm.product_name.trim(),
             category: orderForm.budget_category || "Uncategorized",
             supplier: orderForm.supplier || null,
-            project_id: projectId,
           })
           .select()
           .single();
