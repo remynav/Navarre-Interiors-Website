@@ -46,6 +46,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ProductInventoryTab } from "@/components/admin/ProductInventoryTab";
 
 interface Project {
@@ -83,6 +93,28 @@ const AdminDashboard = () => {
     status: "Planning",
   });
   const [isSendingInvitation, setIsSendingInvitation] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [isDeletingClient, setIsDeletingClient] = useState(false);
+
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+    setIsDeletingClient(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-client", {
+        body: { clientId: clientToDelete.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Deleted ${clientToDelete.name}`);
+      setClientToDelete(null);
+      await refetchClients();
+    } catch (err) {
+      console.error("Delete client error:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to delete client");
+    } finally {
+      setIsDeletingClient(false);
+    }
+  };
 
   // Check if logged in and is admin
   useEffect(() => {
@@ -742,7 +774,13 @@ const AdminDashboard = () => {
                                       <Edit className="w-4 h-4 mr-2" />
                                       Edit Client
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-destructive">
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setClientToDelete(client);
+                                      }}
+                                    >
                                       <Trash2 className="w-4 h-4 mr-2" />
                                       Delete
                                     </DropdownMenuItem>
@@ -954,6 +992,32 @@ const AdminDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!clientToDelete} onOpenChange={(open) => !open && setClientToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {clientToDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the client's account and all of their
+              projects, messages, documents, mood boards, renderings, and
+              orders. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingClient}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteClient();
+              }}
+              disabled={isDeletingClient}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingClient ? "Deleting..." : "Delete client"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
