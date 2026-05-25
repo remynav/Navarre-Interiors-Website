@@ -23,23 +23,27 @@ const HeroSection = () => {
         <div className="hero-overlay-wash animate-hero-ui-fade pointer-events-none absolute inset-0" aria-hidden />
       </div>
 
-      {/* Large wordmark — ~1/5 viewport height, top-left (not in header) */}
-      <Link
-        to="/"
-        onClick={(e) => {
-          e.preventDefault();
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        className="animate-hero-ui-fade absolute left-5 top-5 z-20 sm:left-8 sm:top-8 md:left-10 md:top-10"
-        aria-label="Navarre Interiors — scroll to top"
-      >
-        <img
-          src={heroLogo}
-          alt="Navarre Interiors Design Studio"
-          className="h-[20vh] max-h-[220px] w-auto min-h-[72px] object-contain object-left drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)] sm:max-h-none"
-          decoding="async"
-        />
-      </Link>
+      {/* Large wordmark — aligned with header container, ~1/5 viewport height */}
+      <div className="absolute inset-x-0 top-0 z-20">
+        <div className="container mx-auto px-6 pt-3 md:pt-4">
+          <Link
+            to="/"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="animate-hero-ui-fade inline-block"
+            aria-label="Navarre Interiors — scroll to top"
+          >
+            <img
+              src={heroLogo}
+              alt="Navarre Interiors Design Studio"
+              className="h-[20vh] max-h-[220px] w-auto min-h-[72px] object-contain object-left drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)] sm:max-h-none"
+              decoding="async"
+            />
+          </Link>
+        </div>
+      </div>
 
       {/* Headline + CTAs — hugging the right edge */}
       <div className="relative z-10 ml-auto w-full max-w-[min(100%,28rem)] pl-6 pr-4 text-left sm:max-w-md sm:pl-8 sm:pr-5 md:max-w-lg md:pr-6 lg:max-w-xl lg:pr-8">
@@ -50,6 +54,11 @@ const HeroSection = () => {
           <br />
           <span className="font-normal italic text-gold">A clearer way to create home.</span>
         </h1>
+
+        <p className="animate-hero-ui-fade mt-5 text-sm leading-relaxed text-foreground/80 sm:mt-6 sm:text-base">
+          A new kind of interior design studio built for homeowners who want exceptional design with complete
+          pricing transparency from day one.
+        </p>
 
         <div className="mt-8 flex flex-col gap-4 sm:mt-10 sm:flex-row sm:items-center sm:gap-10">
           <Link to="/contact" className={`${linkClass} [animation-delay:300ms]`}>
