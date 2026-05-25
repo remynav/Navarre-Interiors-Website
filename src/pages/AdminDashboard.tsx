@@ -93,6 +93,28 @@ const AdminDashboard = () => {
     status: "Planning",
   });
   const [isSendingInvitation, setIsSendingInvitation] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [isDeletingClient, setIsDeletingClient] = useState(false);
+
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+    setIsDeletingClient(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-client", {
+        body: { clientId: clientToDelete.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Deleted ${clientToDelete.name}`);
+      setClientToDelete(null);
+      await refetchClients();
+    } catch (err) {
+      console.error("Delete client error:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to delete client");
+    } finally {
+      setIsDeletingClient(false);
+    }
+  };
 
   // Check if logged in and is admin
   useEffect(() => {
