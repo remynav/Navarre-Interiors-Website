@@ -774,7 +774,13 @@ const AdminDashboard = () => {
                                       <Edit className="w-4 h-4 mr-2" />
                                       Edit Client
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-destructive">
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setClientToDelete(client);
+                                      }}
+                                    >
                                       <Trash2 className="w-4 h-4 mr-2" />
                                       Delete
                                     </DropdownMenuItem>
