@@ -9,6 +9,7 @@ import { z } from "zod";
 import navarreFullLogoLight from "@/assets/navarre-full-logo-light.png";
 import navarreFullLogoDark from "@/assets/navarre-full-logo-dark.png";
 import navarreMonogramDiamond from "@/assets/navarre-monogram-diamond.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -19,11 +20,17 @@ const Auth = () => {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isInviteFlow, setIsInviteFlow] = useState(() => {
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const queryParams = new URLSearchParams(window.location.search);
+    return hashParams.get("type") === "invite" || queryParams.get("type") === "invite";
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !isInviteFlow) {
       // Redirect based on role
       if (isAdmin) {
         navigate("/admin");
@@ -31,7 +38,7 @@ const Auth = () => {
         navigate("/client");
       }
     }
-  }, [user, authLoading, isAdmin, navigate]);
+  }, [user, authLoading, isAdmin, isInviteFlow, navigate]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
