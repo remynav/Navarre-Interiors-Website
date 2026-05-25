@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 
 type PricingTier = {
   name: string;
-  packageLabel: string;
   price: string;
   hourlyRate: string;
   scopeLine: string;
@@ -20,7 +19,6 @@ type PricingTier = {
 const pricingTiers: PricingTier[] = [
   {
     name: "Petit Package",
-    packageLabel: "PACKAGE 1",
     price: "50k",
     hourlyRate: "$200/hr",
     scopeLine: "Up to 4 bedrooms/5 baths or 5000 sq ft",
@@ -43,7 +41,6 @@ const pricingTiers: PricingTier[] = [
   },
   {
     name: "Signature package",
-    packageLabel: "PACKAGE 2",
     price: "65k",
     hourlyRate: "$185/hr",
     scopeLine: "Up to 6 bedrooms/7 baths or 5000+ sq ft",
@@ -64,7 +61,6 @@ const pricingTiers: PricingTier[] = [
   },
   {
     name: "Atelier package",
-    packageLabel: "PACKAGE 3",
     price: "125k",
     hourlyRate: "$156/hr",
     scopeLine: "Up to 7000+ sq ft",
@@ -108,7 +104,6 @@ function PricingCard({ tier, index }: { tier: PricingTier; index: number }) {
       style={{ transitionDelay: inView ? `${index * 100}ms` : "0ms" }}
     >
       <div className="mb-6 text-center">
-        <p className="eyebrow mb-2 text-gold">{tier.packageLabel}</p>
         <h3 className="font-display mb-2 text-2xl font-semibold tracking-display text-foreground">{tier.name}</h3>
         <p className="mb-1 text-sm text-muted-foreground">{tier.scopeLine}</p>
         {tier.summary && <p className="text-sm font-medium text-foreground/90">{tier.summary}</p>}
@@ -168,7 +163,7 @@ const PricingSection = () => {
 
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-stretch gap-8 md:grid-cols-3">
           {pricingTiers.map((tier, index) => (
-            <PricingCard key={tier.packageLabel} tier={tier} index={index} />
+            <PricingCard key={tier.name} tier={tier} index={index} />
           ))}
         </div>
       </div>
