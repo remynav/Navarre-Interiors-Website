@@ -18,6 +18,11 @@ const HeroSection = () => {
           style={{ objectPosition: "10% 80%" }}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background/82 via-background/48 to-transparent" />
+        {/* Translucent white overlay fades in on load */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-white/35 opacity-0 animate-[fade-in_1.4s_ease-out_forwards]"
+          aria-hidden
+        />
       </div>
 
       {/* Content */}
@@ -26,7 +31,7 @@ const HeroSection = () => {
           <img
             src={heroLogo}
             alt="Navarre Interiors Design Studio"
-            className="animate-reveal-fade mx-auto mb-6 h-56 w-auto md:h-72 lg:h-96"
+            className="mx-auto mb-6 h-56 w-auto opacity-0 animate-[fade-in_1.6s_ease-out_forwards] md:h-72 lg:h-96"
           />
         </div>
       </div>
