@@ -144,11 +144,16 @@ const handler = async (req: Request): Promise<Response> => {
     const safePhone = escapeHtml(sanitizedPhone);
     const safeMessage = escapeHtml(sanitizedMessage);
 
+    const fromAddress =
+      Deno.env.get("RESEND_FROM_EMAIL") ?? "Navarre Interiors <onboarding@resend.dev>";
+    const toAddress =
+      Deno.env.get("CONTACT_INQUIRY_TO") ?? "brandy@navarreinteriors.com";
+
     console.log("Sending contact inquiry email");
 
     const emailResponse = await resend.emails.send({
-      from: "Navarre Interiors <onboarding@resend.dev>",
-      to: ["brandy@navarreinteriors.com"],
+      from: fromAddress,
+      to: [toAddress],
       subject: `New Inquiry from ${safeName}`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">

@@ -27,6 +27,8 @@ function PortfolioCard({
           alt={project.title}
           className="h-full w-full object-cover"
           style={{ objectPosition: project.objectPosition || "center" }}
+          loading="lazy"
+          decoding="async"
         />
       </div>
       <div className="transition-colors duration-300 group-hover:text-gold">

@@ -16,6 +16,8 @@ const HeroSection = () => {
           alt="Luxurious modern living room interior"
           className="h-full w-full object-cover"
           style={{ objectPosition: "10% 80%" }}
+          fetchPriority="high"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background/82 via-background/48 to-transparent" />
         <div
@@ -31,6 +33,7 @@ const HeroSection = () => {
             src={heroLogo}
             alt="Navarre Interiors Design Studio"
             className="animate-hero-ui-fade mx-auto mb-6 h-56 w-auto md:h-72 lg:h-96"
+            decoding="async"
           />
         </div>
       </div>

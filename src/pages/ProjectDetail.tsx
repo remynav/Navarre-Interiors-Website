@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getProjectById } from "@/lib/projectsData";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PageMeta from "@/components/PageMeta";
 import { cn } from "@/lib/utils";
 
 const ProjectDetail = () => {
@@ -17,8 +18,9 @@ const ProjectDetail = () => {
   if (!project) {
     return (
       <div className="min-h-screen bg-background">
+        <PageMeta title="Project not found" description="This project could not be found." path="/portfolio" />
         <Header />
-        <main className="container mx-auto px-6 py-24">
+        <main id="main-content" className="container mx-auto px-6 py-24">
           <Link
             to="/portfolio"
             className="link-underline mb-8 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -37,8 +39,13 @@ const ProjectDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title={project.title}
+        description={`${project.title} — ${project.location}. ${project.category} interior design by Navarre Interiors.`}
+        path={`/project/${project.id}`}
+      />
       <Header />
-      <main className="container mx-auto px-6 py-24 pt-28">
+      <main id="main-content" className="container mx-auto px-6 py-24 pt-28">
         <Link
           to="/portfolio"
           className="link-underline mb-8 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -70,6 +77,8 @@ const ProjectDetail = () => {
                 alt={`${project.title} - Photo ${index + 1}`}
                 className="h-full w-full object-cover"
                 style={{ objectPosition: project.objectPosition || "center" }}
+                loading={index < 2 ? "eager" : "lazy"}
+                decoding="async"
               />
             </div>
           ))}

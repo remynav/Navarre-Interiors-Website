@@ -135,6 +135,7 @@ const Header = () => {
                 className="p-2 md:hidden"
                 onClick={() => setMobileNavOpen((o) => !o)}
                 aria-expanded={mobileNavOpen}
+                aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
               >
                 {mobileNavOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
@@ -220,6 +221,8 @@ const Header = () => {
                   <button
                     type="button"
                     onClick={() => setHomeMegaOpen(true)}
+                    aria-label="Open menu"
+                    aria-expanded={false}
                     className={cn(
                       "inline-flex cursor-pointer items-center gap-2.5 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.2em] text-foreground outline-none ring-offset-background transition-colors hover:text-gold focus-visible:ring-2 focus-visible:ring-ring",
                       overlayOnHero && "drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]",
@@ -234,6 +237,8 @@ const Header = () => {
                   <button
                     type="button"
                     onClick={() => setHomeMegaOpen(false)}
+                    aria-label="Close menu"
+                    aria-expanded={true}
                     className={cn(
                       "inline-flex items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground outline-none ring-offset-background transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
                       overlayOnHero && "text-foreground/90 drop-shadow-[0_1px_2px_rgba(255,255,255,0.85)] hover:text-foreground",

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
@@ -6,7 +7,6 @@ import { cn } from "@/lib/utils";
 type PricingTier = {
   name: string;
   price: string;
-  hourlyRate: string;
   scopeLine: string;
   summary?: string;
   includes: string[];
@@ -20,9 +20,8 @@ const pricingTiers: PricingTier[] = [
   {
     name: "Petit Package",
     price: "50k",
-    hourlyRate: "$200/hr",
     scopeLine: "Up to 4 bedrooms/5 baths or 5000 sq ft",
-    summary: "Finishes only (no furnishings or window treatments)",
+    summary: "Finishes only",
     includes: [
       "Flooring (wood, stone, tile)",
       "Slab + countertop selections",
@@ -40,13 +39,12 @@ const pricingTiers: PricingTier[] = [
     storeVisits: "3 store visits",
   },
   {
-    name: "Signature package",
+    name: "Signature Package",
     price: "65k",
-    hourlyRate: "$185/hr",
     scopeLine: "Up to 6 bedrooms/7 baths or 5000+ sq ft",
     summary: "Pre-planning + finishes",
     includes: [
-      "All Petit Package finishes scope",
+      "Includes all Petit Package scope",
       "Lighting pre-plan",
       "Window and door choices/casings",
       "Baseboards/mouldings",
@@ -60,13 +58,12 @@ const pricingTiers: PricingTier[] = [
     storeVisits: "5 store visits",
   },
   {
-    name: "Atelier package",
+    name: "Atelier Package",
     price: "125k",
-    hourlyRate: "$156/hr",
     scopeLine: "Up to 7000+ sq ft",
     summary: "Pre-planning + finishes + furnishing",
     includes: [
-      "All Signature package scope",
+      "Includes all Signature Package scope",
       "All furnishings",
       "Window treatments",
     ],
@@ -110,10 +107,7 @@ function PricingCard({ tier, index }: { tier: PricingTier; index: number }) {
       </div>
 
       <div className="mb-6 text-center">
-        <div className="flex items-baseline justify-center gap-2">
-          <span className="font-display text-4xl font-semibold text-foreground">${tier.price}</span>
-          <span className="text-sm text-muted-foreground">({tier.hourlyRate})</span>
-        </div>
+        <span className="font-display text-4xl font-semibold text-foreground">${tier.price}</span>
       </div>
 
       <div className="mb-6 flex-1 space-y-6">
@@ -130,9 +124,11 @@ function PricingCard({ tier, index }: { tier: PricingTier; index: number }) {
         <span>{tier.storeVisits}</span>
       </div>
 
-      <Button variant="gold-outline" className="group w-full gap-2">
-        Get Started
-        <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">→</span>
+      <Button variant="gold-outline" className="group w-full gap-2" asChild>
+        <Link to="/contact">
+          Get Started
+          <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">→</span>
+        </Link>
       </Button>
     </div>
   );

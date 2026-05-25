@@ -7,6 +7,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { cn } from "@/lib/utils";
+import {
+  CONTACT_EMAIL,
+  CONTACT_LOCATION,
+  CONTACT_PHONE,
+  CONTACT_PHONE_HREF,
+} from "@/lib/site";
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -38,7 +44,7 @@ const ContactSection = () => {
 
       if (error) {
         console.error("Error sending inquiry:", error);
-        toast.error("Failed to send message. Please try again or email us directly.");
+        toast.error(`Failed to send message. Please try again or email us at ${CONTACT_EMAIL}.`);
         return;
       }
 
@@ -52,7 +58,7 @@ const ContactSection = () => {
       });
     } catch (error) {
       console.error("Error sending inquiry:", error);
-      toast.error("Failed to send message. Please try again or email us directly.");
+      toast.error(`Failed to send message. Please try again or email us at ${CONTACT_EMAIL}.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -82,7 +88,12 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium text-foreground">info@navarreinteriors.com</p>
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="link-underline font-medium text-foreground hover:text-gold"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
                 </div>
               </div>
               <div className="flex items-center gap-4 transition-colors duration-300 hover:text-gold">
@@ -91,7 +102,12 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium text-foreground">+1 (310) 562-7213</p>
+                  <a
+                    href={CONTACT_PHONE_HREF}
+                    className="link-underline font-medium text-foreground hover:text-gold"
+                  >
+                    {CONTACT_PHONE}
+                  </a>
                 </div>
               </div>
               <div className="flex items-center gap-4 transition-colors duration-300 hover:text-gold">
@@ -100,7 +116,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Based in</p>
-                  <p className="font-medium text-foreground">Pacific Palisades</p>
+                  <p className="font-medium text-foreground">{CONTACT_LOCATION.split(",")[0]}</p>
                 </div>
               </div>
             </div>
@@ -117,8 +133,13 @@ const ContactSection = () => {
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Full Name</label>
+                <label htmlFor="contact-name" className="mb-2 block text-sm font-medium text-foreground">
+                  Full Name
+                </label>
                 <Input
+                  id="contact-name"
+                  name="name"
+                  autoComplete="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="John Smith"
@@ -128,9 +149,14 @@ const ContactSection = () => {
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-foreground">Email</label>
+                  <label htmlFor="contact-email" className="mb-2 block text-sm font-medium text-foreground">
+                    Email
+                  </label>
                   <Input
+                    id="contact-email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="john@example.com"
@@ -139,9 +165,14 @@ const ContactSection = () => {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-foreground">Phone</label>
+                  <label htmlFor="contact-phone" className="mb-2 block text-sm font-medium text-foreground">
+                    Phone
+                  </label>
                   <Input
+                    id="contact-phone"
+                    name="phone"
                     type="tel"
+                    autoComplete="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+1 (555) 000-0000"
@@ -150,8 +181,12 @@ const ContactSection = () => {
                 </div>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Tell us about your project</label>
+                <label htmlFor="contact-message" className="mb-2 block text-sm font-medium text-foreground">
+                  Tell us about your project
+                </label>
                 <Textarea
+                  id="contact-message"
+                  name="message"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Describe your vision, timeline, and any specific requirements..."
