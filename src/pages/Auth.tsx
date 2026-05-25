@@ -9,6 +9,7 @@ import { z } from "zod";
 import navarreFullLogoLight from "@/assets/navarre-full-logo-light.png";
 import navarreFullLogoDark from "@/assets/navarre-full-logo-dark.png";
 import navarreMonogramDiamond from "@/assets/navarre-monogram-diamond.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -19,11 +20,17 @@ const Auth = () => {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isInviteFlow, setIsInviteFlow] = useState(() => {
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const queryParams = new URLSearchParams(window.location.search);
+    return hashParams.get("type") === "invite" || queryParams.get("type") === "invite";
+  });
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !isInviteFlow) {
       // Redirect based on role
       if (isAdmin) {
         navigate("/admin");
@@ -31,19 +38,24 @@ const Auth = () => {
         navigate("/client");
       }
     }
-  }, [user, authLoading, isAdmin, navigate]);
+  }, [user, authLoading, isAdmin, isInviteFlow, navigate]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { email?: string; password?: string; confirmPassword?: string } = {};
     
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
+    if (!isInviteFlow) {
+      const emailResult = emailSchema.safeParse(email);
+      if (!emailResult.success) {
+        newErrors.email = emailResult.error.errors[0].message;
+      }
     }
     
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
+    }
+    if (isInviteFlow && password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
     
     setErrors(newErrors);
@@ -58,6 +70,18 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
+      if (isInviteFlow) {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Password created successfully");
+          setIsInviteFlow(false);
+          navigate("/client");
+        }
+        return;
+      }
+
       const { error } = await signIn(email, password);
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
@@ -114,32 +138,34 @@ const Auth = () => {
           </Link>
 
           <h1 className="font-display text-3xl font-semibold text-foreground mb-2">
-            Client Portal
+            {isInviteFlow ? "Create Your Password" : "Client Portal"}
           </h1>
           <p className="text-muted-foreground mb-8">
-            Sign in to access your project dashboard
+            {isInviteFlow ? "Set a password to activate your client portal" : "Sign in to access your project dashboard"}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Email Address
-              </label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setErrors({ ...errors, email: undefined });
-                }}
-                placeholder="you@example.com"
-                required
-                className={`h-12 ${errors.email ? "border-destructive" : ""}`}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive mt-1">{errors.email}</p>
-              )}
-            </div>
+            {!isInviteFlow && (
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Email Address
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setErrors({ ...errors, email: undefined });
+                  }}
+                  placeholder="you@example.com"
+                  required
+                  className={`h-12 ${errors.email ? "border-destructive" : ""}`}
+                />
+                {errors.email && (
+                  <p className="text-sm text-destructive mt-1">{errors.email}</p>
+                )}
+              </div>
+            )}
             
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">
@@ -161,6 +187,28 @@ const Auth = () => {
               )}
             </div>
 
+            {isInviteFlow && (
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Confirm Password
+                </label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setErrors({ ...errors, confirmPassword: undefined });
+                  }}
+                  placeholder="••••••••"
+                  required
+                  className={`h-12 ${errors.confirmPassword ? "border-destructive" : ""}`}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-sm text-destructive mt-1">{errors.confirmPassword}</p>
+                )}
+              </div>
+            )}
+
             <Button
               type="submit"
               variant="gold"
@@ -168,7 +216,7 @@ const Auth = () => {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? (isInviteFlow ? "Saving..." : "Signing in...") : (isInviteFlow ? "Create Password" : "Sign In")}
             </Button>
           </form>
 

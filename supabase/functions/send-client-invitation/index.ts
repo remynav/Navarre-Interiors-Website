@@ -2,8 +2,6 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -14,8 +12,23 @@ interface InvitationRequest {
   clientName: string;
   clientEmail: string;
   projectName: string;
+  projectStatus?: string;
   portalUrl?: string;
 }
+
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error && "message" in error) {
+    return String((error as { message?: unknown }).message);
+  }
+  return String(error);
+};
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -28,10 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       console.error("Missing authorization header");
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Missing authorization header" }, 401);
     }
 
     // Create Supabase client with user's auth context
@@ -45,10 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) {
       console.error("Authentication failed:", authError?.message || "No user found");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
     // Verify user has admin role
@@ -61,47 +68,105 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (roleError) {
       console.error("Role check failed:", roleError.message);
-      return new Response(
-        JSON.stringify({ error: "Failed to verify permissions" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Failed to verify permissions" }, 500);
     }
 
     if (!roleData) {
       console.error("User is not an admin:", user.id);
-      return new Response(
-        JSON.stringify({ error: "Forbidden: Admin access required" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Forbidden: Admin access required" }, 403);
     }
 
     console.log("Admin verified:", user.id);
 
-    const { clientName, clientEmail, projectName, portalUrl }: InvitationRequest = await req.json();
+    const { clientName, clientEmail, projectName, projectStatus, portalUrl }: InvitationRequest = await req.json();
 
     console.log(`Sending invitation email to ${clientEmail} for project ${projectName}`);
 
     // Validate required fields
     if (!clientName || !clientEmail || !projectName) {
       console.error("Missing required fields:", { clientName, clientEmail, projectName });
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: clientName, clientEmail, or projectName" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+      return jsonResponse({ error: "Missing required fields: clientName, clientEmail, or projectName" }, 400);
     }
 
     const loginUrl = portalUrl || "https://navarreinteriors.com/auth";
 
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY is not configured");
+      return jsonResponse({ error: "Email service is not configured." }, 500);
+    }
+
+    const supabaseServiceClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    const normalizedEmail = clientEmail.trim().toLowerCase();
+    const safeProjectStatus = projectStatus || "Planning";
+    const progress = safeProjectStatus === "Planning" ? 5 : 0;
+
+    const { data: inviteData, error: inviteError } = await supabaseServiceClient.auth.admin.generateLink({
+      type: "invite",
+      email: normalizedEmail,
+      options: {
+        data: { full_name: clientName },
+        redirectTo: loginUrl,
+      },
+    });
+
+    if (inviteError || !inviteData?.user || !inviteData?.properties?.action_link) {
+      console.error("Failed to create client invite link:", inviteError);
+      return jsonResponse({ error: "Failed to create client invitation", details: inviteError?.message }, 500);
+    }
+
+    const clientId = inviteData.user.id;
+    const inviteLink = inviteData.properties.action_link;
+
+    const { error: profileError } = await supabaseServiceClient
+      .from("profiles")
+      .upsert({
+        id: clientId,
+        email: normalizedEmail,
+        full_name: clientName,
+        role: "client",
+      }, { onConflict: "id" });
+
+    if (profileError) {
+      console.error("Failed to save client profile:", profileError);
+      return jsonResponse({ error: "Failed to save client profile", details: profileError.message }, 500);
+    }
+
+    const { error: roleUpsertError } = await supabaseServiceClient
+      .from("user_roles")
+      .upsert({ user_id: clientId, role: "client" }, { onConflict: "user_id,role" });
+
+    if (roleUpsertError) {
+      console.error("Failed to save client role:", roleUpsertError);
+      return jsonResponse({ error: "Failed to save client access", details: roleUpsertError.message }, 500);
+    }
+
+    const { data: projectData, error: projectError } = await supabaseServiceClient
+      .from("projects")
+      .insert({
+        client_id: clientId,
+        name: projectName,
+        status: safeProjectStatus,
+        progress,
+      })
+      .select("id, name, status, progress")
+      .single();
+
+    if (projectError) {
+      console.error("Failed to save client project:", projectError);
+      return jsonResponse({ error: "Failed to save client project", details: projectError.message }, 500);
+    }
+
+    const resend = new Resend(resendApiKey);
+
     const fromAddress = Deno.env.get("RESEND_FROM_EMAIL");
     if (!fromAddress) {
       console.error("RESEND_FROM_EMAIL is not configured");
-      return new Response(
-        JSON.stringify({ error: "Email sender not configured. Set RESEND_FROM_EMAIL secret to an address on a verified domain." }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Email sender not configured. Set RESEND_FROM_EMAIL secret to an address on a verified domain." }, 500);
     }
 
     console.log("Sending from:", fromAddress, "to:", clientEmail);
@@ -160,7 +225,7 @@ const handler = async (req: Request): Promise<Response> => {
                       <table width="100%" cellpadding="0" cellspacing="0" style="margin: 35px 0;">
                         <tr>
                           <td align="center">
-                            <a href="${loginUrl}" style="display: inline-block; background-color: #c9a962; color: #1a1a1a; text-decoration: none; padding: 16px 40px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 4px; text-transform: uppercase;">
+                            <a href="${inviteLink}" style="display: inline-block; background-color: #c9a962; color: #1a1a1a; text-decoration: none; padding: 16px 40px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 4px; text-transform: uppercase;">
                               Access Your Portal
                             </a>
                           </td>
@@ -196,27 +261,26 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error("Resend error:", emailResponse.error);
-      return new Response(
-        JSON.stringify({ error: "Email failed to send", details: emailResponse.error }),
-        { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({
+        success: false,
+        error: "Client was added, but the invitation email failed to send",
+        details: emailResponse.error,
+        client: { id: clientId, name: clientName, email: normalizedEmail },
+        project: projectData,
+      });
     }
 
     console.log("Email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+    return jsonResponse({
+      success: true,
+      data: emailResponse,
+      client: { id: clientId, name: clientName, email: normalizedEmail },
+      project: projectData,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in send-client-invitation function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return jsonResponse({ error: getErrorMessage(error) }, 500);
   }
 };
 
