@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 
 type PricingTier = {
   name: string;
-  packageLabel: string;
   price: string;
   hourlyRate: string;
   scopeLine: string;
