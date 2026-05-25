@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import heroLogo from "@/assets/navarre-hero-logo.png";
+import logoMonogram from "@/assets/logo-monogram.png";
 
 const HERO_UI_DELAY_MS = 1400;
 const homeHeaderRevealClass =
@@ -38,18 +38,21 @@ const Header = () => {
     timeoutsRef.current = [];
   };
 
-  useEffect(() => {
+  const closeMenus = () => {
     setMobileNavOpen(false);
+    setHomeMegaOpen(false);
+  };
+
+  useEffect(() => {
+    closeMenus();
     clearAllTimeouts();
 
     if (!isHome) {
       setHomeUiRevealed(true);
-      setHomeMegaOpen(false);
       return;
     }
 
     setHomeUiRevealed(false);
-    setHomeMegaOpen(false);
 
     timeoutsRef.current.push(
       window.setTimeout(() => {
@@ -67,106 +70,137 @@ const Header = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navLinksEl = (
-    <>
-      {navItems.map((item) => (
-        <Link key={item.to} to={item.to} className={navLinkClass(location.pathname === item.to)}>
-          {item.label}
-        </Link>
-      ))}
-    </>
-  );
-
   const overlayOnHero = isHome && !scrolled;
+  // Home: transparent over hero unless burger menu is open or user has scrolled
+  const headerSolid = !isHome || !overlayOnHero || mobileNavOpen;
+  const homeRevealVisible = homeUiRevealed;
 
   const ctaPair = (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <Link to="/auth" onClick={() => setMobileNavOpen(false)}>
-        <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-foreground sm:w-auto">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 lg:gap-3">
+      <Link to="/auth" onClick={closeMenus}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-9 w-full whitespace-nowrap px-2.5 text-xs text-muted-foreground hover:text-foreground sm:w-auto lg:px-3 lg:text-sm"
+        >
           Client Portal
         </Button>
       </Link>
-      <Link to="/contact" onClick={() => setMobileNavOpen(false)}>
-        <Button variant="gold" size="sm" className="w-full sm:w-auto">
+      <Link to="/contact" onClick={closeMenus}>
+        <Button variant="gold" size="sm" className="h-9 w-full whitespace-nowrap px-2.5 text-xs sm:w-auto lg:px-3 lg:text-sm">
           Start a Project
         </Button>
       </Link>
     </div>
   );
 
-  const homeRevealVisible = homeUiRevealed;
+  const mobileNavDropdown = (
+    <nav className="mt-4 flex animate-fade-in flex-col gap-4 border-border/35 border-t pt-4 pb-2 lg:hidden">
+      {navItems.map((item) => (
+        <Link
+          key={`mobile-${item.to}`}
+          to={item.to}
+          className={navLinkClass(location.pathname === item.to)}
+          onClick={closeMenus}
+        >
+          {item.label}
+        </Link>
+      ))}
+      <div className="flex flex-col gap-3">{ctaPair}</div>
+    </nav>
+  );
+
+  const burgerButton = (
+    <button
+      type="button"
+      className="p-2"
+      onClick={() => {
+        setHomeMegaOpen(false);
+        setMobileNavOpen((o) => !o);
+      }}
+      aria-expanded={mobileNavOpen}
+      aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
+    >
+      {mobileNavOpen ? <X size={24} /> : <Menu size={24} />}
+    </button>
+  );
 
   return (
     <header
       className={cn(
-        "fixed left-0 right-0 top-0 z-50",
-        isHome
-          ? cn(homeHeaderRevealClass, homeRevealVisible ? "opacity-100" : "pointer-events-none opacity-0")
-          : "transition-[background-color,border-color] duration-300 ease-out",
-        overlayOnHero
-          ? "border-transparent bg-transparent shadow-none backdrop-blur-none"
-          : "border-b border-border/50 bg-background/90 backdrop-blur-md",
+        "fixed left-0 right-0 top-0 z-50 transition-[background-color,border-color,box-shadow] duration-300 ease-out",
+        isHome && cn(homeHeaderRevealClass, homeRevealVisible ? "opacity-100" : "pointer-events-none opacity-0"),
+        headerSolid
+          ? "border-b border-border/50 bg-background/95 shadow-sm backdrop-blur-md"
+          : "border-transparent bg-transparent shadow-none backdrop-blur-none",
       )}
     >
       <div className={cn("relative container mx-auto px-6", isHome ? "py-3 md:py-4" : "py-4")}>
         {!isHome && (
           <>
-            <div className="flex items-center justify-between">
-              <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-                <img src={heroLogo} alt="Navarre Interiors Design Studio" className="h-11 w-auto md:h-12" />
+            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 lg:gap-6">
+              <Link
+                to="/"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="shrink-0"
+              >
+                <img src={logoMonogram} alt="Navarre Interiors" className="h-9 w-auto md:h-10" />
               </Link>
 
-              <nav className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:pointer-events-auto md:flex">
-                {navLinksEl}
+              <nav className="hidden min-w-0 justify-center lg:flex">
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 xl:gap-x-8">
+                  {navItems.map((item) => (
+                    <Link key={item.to} to={item.to} className={navLinkClass(location.pathname === item.to)}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
               </nav>
 
-              <div className="hidden md:block">{ctaPair}</div>
-
-              <button
-                type="button"
-                className="p-2 md:hidden"
-                onClick={() => setMobileNavOpen((o) => !o)}
-                aria-expanded={mobileNavOpen}
-                aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
-              >
-                {mobileNavOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
+              <div className="flex shrink-0 items-center justify-end gap-2">
+                <div className="hidden lg:block">{ctaPair}</div>
+                <div className="lg:hidden">{burgerButton}</div>
+              </div>
             </div>
 
-            {mobileNavOpen && (
-              <nav className="mt-4 flex animate-fade-in flex-col gap-4 border-border/35 border-t pt-4 pb-2 md:hidden">
-                <Link to="/services" className={navLinkClass(location.pathname === "/services")} onClick={() => setMobileNavOpen(false)}>
-                  Services
-                </Link>
-                <Link to="/portfolio" className={navLinkClass(location.pathname === "/portfolio")} onClick={() => setMobileNavOpen(false)}>
-                  Portfolio
-                </Link>
-                <Link to="/about" className={navLinkClass(location.pathname === "/about")} onClick={() => setMobileNavOpen(false)}>
-                  About
-                </Link>
-                <Link to="/contact" className={navLinkClass(location.pathname === "/contact")} onClick={() => setMobileNavOpen(false)}>
-                  Contact
-                </Link>
-                <div className="flex flex-col gap-3">{ctaPair}</div>
-              </nav>
-            )}
+            {mobileNavOpen && mobileNavDropdown}
           </>
         )}
 
         {isHome && (
           <>
-            <div className="relative flex h-11 items-center justify-end md:h-12">
+            {/* Tablet / mobile: same burger + white dropdown as other pages */}
+            <div
+              className={cn(
+                "flex items-center justify-end lg:hidden",
+                homeHeaderRevealClass,
+                homeRevealVisible ? "opacity-100" : "pointer-events-none opacity-0",
+              )}
+            >
+              {burgerButton}
+            </div>
+
+            {mobileNavOpen && mobileNavDropdown}
+
+            {/* Desktop: + Menu expand with centered nav */}
+            <div className="relative hidden h-11 items-center justify-end lg:flex md:h-12">
               <nav
                 className={cn(
-                  "pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[60%] min-w-0 -translate-x-1/2 -translate-y-1/2 flex-wrap justify-center gap-x-8 gap-y-2 transition-opacity duration-300 ease-out md:flex",
-                  homeMegaOpen ? "opacity-100 md:pointer-events-auto" : "opacity-0",
+                  "pointer-events-none absolute left-1/2 top-1/2 flex max-w-[min(100%,36rem)] min-w-0 -translate-x-1/2 -translate-y-1/2 flex-wrap justify-center gap-x-6 gap-y-2 transition-opacity duration-300 ease-out xl:gap-x-8",
+                  homeMegaOpen ? "opacity-100 lg:pointer-events-auto" : "opacity-0",
                   overlayOnHero &&
+                    !headerSolid &&
                     "[&_a]:text-foreground [&_a:hover]:text-gold [&_a.link-underline-active]:text-foreground [&_a]:drop-shadow-[0_1px_2px_rgba(255,255,255,0.88)]",
                 )}
                 aria-hidden={!homeMegaOpen}
               >
                 {navItems.map((item) => (
-                  <Link key={`home-menu-${item.to}`} to={item.to} className={navLinkClass(location.pathname === item.to)}>
+                  <Link
+                    key={`home-menu-${item.to}`}
+                    to={item.to}
+                    className={navLinkClass(location.pathname === item.to)}
+                    onClick={() => setHomeMegaOpen(false)}
+                  >
                     {item.label}
                   </Link>
                 ))}
@@ -174,15 +208,15 @@ const Header = () => {
 
               <div
                 className={cn(
-                  "relative z-[1] ml-auto flex items-center gap-4",
+                  "relative z-[1] ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2 lg:gap-3",
                   homeHeaderRevealClass,
                   homeRevealVisible ? "opacity-100" : "pointer-events-none opacity-0",
-                  homeMegaOpen && "md:gap-6",
+                  homeMegaOpen && "lg:gap-4",
                 )}
               >
                 <div
                   className={cn(
-                    "hidden transition-opacity duration-300 ease-out md:flex md:gap-6",
+                    "hidden shrink-0 transition-opacity duration-300 ease-out lg:flex",
                     homeMegaOpen ? "opacity-100" : "pointer-events-none opacity-0",
                   )}
                   aria-hidden={!homeMegaOpen}
@@ -193,12 +227,15 @@ const Header = () => {
                 {!homeMegaOpen ? (
                   <button
                     type="button"
-                    onClick={() => setHomeMegaOpen(true)}
+                    onClick={() => {
+                      setMobileNavOpen(false);
+                      setHomeMegaOpen(true);
+                    }}
                     aria-label="Open menu"
                     aria-expanded={false}
                     className={cn(
                       "inline-flex cursor-pointer items-center gap-2.5 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.2em] text-foreground outline-none ring-offset-background transition-colors hover:text-gold focus-visible:ring-2 focus-visible:ring-ring",
-                      overlayOnHero && "drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]",
+                      overlayOnHero && !headerSolid && "drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]",
                     )}
                   >
                     <span aria-hidden className="text-lg leading-none font-light text-gold">
@@ -214,7 +251,9 @@ const Header = () => {
                     aria-expanded={true}
                     className={cn(
                       "inline-flex items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground outline-none ring-offset-background transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
-                      overlayOnHero && "text-foreground/90 drop-shadow-[0_1px_2px_rgba(255,255,255,0.85)] hover:text-foreground",
+                      overlayOnHero &&
+                        !headerSolid &&
+                        "text-foreground/90 drop-shadow-[0_1px_2px_rgba(255,255,255,0.85)] hover:text-foreground",
                     )}
                   >
                     <span aria-hidden className="text-lg leading-none">
@@ -223,37 +262,6 @@ const Header = () => {
                     Close
                   </button>
                 )}
-              </div>
-            </div>
-
-            <div
-              className={cn(
-                "grid overflow-hidden transition-[grid-template-rows] duration-300 ease-out md:hidden",
-                homeMegaOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-              )}
-            >
-              <div className="min-h-0">
-                <div
-                  className={cn(
-                    "pt-4 transition-opacity duration-300 ease-out md:hidden",
-                    homeMegaOpen ? "opacity-100" : "pointer-events-none opacity-0",
-                  )}
-                  aria-hidden={!homeMegaOpen}
-                >
-                  <nav className="flex flex-col gap-4">
-                    {navItems.map((item) => (
-                      <Link
-                        key={`home-mobile-${item.to}`}
-                        to={item.to}
-                        className={navLinkClass(location.pathname === item.to)}
-                        onClick={() => setHomeMegaOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </nav>
-                  <div className="mt-5 pt-5">{ctaPair}</div>
-                </div>
               </div>
             </div>
           </>

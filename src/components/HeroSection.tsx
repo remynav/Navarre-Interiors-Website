@@ -4,7 +4,7 @@ import heroImage from "@/assets/hero-living-room.webp";
 import heroLogo from "@/assets/navarre-hero-logo.png";
 
 const linkClass =
-  "group link-underline inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-foreground/80 hover:text-gold animate-reveal-up [animation-fill-mode:both]";
+  "group link-underline inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-foreground/80 hover:text-gold";
 
 const HeroSection = () => {
   return (
@@ -60,12 +60,12 @@ const HeroSection = () => {
           pricing transparency from day one.
         </p>
 
-        <div className="mt-8 flex flex-col gap-4 sm:mt-10 sm:flex-row sm:items-center sm:gap-10">
-          <Link to="/contact" className={`${linkClass} [animation-delay:300ms]`}>
+        <div className="animate-hero-ui-fade mt-8 flex flex-col gap-4 sm:mt-10 sm:flex-row sm:items-center sm:gap-10">
+          <Link to="/contact" className={linkClass}>
             Start a project
             <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">→</span>
           </Link>
-          <Link to="/portfolio" className={`${linkClass} [animation-delay:400ms]`}>
+          <Link to="/portfolio" className={linkClass}>
             View portfolio
             <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">→</span>
           </Link>
