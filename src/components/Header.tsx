@@ -197,10 +197,11 @@ const Header = () => {
               {homeMegaOpen && (
                 <nav
                   className={cn(
-                    "pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[60%] min-w-0 -translate-x-1/2 -translate-y-1/2 flex-wrap justify-center gap-x-8 gap-y-2 animate-fade-in md:pointer-events-auto md:flex",
+                    "pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[60%] min-w-0 -translate-x-1/2 -translate-y-1/2 flex-wrap justify-center gap-x-8 gap-y-2 animate-menu-sweep-in md:pointer-events-auto md:flex",
                     overlayOnHero &&
                       "[&_a]:text-foreground [&_a:hover]:text-gold [&_a.link-underline-active]:text-foreground [&_a]:drop-shadow-[0_1px_2px_rgba(255,255,255,0.88)]",
                   )}
+                  style={{ animationDelay: "120ms" }}
                 >
                   {navLinksEl}
                 </nav>
@@ -210,12 +211,13 @@ const Header = () => {
                 className={cn(
                   "relative z-[1] ml-auto flex items-center gap-4 transition-opacity duration-500 ease-elegant",
                   compactTriggerReveal ? "opacity-100" : "pointer-events-none opacity-0",
-                  homeMegaOpen && "animate-fade-in md:animate-none md:gap-6",
+                  homeMegaOpen && "md:gap-6",
                 )}
               >
                 {homeMegaOpen && (
-                  <div className="hidden animate-fade-in md:flex md:animate-none md:gap-6">{ctaPair}</div>
+                  <div className="hidden animate-menu-sweep-in md:flex md:gap-6">{ctaPair}</div>
                 )}
+
                 {!homeMegaOpen ? (
                   <button
                     type="button"

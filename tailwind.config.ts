@@ -201,6 +201,17 @@ export default {
   					opacity: '1'
   				}
   			}
+  			,
+  			'menu-sweep-in': {
+  				from: {
+  					opacity: '0',
+  					transform: 'translateX(24px)'
+  				},
+  				to: {
+  					opacity: '1',
+  					transform: 'translateX(0)'
+  				}
+  			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
@@ -210,7 +221,9 @@ export default {
   			'reveal-up': 'reveal-up 0.85s var(--ease-elegant) forwards',
   			'reveal-fade': 'reveal-fade 1.2s var(--ease-elegant) forwards',
   			'marquee-arrow': 'marquee-arrow 1.2s var(--ease-elegant) infinite alternate',
-  			'scroll-cue': 'scroll-cue 2s var(--ease-elegant) infinite'
+  			'scroll-cue': 'scroll-cue 2s var(--ease-elegant) infinite',
+  			'menu-sweep-in': 'menu-sweep-in 0.9s var(--ease-elegant) forwards'
+
   		}
   	}
   },
