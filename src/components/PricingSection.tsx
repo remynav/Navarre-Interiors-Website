@@ -104,7 +104,6 @@ function PricingCard({ tier, index }: { tier: PricingTier; index: number }) {
       style={{ transitionDelay: inView ? `${index * 100}ms` : "0ms" }}
     >
       <div className="mb-6 text-center">
-        <p className="eyebrow mb-2 text-gold">{tier.packageLabel}</p>
         <h3 className="font-display mb-2 text-2xl font-semibold tracking-display text-foreground">{tier.name}</h3>
         <p className="mb-1 text-sm text-muted-foreground">{tier.scopeLine}</p>
         {tier.summary && <p className="text-sm font-medium text-foreground/90">{tier.summary}</p>}
