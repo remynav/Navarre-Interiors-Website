@@ -295,34 +295,28 @@ const AdminDashboard = () => {
           clientName: newClient.name,
           clientEmail: newClient.email,
           projectName: newClient.project,
+          projectStatus: newClient.status,
           portalUrl: `${window.location.origin}/auth`,
         },
       });
 
       if (error) {
         console.error("Error sending invitation:", error);
-        toast.error("Failed to send invitation email");
+        toast.error(error.message || "Failed to add client");
         setIsSendingInvitation(false);
         return;
       }
 
-      // Add a temporary client entry (will be updated when client registers)
-      const tempClient: Client = {
-        id: crypto.randomUUID(),
-        name: newClient.name,
-        email: newClient.email,
-        projects: [{
-          id: crypto.randomUUID(),
-          name: newClient.project,
-          status: newClient.status,
-          progress: newClient.status === "Planning" ? 5 : 0,
-        }],
-      };
-      
-      setClients([tempClient, ...clients]);
+      await refetchClients();
       setNewClient({ name: "", email: "", project: "", status: "Planning" });
       setShowAddClientModal(false);
-      toast.success("Client added and invitation email sent!");
+
+      if (data?.success === false) {
+        console.error("Invitation email failed:", data.details);
+        toast.warning("Client added, but the invitation email failed to send");
+      } else {
+        toast.success("Client added and invitation email sent!");
+      }
     } catch (err) {
       console.error("Error adding client:", err);
       toast.error("Failed to add client");
