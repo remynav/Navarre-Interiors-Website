@@ -278,7 +278,7 @@ const handler = async (req: Request): Promise<Response> => {
       client: { id: clientId, name: clientName, email: normalizedEmail },
       project: projectData,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in send-client-invitation function:", error);
     return jsonResponse({ error: getErrorMessage(error) }, 500);
   }
