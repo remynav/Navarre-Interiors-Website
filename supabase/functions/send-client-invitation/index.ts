@@ -78,31 +78,93 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Admin verified:", user.id);
 
-    const { clientName, clientEmail, projectName, portalUrl }: InvitationRequest = await req.json();
+    const { clientName, clientEmail, projectName, projectStatus, portalUrl }: InvitationRequest = await req.json();
 
     console.log(`Sending invitation email to ${clientEmail} for project ${projectName}`);
 
     // Validate required fields
     if (!clientName || !clientEmail || !projectName) {
       console.error("Missing required fields:", { clientName, clientEmail, projectName });
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: clientName, clientEmail, or projectName" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+      return jsonResponse({ error: "Missing required fields: clientName, clientEmail, or projectName" }, 400);
     }
 
-    const loginUrl = portalUrl || "https://navarreinteriors.com/auth";
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY is not configured");
+      return jsonResponse({ error: "Email service is not configured." }, 500);
+    }
+
+    const supabaseServiceClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    const normalizedEmail = clientEmail.trim().toLowerCase();
+    const safeProjectStatus = projectStatus || "Planning";
+    const progress = safeProjectStatus === "Planning" ? 5 : 0;
+
+    const { data: inviteData, error: inviteError } = await supabaseServiceClient.auth.admin.generateLink({
+      type: "invite",
+      email: normalizedEmail,
+      options: {
+        data: { full_name: clientName },
+        redirectTo: loginUrl,
+      },
+    });
+
+    if (inviteError || !inviteData?.user || !inviteData?.properties?.action_link) {
+      console.error("Failed to create client invite link:", inviteError);
+      return jsonResponse({ error: "Failed to create client invitation", details: inviteError?.message }, 500);
+    }
+
+    const clientId = inviteData.user.id;
+    const inviteLink = inviteData.properties.action_link;
+
+    const { error: profileError } = await supabaseServiceClient
+      .from("profiles")
+      .upsert({
+        id: clientId,
+        email: normalizedEmail,
+        full_name: clientName,
+        role: "client",
+      }, { onConflict: "id" });
+
+    if (profileError) {
+      console.error("Failed to save client profile:", profileError);
+      return jsonResponse({ error: "Failed to save client profile", details: profileError.message }, 500);
+    }
+
+    const { error: roleUpsertError } = await supabaseServiceClient
+      .from("user_roles")
+      .upsert({ user_id: clientId, role: "client" }, { onConflict: "user_id,role" });
+
+    if (roleUpsertError) {
+      console.error("Failed to save client role:", roleUpsertError);
+      return jsonResponse({ error: "Failed to save client access", details: roleUpsertError.message }, 500);
+    }
+
+    const { data: projectData, error: projectError } = await supabaseServiceClient
+      .from("projects")
+      .insert({
+        client_id: clientId,
+        name: projectName,
+        status: safeProjectStatus,
+        progress,
+      })
+      .select("id, name, status, progress")
+      .single();
+
+    if (projectError) {
+      console.error("Failed to save client project:", projectError);
+      return jsonResponse({ error: "Failed to save client project", details: projectError.message }, 500);
+    }
+
+    const resend = new Resend(resendApiKey);
 
     const fromAddress = Deno.env.get("RESEND_FROM_EMAIL");
     if (!fromAddress) {
       console.error("RESEND_FROM_EMAIL is not configured");
-      return new Response(
-        JSON.stringify({ error: "Email sender not configured. Set RESEND_FROM_EMAIL secret to an address on a verified domain." }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Email sender not configured. Set RESEND_FROM_EMAIL secret to an address on a verified domain." }, 500);
     }
 
     console.log("Sending from:", fromAddress, "to:", clientEmail);
