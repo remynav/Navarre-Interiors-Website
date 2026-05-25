@@ -5,8 +5,9 @@ import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo-monogram.png";
 
-const HEADER_DELAY_MS = 1400;
-const MENU_TRIGGER_STAGGER_MS = 450;
+const HERO_UI_DELAY_MS = 1400;
+const homeHeaderRevealClass =
+  "transition-[opacity,transform] duration-[1400ms] ease-out";
 
 const navLinkClass = (active: boolean) =>
   cn(
@@ -14,14 +15,19 @@ const navLinkClass = (active: boolean) =>
     active && "link-underline-active text-foreground",
   );
 
+const navItems = [
+  { to: "/services", label: "Services" },
+  { to: "/portfolio", label: "Portfolio" },
+  { to: "/about", label: "About" },
+  { to: "/contact", label: "Contact" },
+];
+
 const Header = () => {
   const location = useLocation();
   const isHome = location.pathname === "/";
 
   const [scrolled, setScrolled] = useState(false);
-  const [shellVisible, setShellVisible] = useState(!isHome);
-  const [logoReveal, setLogoReveal] = useState(!isHome);
-  const [compactTriggerReveal, setCompactTriggerReveal] = useState(!isHome);
+  const [homeUiRevealed, setHomeUiRevealed] = useState(!isHome);
   const [homeMegaOpen, setHomeMegaOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -37,24 +43,18 @@ const Header = () => {
     clearAllTimeouts();
 
     if (!isHome) {
-      setShellVisible(true);
-      setLogoReveal(true);
-      setCompactTriggerReveal(true);
+      setHomeUiRevealed(true);
       setHomeMegaOpen(false);
       return;
     }
 
-    setShellVisible(false);
-    setLogoReveal(false);
-    setCompactTriggerReveal(false);
+    setHomeUiRevealed(false);
     setHomeMegaOpen(false);
 
     timeoutsRef.current.push(
       window.setTimeout(() => {
-        setShellVisible(true);
-        setLogoReveal(true);
-        timeoutsRef.current.push(window.setTimeout(() => setCompactTriggerReveal(true), MENU_TRIGGER_STAGGER_MS));
-      }, HEADER_DELAY_MS),
+        setHomeUiRevealed(true);
+      }, HERO_UI_DELAY_MS),
     );
 
     return () => clearAllTimeouts();
@@ -77,22 +77,14 @@ const Header = () => {
 
   const navLinksEl = (
     <>
-      <Link to="/services" className={navLinkClass(location.pathname === "/services")}>
-        Services
-      </Link>
-      <Link to="/portfolio" className={navLinkClass(location.pathname === "/portfolio")}>
-        Portfolio
-      </Link>
-      <Link to="/about" className={navLinkClass(location.pathname === "/about")}>
-        About
-      </Link>
-      <Link to="/contact" className={navLinkClass(location.pathname === "/contact")}>
-        Contact
-      </Link>
+      {navItems.map((item) => (
+        <Link key={item.to} to={item.to} className={navLinkClass(location.pathname === item.to)}>
+          {item.label}
+        </Link>
+      ))}
     </>
   );
 
-  /** Hero is full-bleed under header: no bar until user scrolls off the top */
   const overlayOnHero = isHome && !scrolled;
 
   const ctaPair = (
@@ -110,12 +102,15 @@ const Header = () => {
     </div>
   );
 
+  const homeRevealVisible = homeUiRevealed;
+
   return (
     <header
       className={cn(
         "fixed left-0 right-0 top-0 z-50",
-        "transition-[opacity,background-color,transform,backdrop-filter,border-color] duration-700 ease-elegant",
-        shellVisible ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0",
+        isHome
+          ? cn(homeHeaderRevealClass, homeRevealVisible ? "opacity-100" : "pointer-events-none opacity-0")
+          : "transition-[background-color,border-color] duration-300 ease-out",
         overlayOnHero
           ? "border-transparent bg-transparent shadow-none backdrop-blur-none"
           : "border-b border-border/50 bg-background/90 backdrop-blur-md",
@@ -167,21 +162,14 @@ const Header = () => {
 
         {isHome && (
           <>
-            <div
-              className={cn(
-                "relative flex h-11 items-center",
-                homeMegaOpen &&
-                  (overlayOnHero
-                    ? "border-foreground/10 md:border-b"
-                    : "border-border/40 md:border-b"),
-              )}
-            >
+            <div className="relative flex h-11 items-center">
               <Link
                 to="/"
                 onClick={handleLogoClick}
                 className={cn(
-                  "relative z-[1] shrink-0 transition-[opacity,transform] duration-700 ease-elegant",
-                  logoReveal ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0",
+                  "relative z-[1] shrink-0",
+                  homeHeaderRevealClass,
+                  homeRevealVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0",
                 )}
               >
                 <img
@@ -194,43 +182,50 @@ const Header = () => {
                 />
               </Link>
 
-              {homeMegaOpen && (
-                <nav
-                  className={cn(
-                    "pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[60%] min-w-0 -translate-x-1/2 -translate-y-1/2 flex-wrap justify-center gap-x-8 gap-y-2 animate-menu-sweep-in md:pointer-events-auto md:flex",
-                    overlayOnHero &&
-                      "[&_a]:text-foreground [&_a:hover]:text-gold [&_a.link-underline-active]:text-foreground [&_a]:drop-shadow-[0_1px_2px_rgba(255,255,255,0.88)]",
-                  )}
-                  style={{ animationDelay: "120ms" }}
-                >
-                  {navLinksEl}
-                </nav>
-              )}
+              <nav
+                className={cn(
+                  "pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[60%] min-w-0 -translate-x-1/2 -translate-y-1/2 flex-wrap justify-center gap-x-8 gap-y-2 transition-opacity duration-300 ease-out md:flex",
+                  homeMegaOpen ? "opacity-100 md:pointer-events-auto" : "opacity-0",
+                  overlayOnHero &&
+                    "[&_a]:text-foreground [&_a:hover]:text-gold [&_a.link-underline-active]:text-foreground [&_a]:drop-shadow-[0_1px_2px_rgba(255,255,255,0.88)]",
+                )}
+                aria-hidden={!homeMegaOpen}
+              >
+                {navItems.map((item) => (
+                  <Link key={`home-menu-${item.to}`} to={item.to} className={navLinkClass(location.pathname === item.to)}>
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
 
               <div
                 className={cn(
-                  "relative z-[1] ml-auto flex items-center gap-4 transition-opacity duration-500 ease-elegant",
-                  compactTriggerReveal ? "opacity-100" : "pointer-events-none opacity-0",
+                  "relative z-[1] ml-auto flex items-center gap-4",
+                  homeHeaderRevealClass,
+                  homeRevealVisible ? "opacity-100" : "pointer-events-none opacity-0",
                   homeMegaOpen && "md:gap-6",
                 )}
               >
-                {homeMegaOpen && (
-                  <div className="hidden animate-menu-sweep-in md:flex md:gap-6">{ctaPair}</div>
-                )}
+                <div
+                  className={cn(
+                    "hidden transition-opacity duration-300 ease-out md:flex md:gap-6",
+                    homeMegaOpen ? "opacity-100" : "pointer-events-none opacity-0",
+                  )}
+                  aria-hidden={!homeMegaOpen}
+                >
+                  {ctaPair}
+                </div>
 
                 {!homeMegaOpen ? (
                   <button
                     type="button"
                     onClick={() => setHomeMegaOpen(true)}
                     className={cn(
-                      "group inline-flex cursor-pointer items-center gap-2.5 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.2em] text-foreground outline-none ring-offset-background transition-colors hover:text-gold focus-visible:ring-2 focus-visible:ring-ring",
+                      "inline-flex cursor-pointer items-center gap-2.5 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.2em] text-foreground outline-none ring-offset-background transition-colors hover:text-gold focus-visible:ring-2 focus-visible:ring-ring",
                       overlayOnHero && "drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]",
                     )}
                   >
-                    <span
-                      aria-hidden
-                      className="text-lg leading-none font-light text-gold transition-transform duration-500 ease-elegant group-hover:rotate-90"
-                    >
+                    <span aria-hidden className="text-lg leading-none font-light text-gold">
                       +
                     </span>
                     <span className="leading-none">Menu</span>
@@ -255,42 +250,32 @@ const Header = () => {
 
             <div
               className={cn(
-                "grid overflow-hidden transition-[grid-template-rows] duration-500 ease-elegant md:hidden",
+                "grid overflow-hidden transition-[grid-template-rows] duration-300 ease-out md:hidden",
                 homeMegaOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
               )}
             >
               <div className="min-h-0">
-                {homeMegaOpen && (
-                  <div
-                    className={cn(
-                      "border-t pt-4 animate-fade-in md:hidden",
-                      overlayOnHero ? "border-foreground/15" : "border-border/40",
-                    )}
-                  >
-                    <nav className="flex flex-col gap-4">
-                      <Link to="/services" className={navLinkClass(location.pathname === "/services")} onClick={() => setHomeMegaOpen(false)}>
-                        Services
+                <div
+                  className={cn(
+                    "pt-4 transition-opacity duration-300 ease-out md:hidden",
+                    homeMegaOpen ? "opacity-100" : "pointer-events-none opacity-0",
+                  )}
+                  aria-hidden={!homeMegaOpen}
+                >
+                  <nav className="flex flex-col gap-4">
+                    {navItems.map((item) => (
+                      <Link
+                        key={`home-mobile-${item.to}`}
+                        to={item.to}
+                        className={navLinkClass(location.pathname === item.to)}
+                        onClick={() => setHomeMegaOpen(false)}
+                      >
+                        {item.label}
                       </Link>
-                      <Link to="/portfolio" className={navLinkClass(location.pathname === "/portfolio")} onClick={() => setHomeMegaOpen(false)}>
-                        Portfolio
-                      </Link>
-                      <Link to="/about" className={navLinkClass(location.pathname === "/about")} onClick={() => setHomeMegaOpen(false)}>
-                        About
-                      </Link>
-                      <Link to="/contact" className={navLinkClass(location.pathname === "/contact")} onClick={() => setHomeMegaOpen(false)}>
-                        Contact
-                      </Link>
-                    </nav>
-                    <div
-                      className={cn(
-                        "mt-5 border-t pt-5",
-                        overlayOnHero ? "border-foreground/15" : "border-border/40",
-                      )}
-                    >
-                      {ctaPair}
-                    </div>
-                  </div>
-                )}
+                    ))}
+                  </nav>
+                  <div className="mt-5 pt-5">{ctaPair}</div>
+                </div>
               </div>
             </div>
           </>

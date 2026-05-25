@@ -61,7 +61,7 @@ const ProjectDetail = () => {
             <div
               key={index}
               className={cn(
-                "hover-image-wrap group rounded-lg",
+                "overflow-hidden rounded-lg",
                 index === 0 && project.photos.length === 1 ? "md:col-span-2" : "",
               )}
             >
@@ -71,19 +71,6 @@ const ProjectDetail = () => {
                 className="h-full w-full object-cover"
                 style={{ objectPosition: project.objectPosition || "center" }}
               />
-              <div className="hover-image-caption">
-                <div className="hover-image-caption-inner">
-                  <div className="flex items-end justify-between gap-3">
-                    <span className="font-display text-xl font-semibold text-primary-foreground">{project.title}</span>
-                    <span className="text-2xl font-light text-primary-foreground transition-transform duration-500 ease-elegant group-hover:translate-x-1">
-                      →
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-primary-foreground/75">
-                    {index + 1} / {project.photos.length}
-                  </p>
-                </div>
-              </div>
             </div>
           ))}
         </div>

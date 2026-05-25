@@ -205,7 +205,7 @@ export default {
   			'menu-sweep-in': {
   				from: {
   					opacity: '0',
-  					transform: 'translateX(24px)'
+  					transform: 'translateX(56px)'
   				},
   				to: {
   					opacity: '1',
@@ -222,7 +222,7 @@ export default {
   			'reveal-fade': 'reveal-fade 1.2s var(--ease-elegant) forwards',
   			'marquee-arrow': 'marquee-arrow 1.2s var(--ease-elegant) infinite alternate',
   			'scroll-cue': 'scroll-cue 2s var(--ease-elegant) infinite',
-  			'menu-sweep-in': 'menu-sweep-in 0.9s var(--ease-elegant) forwards'
+  			'menu-sweep-in': 'menu-sweep-in 1.25s var(--ease-elegant) forwards'
 
   		}
   	}

@@ -28,18 +28,6 @@ function PortfolioCard({
           className="h-full w-full object-cover"
           style={{ objectPosition: project.objectPosition || "center" }}
         />
-        <div className="hover-image-caption">
-          <div className="hover-image-caption-inner">
-            <p className="mb-1 text-xs font-medium uppercase tracking-[0.2em] text-gold-light">{project.category}</p>
-            <div className="flex items-end justify-between gap-3">
-              <span className="font-display text-xl font-semibold text-primary-foreground">{project.title}</span>
-              <span className="text-2xl font-light text-primary-foreground transition-transform duration-500 ease-elegant group-hover:translate-x-1">
-                →
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-primary-foreground/85">{project.location}</p>
-          </div>
-        </div>
       </div>
       <div className="transition-colors duration-300 group-hover:text-gold">
         <p className="text-sm font-medium text-gold">{project.category}</p>
