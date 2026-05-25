@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo-monogram.png";
+import logo from "@/assets/navarre-full-logo-dark.png";
 
 const HERO_UI_DELAY_MS = 1400;
 const homeHeaderRevealClass =
