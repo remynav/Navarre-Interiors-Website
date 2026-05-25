@@ -121,7 +121,7 @@ const Header = () => {
           <>
             <div className="flex items-center justify-between">
               <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-                <img src={logo} alt="Navarre Interiors Design Studio" className="h-10 w-auto" />
+                <img src={logo} alt="Navarre Interiors Design Studio" className="h-12 w-auto md:h-14" />
               </Link>
 
               <nav className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:pointer-events-auto md:flex">
