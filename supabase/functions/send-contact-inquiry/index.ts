@@ -144,12 +144,22 @@ const handler = async (req: Request): Promise<Response> => {
     const safePhone = escapeHtml(sanitizedPhone);
     const safeMessage = escapeHtml(sanitizedMessage);
 
-    const fromAddress =
-      Deno.env.get("RESEND_FROM_EMAIL") ?? "Navarre Interiors <onboarding@resend.dev>";
+    const fromAddress = Deno.env.get("RESEND_FROM_EMAIL");
     const toAddress =
       Deno.env.get("CONTACT_INQUIRY_TO") ?? "brandy@navarreinteriors.com";
 
-    console.log("Sending contact inquiry email");
+    if (!fromAddress) {
+      console.error("RESEND_FROM_EMAIL is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email sender is not configured. Please contact support." }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log(`Sending contact inquiry email from "${fromAddress}" to "${toAddress}"`);
 
     const emailResponse = await resend.emails.send({
       from: fromAddress,
@@ -178,7 +188,21 @@ const handler = async (req: Request): Promise<Response> => {
       reply_to: sanitizedEmail,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    if (emailResponse.error) {
+      console.error("Resend returned an error:", JSON.stringify(emailResponse.error));
+      return new Response(
+        JSON.stringify({
+          error: "Failed to send inquiry.",
+          details: emailResponse.error.message ?? "Unknown error from email provider.",
+        }),
+        {
+          status: 502,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log("Email sent successfully:", JSON.stringify(emailResponse.data));
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
