@@ -163,7 +163,7 @@ const PricingSection = () => {
 
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-stretch gap-8 md:grid-cols-3">
           {pricingTiers.map((tier, index) => (
-            <PricingCard key={tier.packageLabel} tier={tier} index={index} />
+            <PricingCard key={tier.name} tier={tier} index={index} />
           ))}
         </div>
       </div>
