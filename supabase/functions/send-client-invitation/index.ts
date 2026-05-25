@@ -95,8 +95,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     const loginUrl = portalUrl || "https://navarreinteriors.com/auth";
 
+    const fromAddress = Deno.env.get("RESEND_FROM_EMAIL");
+    if (!fromAddress) {
+      console.error("RESEND_FROM_EMAIL is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email sender not configured. Set RESEND_FROM_EMAIL secret to an address on a verified domain." }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log("Sending from:", fromAddress, "to:", clientEmail);
+
     const emailResponse = await resend.emails.send({
-      from: "Navarre Interiors <onboarding@resend.dev>",
+      from: fromAddress,
       to: [clientEmail],
       subject: `Welcome to Your Design Project - ${projectName}`,
       html: `
@@ -182,6 +193,14 @@ const handler = async (req: Request): Promise<Response> => {
         </html>
       `,
     });
+
+    if (emailResponse.error) {
+      console.error("Resend error:", emailResponse.error);
+      return new Response(
+        JSON.stringify({ error: "Email failed to send", details: emailResponse.error }),
+        { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     console.log("Email sent successfully:", emailResponse);
 
