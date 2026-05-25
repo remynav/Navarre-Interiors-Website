@@ -27,7 +27,7 @@ const Auth = () => {
     return hashParams.get("type") === "invite" || queryParams.get("type") === "invite";
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
 
   useEffect(() => {
     if (!authLoading && user && !isInviteFlow) {
@@ -43,14 +43,19 @@ const Auth = () => {
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
     
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
+    if (!isInviteFlow) {
+      const emailResult = emailSchema.safeParse(email);
+      if (!emailResult.success) {
+        newErrors.email = emailResult.error.errors[0].message;
+      }
     }
     
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
+    }
+    if (isInviteFlow && password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
     
     setErrors(newErrors);
@@ -65,6 +70,18 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
+      if (isInviteFlow) {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Password created successfully");
+          setIsInviteFlow(false);
+          navigate("/client");
+        }
+        return;
+      }
+
       const { error } = await signIn(email, password);
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
