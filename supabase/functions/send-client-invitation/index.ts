@@ -41,10 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       console.error("Missing authorization header");
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Missing authorization header" }, 401);
     }
 
     // Create Supabase client with user's auth context
@@ -58,10 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) {
       console.error("Authentication failed:", authError?.message || "No user found");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
     // Verify user has admin role
@@ -74,18 +68,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (roleError) {
       console.error("Role check failed:", roleError.message);
-      return new Response(
-        JSON.stringify({ error: "Failed to verify permissions" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Failed to verify permissions" }, 500);
     }
 
     if (!roleData) {
       console.error("User is not an admin:", user.id);
-      return new Response(
-        JSON.stringify({ error: "Forbidden: Admin access required" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Forbidden: Admin access required" }, 403);
     }
 
     console.log("Admin verified:", user.id);
