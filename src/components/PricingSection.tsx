@@ -41,7 +41,6 @@ const pricingTiers: PricingTier[] = [
   },
   {
     name: "Signature package",
-    packageLabel: "PACKAGE 2",
     price: "65k",
     hourlyRate: "$185/hr",
     scopeLine: "Up to 6 bedrooms/7 baths or 5000+ sq ft",
