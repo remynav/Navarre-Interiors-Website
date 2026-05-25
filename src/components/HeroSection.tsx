@@ -55,13 +55,6 @@ const HeroSection = () => {
             View portfolio
             <span className="inline-block transition-transform duration-500 ease-elegant group-hover:translate-x-1">→</span>
           </Link>
-          <div
-            className="col-span-2 row-start-2 flex flex-col items-center gap-2 text-muted-foreground md:col-span-1 md:col-start-2 md:row-start-1"
-            aria-hidden
-          >
-            <div className="h-10 w-px bg-gradient-to-b from-transparent via-border to-gold/60" />
-            <ChevronDown className="h-5 w-5 animate-scroll-cue text-gold/80" strokeWidth={1.25} />
-          </div>
         </div>
       </div>
     </section>
