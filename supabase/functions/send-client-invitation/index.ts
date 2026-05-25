@@ -88,6 +88,8 @@ const handler = async (req: Request): Promise<Response> => {
       return jsonResponse({ error: "Missing required fields: clientName, clientEmail, or projectName" }, 400);
     }
 
+    const loginUrl = portalUrl || "https://navarreinteriors.com/auth";
+
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
       console.error("RESEND_API_KEY is not configured");
@@ -223,7 +225,7 @@ const handler = async (req: Request): Promise<Response> => {
                       <table width="100%" cellpadding="0" cellspacing="0" style="margin: 35px 0;">
                         <tr>
                           <td align="center">
-                            <a href="${loginUrl}" style="display: inline-block; background-color: #c9a962; color: #1a1a1a; text-decoration: none; padding: 16px 40px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 4px; text-transform: uppercase;">
+                            <a href="${inviteLink}" style="display: inline-block; background-color: #c9a962; color: #1a1a1a; text-decoration: none; padding: 16px 40px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 4px; text-transform: uppercase;">
                               Access Your Portal
                             </a>
                           </td>
@@ -259,27 +261,26 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error("Resend error:", emailResponse.error);
-      return new Response(
-        JSON.stringify({ error: "Email failed to send", details: emailResponse.error }),
-        { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({
+        success: false,
+        error: "Client was added, but the invitation email failed to send",
+        details: emailResponse.error,
+        client: { id: clientId, name: clientName, email: normalizedEmail },
+        project: projectData,
+      });
     }
 
     console.log("Email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+    return jsonResponse({
+      success: true,
+      data: emailResponse,
+      client: { id: clientId, name: clientName, email: normalizedEmail },
+      project: projectData,
     });
   } catch (error: any) {
     console.error("Error in send-client-invitation function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return jsonResponse({ error: getErrorMessage(error) }, 500);
   }
 };
 
