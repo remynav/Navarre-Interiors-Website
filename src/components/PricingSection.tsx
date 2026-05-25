@@ -61,7 +61,6 @@ const pricingTiers: PricingTier[] = [
   },
   {
     name: "Atelier package",
-    packageLabel: "PACKAGE 3",
     price: "125k",
     hourlyRate: "$156/hr",
     scopeLine: "Up to 7000+ sq ft",
