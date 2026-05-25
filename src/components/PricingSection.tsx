@@ -19,7 +19,6 @@ type PricingTier = {
 const pricingTiers: PricingTier[] = [
   {
     name: "Petit Package",
-    packageLabel: "PACKAGE 1",
     price: "50k",
     hourlyRate: "$200/hr",
     scopeLine: "Up to 4 bedrooms/5 baths or 5000 sq ft",
