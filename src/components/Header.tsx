@@ -177,7 +177,7 @@ const Header = () => {
                   src={logo}
                   alt="Navarre Interiors Design Studio"
                   className={cn(
-                    "h-10 w-auto",
+                    "h-12 w-auto md:h-14",
                     overlayOnHero && "drop-shadow-[0_1px_2px_rgba(255,255,255,0.85)]",
                   )}
                 />
