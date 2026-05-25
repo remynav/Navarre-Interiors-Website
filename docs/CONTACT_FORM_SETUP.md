@@ -1,3 +1,15 @@
+# Images
+
+Marketing photos in `src/assets/` are WebP (max width 1920px, hero 2560px). To re-compress after adding new photos:
+
+```sh
+npm run optimize-images
+```
+
+Then update imports in `src/lib/projectsData.ts` (and any components) to use the new `.webp` paths.
+
+---
+
 # Contact form — production setup (Resend + DNS)
 
 The contact form calls the Supabase Edge Function `send-contact-inquiry`, which sends email via [Resend](https://resend.com).

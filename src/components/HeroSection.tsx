@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
-import heroImage from "@/assets/hero-living-room.jpg";
+import heroImage from "@/assets/hero-living-room.webp";
 import heroLogo from "@/assets/navarre-hero-logo.png";
 
 const linkClass =

@@ -20,11 +20,11 @@ const PageMeta = ({ title, description, path = "" }: PageMetaProps) => {
       <meta property="og:description" content={description} />
       <meta property="og:type" content="website" />
       <meta property="og:url" content={canonical} />
-      <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
+      <meta property="og:image" content={`${SITE_URL}/og-image.webp`} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={`${SITE_URL}/og-image.jpg`} />
+      <meta name="twitter:image" content={`${SITE_URL}/og-image.webp`} />
     </Helmet>
   );
 };

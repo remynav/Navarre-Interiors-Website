@@ -1,4 +1,4 @@
-import palisadesMap from "@/assets/palisades-map.jpg";
+import palisadesMap from "@/assets/palisades-map.webp";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { cn } from "@/lib/utils";
 
