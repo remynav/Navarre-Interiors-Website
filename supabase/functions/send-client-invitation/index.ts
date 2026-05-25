@@ -174,7 +174,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: fromAddress,
       to: [clientEmail],
-      subject: `Welcome to Your Design Project - ${projectName}`,
+      subject: "Welcome to Navarre Interiors",
       html: `
         <!DOCTYPE html>
         <html>
@@ -182,74 +182,49 @@ const handler = async (req: Request): Promise<Response> => {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="margin: 0; padding: 0; font-family: 'Georgia', serif; background-color: #f8f7f4;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f7f4; padding: 40px 20px;">
+        <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #faf9f6;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #faf9f6; padding: 48px 20px;">
             <tr>
               <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-                  
-                  <!-- Header -->
+                <table width="520" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
+
+                  <!-- Logo -->
                   <tr>
-                    <td style="background-color: #1a1a1a; padding: 40px; text-align: center;">
-                      <h1 style="margin: 0; font-size: 28px; font-weight: 400; letter-spacing: 2px;">
-                        <span style="color: #ffffff;">Navarre</span>
-                        <span style="color: #c9a962;"> Interiors</span>
-                      </h1>
+                    <td style="padding: 40px 40px 24px; text-align: center;">
+                      <img src="https://navarreinteriors.com/email-logo.png" alt="Navarre Interiors" width="180" style="display: block; margin: 0 auto; max-width: 180px; height: auto;" />
                     </td>
                   </tr>
-                  
-                  <!-- Content -->
+
+                  <!-- Message -->
                   <tr>
-                    <td style="padding: 50px 40px;">
-                      <h2 style="margin: 0 0 20px; font-size: 24px; font-weight: 400; color: #1a1a1a;">
-                        Welcome, ${clientName}!
-                      </h2>
-                      
-                      <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.8; color: #4a4a4a;">
-                        We're thrilled to begin your design journey with us. Your project <strong style="color: #1a1a1a;">"${projectName}"</strong> has been set up and is ready for you to explore.
+                    <td style="padding: 16px 40px 8px; text-align: center;">
+                      <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #2d2d2d;">
+                        Hi ${clientName},
                       </p>
-                      
-                      <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.8; color: #4a4a4a;">
-                        Through your personalized client portal, you'll be able to:
-                      </p>
-                      
-                      <ul style="margin: 0 0 30px; padding-left: 20px; font-size: 16px; line-height: 2; color: #4a4a4a;">
-                        <li>Track your project's progress in real-time</li>
-                        <li>View and approve design concepts and mood boards</li>
-                        <li>Access important documents and contracts</li>
-                        <li>Communicate directly with your design team</li>
-                        <li>Review product selections and 3D renderings</li>
-                      </ul>
-                      
-                      <!-- CTA Button -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="margin: 35px 0;">
-                        <tr>
-                          <td align="center">
-                            <a href="${inviteLink}" style="display: inline-block; background-color: #c9a962; color: #1a1a1a; text-decoration: none; padding: 16px 40px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 4px; text-transform: uppercase;">
-                              Access Your Portal
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <p style="margin: 30px 0 0; font-size: 14px; line-height: 1.8; color: #888888;">
-                        If you have any questions, please don't hesitate to reach out. We're here to make your design experience seamless and enjoyable.
+                      <p style="margin: 16px 0 0; font-size: 16px; line-height: 1.7; color: #2d2d2d;">
+                        We look forward to working with you! Click below to set up your account and get access to the client portal.
                       </p>
                     </td>
                   </tr>
-                  
+
+                  <!-- CTA -->
+                  <tr>
+                    <td style="padding: 32px 40px 48px; text-align: center;">
+                      <a href="${inviteLink}" style="display: inline-block; background-color: #758f7f; color: #ffffff; text-decoration: none; padding: 14px 36px; font-size: 14px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;">
+                        Set Up Your Account
+                      </a>
+                    </td>
+                  </tr>
+
                   <!-- Footer -->
                   <tr>
-                    <td style="background-color: #f8f7f4; padding: 30px 40px; text-align: center; border-top: 1px solid #e8e6e1;">
-                      <p style="margin: 0 0 10px; font-size: 14px; color: #888888;">
-                        Navarre Interiors
-                      </p>
-                      <p style="margin: 0; font-size: 12px; color: #aaaaaa;">
-                        Elevating spaces with timeless design
+                    <td style="padding: 24px 40px 40px; text-align: center; border-top: 1px solid #ececec;">
+                      <p style="margin: 16px 0 0; font-size: 12px; color: #999999; letter-spacing: 1px;">
+                        NAVARRE INTERIORS
                       </p>
                     </td>
                   </tr>
-                  
+
                 </table>
               </td>
             </tr>
