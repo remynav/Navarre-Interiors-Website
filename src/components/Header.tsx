@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo-monogram.png";
+import heroLogo from "@/assets/navarre-hero-logo.png";
 
 const HERO_UI_DELAY_MS = 1400;
 const homeHeaderRevealClass =
@@ -67,14 +67,6 @@ const Header = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleLogoClick = (e: React.MouseEvent) => {
-    if (location.pathname === "/") {
-      e.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      setHomeMegaOpen(false);
-    }
-  };
-
   const navLinksEl = (
     <>
       {navItems.map((item) => (
@@ -121,7 +113,7 @@ const Header = () => {
           <>
             <div className="flex items-center justify-between">
               <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-                <img src={logo} alt="Navarre Interiors Design Studio" className="h-9 w-auto md:h-10" />
+                <img src={heroLogo} alt="Navarre Interiors Design Studio" className="h-11 w-auto md:h-12" />
               </Link>
 
               <nav className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:pointer-events-auto md:flex">
@@ -163,26 +155,7 @@ const Header = () => {
 
         {isHome && (
           <>
-            <div className="relative flex h-11 items-center">
-              <Link
-                to="/"
-                onClick={handleLogoClick}
-                className={cn(
-                  "relative z-[1] shrink-0",
-                  homeHeaderRevealClass,
-                  homeRevealVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0",
-                )}
-              >
-                <img
-                  src={logo}
-                  alt="Navarre Interiors Design Studio"
-                  className={cn(
-                    "h-9 w-auto md:h-10",
-                    overlayOnHero && "drop-shadow-[0_1px_2px_rgba(255,255,255,0.85)]",
-                  )}
-                />
-              </Link>
-
+            <div className="relative flex h-11 items-center justify-end md:h-12">
               <nav
                 className={cn(
                   "pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[60%] min-w-0 -translate-x-1/2 -translate-y-1/2 flex-wrap justify-center gap-x-8 gap-y-2 transition-opacity duration-300 ease-out md:flex",

@@ -365,6 +365,28 @@
     animation: marqueeArrow 1.2s var(--ease-elegant) infinite alternate;
   }
 
+  /* Home hero: photo visible left, readable wash under right-aligned headline */
+  .hero-overlay-tint {
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      hsl(var(--background) / 0.08) 30%,
+      hsl(var(--background) / 0.42) 62%,
+      hsl(var(--background) / 0.58) 100%
+    );
+  }
+
+  .hero-overlay-wash {
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.12) 28%,
+      rgba(255, 255, 255, 0.38) 58%,
+      rgba(255, 255, 255, 0.55) 82%,
+      rgba(255, 255, 255, 0.58) 100%
+    );
+  }
+
   /* Home hero UI: visible photo first, then overlay/logo/header fade together */
   .animate-hero-ui-fade {
     opacity: 0;
